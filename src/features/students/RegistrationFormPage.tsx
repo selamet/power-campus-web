@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Field, Icon, Input, Logo, Select, Steps, Textarea } from '@/components/ui';
+import { Button, DatePicker, Field, Icon, Input, Logo, Select, Steps, Textarea } from '@/components/ui';
 import {
   CITIES,
   COURSES,
@@ -153,7 +153,11 @@ export function RegistrationFormPage() {
                   />
                 </Field>
                 <Field label="Doğum Tarihi">
-                  <Input type="date" value={form.birth} onChange={update('birth')} />
+                  <DatePicker
+                    value={form.birth}
+                    onChange={(iso) => patch({ birth: iso })}
+                    placeholder="Doğum tarihi seç"
+                  />
                 </Field>
                 <Field label="Cinsiyet">
                   <Select value={form.gender} onChange={update('gender')}>
@@ -214,7 +218,11 @@ export function RegistrationFormPage() {
                   </Select>
                 </Field>
                 <Field label="Başlangıç Tarihi" icon="calendar" full>
-                  <Input type="date" value={form.start} onChange={update('start')} />
+                  <DatePicker
+                    value={form.start}
+                    onChange={(iso) => patch({ start: iso })}
+                    placeholder="Başlangıç tarihi seç"
+                  />
                 </Field>
               </div>
             </div>
@@ -353,7 +361,11 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
           </Select>
         </Field>
         <Field label="İlk Ödeme Tarihi" icon="calendar" full>
-          <Input type="date" value={form.firstDate} onChange={update('firstDate')} />
+          <DatePicker
+            value={form.firstDate}
+            onChange={(iso) => patch({ firstDate: iso })}
+            placeholder="İlk ödeme tarihi seç"
+          />
         </Field>
       </div>
 
