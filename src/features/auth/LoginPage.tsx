@@ -44,7 +44,7 @@ export function LoginPage() {
 
       {/* Brand panel */}
       <div
-        className="relative hidden flex-col justify-between overflow-hidden px-[52px] py-14 text-white min-[900px]:flex"
+        className="grain relative hidden flex-col justify-between overflow-hidden px-[52px] py-14 text-white min-[900px]:flex"
         style={{
           background:
             'linear-gradient(150deg, hsl(40 18% 13%), hsl(36 22% 9%) 55%, hsl(30 20% 7%))',

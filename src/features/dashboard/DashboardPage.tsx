@@ -44,13 +44,14 @@ export function DashboardPage() {
       {/* Hero greeting */}
       <div className="card relative overflow-hidden p-0">
         <div
-          className="relative overflow-hidden px-7 py-[26px] text-white"
+          className="grain relative overflow-hidden px-7 py-[26px] text-white"
           style={{ background: 'linear-gradient(120deg, hsl(40 18% 13%), hsl(34 20% 9%))' }}
         >
           <div
             className="absolute -top-[140px] -right-[60px] size-[300px] rounded-full"
             style={{ border: '44px solid hsl(0 0% 100% / .08)' }}
           />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,hsl(42_92%_55%/0.16),transparent_50%)]" />
           <div className="relative flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-col gap-1.5">
               <span className="font-mono text-xs tracking-[0.1em] opacity-85">
