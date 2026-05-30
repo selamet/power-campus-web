@@ -9,8 +9,8 @@ interface IconProps {
   style?: CSSProperties;
 }
 
-/** Renders a stroked SVG icon from the shared icon set. */
-export function Icon({ name, size = 18, strokeWidth = 2, className, style }: IconProps) {
+/** Renders a refined stroked SVG icon from the shared icon set. */
+export function Icon({ name, size = 18, strokeWidth = 1.75, className, style }: IconProps) {
   return (
     <svg
       className={className}
@@ -22,6 +22,7 @@ export function Icon({ name, size = 18, strokeWidth = 2, className, style }: Ico
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
+      vectorEffect="non-scaling-stroke"
       style={style}
       dangerouslySetInnerHTML={{ __html: ICONS[name] ?? '' }}
     />
