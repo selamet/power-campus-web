@@ -20,7 +20,7 @@ export function Steps({ steps, current }: StepsProps) {
               <div
                 className={cn(
                   'flex size-[34px] items-center justify-center rounded-full font-mono text-sm font-bold transition-all duration-300',
-                  done && 'bg-accent text-white',
+                  done && 'bg-accent text-accent-contrast',
                   active && 'border-2 border-accent bg-accent-soft text-accent-strong',
                   !done && !active && 'border-2 border-transparent bg-bg-2 text-ink-3',
                 )}

@@ -11,14 +11,14 @@
 
 /* ---------- Raw design tokens (runtime-tweakable) ---------- */
 :root {
-  --accent-h: 4;
-  --accent-s: 74%;
-  --accent-l: 50%;
+  --accent-h: 42;
+  --accent-s: 82%;
+  --accent-l: 52%;
   --accent: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
-  --accent-strong: hsl(var(--accent-h) var(--accent-s) 43%);
-  --accent-soft: hsl(var(--accent-h) 80% 96%);
-  --accent-soft-border: hsl(var(--accent-h) 70% 88%);
-  --accent-contrast: #fff;
+  --accent-strong: hsl(var(--accent-h) var(--accent-s) 38%);
+  --accent-soft: hsl(var(--accent-h) 85% 94%);
+  --accent-soft-border: hsl(var(--accent-h) 75% 84%);
+  --accent-contrast: hsl(38 55% 12%);
 
   --ok: hsl(150 55% 40%);
   --ok-soft: hsl(150 50% 95%);
@@ -137,7 +137,7 @@
   }
   ::selection {
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-contrast);
   }
   *::-webkit-scrollbar {
     width: 11px;
@@ -426,8 +426,8 @@
 .spinner {
   width: 18px;
   height: 18px;
-  border: 2.5px solid hsl(0 0% 100% / 0.35);
-  border-top-color: #fff;
+  border: 2.5px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
