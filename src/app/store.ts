@@ -1,0 +1,25 @@
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from '@/features/auth/authSlice';
+import studentsReducer from '@/features/students/studentsSlice';
+import uiReducer, { persistUiState } from '@/features/ui/uiSlice';
+
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
+    students: studentsReducer,
+    ui: uiReducer,
+  },
+});
+
+// Persist UI preferences whenever they change.
+let lastUi = store.getState().ui;
+store.subscribe(() => {
+  const { ui } = store.getState();
+  if (ui !== lastUi) {
+    lastUi = ui;
+    persistUiState(ui);
+  }
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
