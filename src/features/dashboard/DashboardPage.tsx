@@ -45,7 +45,7 @@ export function DashboardPage() {
       <div className="card relative overflow-hidden p-0">
         <div
           className="grain relative overflow-hidden px-7 py-[26px] text-white"
-          style={{ background: 'linear-gradient(120deg, hsl(4 74% 50%), hsl(8 70% 56%))' }}
+          style={{ background: 'linear-gradient(125deg, hsl(240 9% 12%), hsl(240 11% 8%))' }}
         >
           <div
             className="absolute -top-[140px] -right-[60px] size-[300px] rounded-full"
@@ -71,7 +71,7 @@ export function DashboardPage() {
             </div>
             <Button
               onClick={openAddFlow}
-              className="self-center bg-white font-semibold text-accent-strong"
+              className="self-center bg-accent font-semibold text-accent-contrast"
             >
               <Icon name="plus" size={18} />
               Yeni Öğrenci
