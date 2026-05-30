@@ -32,6 +32,17 @@ export const login = createAsyncThunk(
   },
 );
 
+export const fetchCurrentUser = createAsyncThunk(
+  'auth/me',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await authApi.me();
+    } catch (error) {
+      return rejectWithValue((error as ApiError)?.message ?? 'Oturum doğrulanamadı.');
+    }
+  },
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -58,6 +69,9 @@ const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.status = 'failed';
         state.error = (action.payload as string) ?? 'Giriş başarısız oldu.';
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.user = action.payload;
       });
   },
 });
