@@ -171,7 +171,7 @@ export function StudentDrawer({ student, onClose, onApprove, onReject }: Student
                       onReject(student.id);
                       close();
                     }}
-                    className="bg-[hsl(0_72%_48%)] text-white"
+                    className="bg-accent text-white"
                   >
                     <Icon name="xCircle" size={17} />
                     Evet, reddet

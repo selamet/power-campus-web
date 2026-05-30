@@ -47,7 +47,7 @@ export function LoginPage() {
         className="grain relative hidden flex-col justify-between overflow-hidden px-[52px] py-14 text-white min-[900px]:flex"
         style={{
           background:
-            'linear-gradient(150deg, hsl(40 18% 13%), hsl(36 22% 9%) 55%, hsl(30 20% 7%))',
+            'linear-gradient(150deg, hsl(4 78% 44%), hsl(4 74% 52%) 55%, hsl(8 72% 56%))',
         }}
       >
         <div
@@ -55,10 +55,10 @@ export function LoginPage() {
           style={{ border: '60px solid hsl(0 0% 100% / .06)' }}
         />
         <div className="absolute -bottom-[90px] -left-[70px] size-[280px] rounded-full bg-[hsl(0_0%_100%/0.05)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,hsl(42_92%_55%/0.18),transparent_45%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,hsl(0_0%_100%/0.12),transparent_45%)]" />
 
         <div className="anim-fade-up relative flex items-center gap-3">
-          <div className="flex rounded-[14px] bg-white px-3 py-2.5 shadow-[0_8px_24px_hsl(38_40%_6%/0.5)]">
+          <div className="flex rounded-[14px] bg-white px-3 py-2.5 shadow-[0_8px_24px_hsl(4_60%_20%/0.3)]">
             <Mark size={30} />
           </div>
           <div className="flex flex-col">
@@ -133,13 +133,13 @@ export function LoginPage() {
               <a
                 href="#"
                 onClick={(event) => event.preventDefault()}
-                className="text-[13.5px] font-semibold text-accent-strong no-underline"
+                className="text-[13.5px] font-semibold text-accent no-underline"
               >
                 Şifremi unuttum
               </a>
             </div>
 
-            {error && <p className="m-0 text-[13px] text-[hsl(0_72%_45%)]">{error}</p>}
+            {error && <p className="m-0 text-[13px] text-accent">{error}</p>}
 
             <Button type="submit" variant="primary" size="lg" block disabled={loading} className="mt-1">
               {loading ? (
