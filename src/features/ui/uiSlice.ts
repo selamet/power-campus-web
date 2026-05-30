@@ -17,7 +17,7 @@ const STORAGE_KEY = 'pa-ui-prefs';
 
 const defaultState: UiState = {
   theme: 'light',
-  accent: '#E11D2A',
+  accent: '#DC2626',
   density: 'regular',
   radius: 14,
 };
