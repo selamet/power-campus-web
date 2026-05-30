@@ -157,6 +157,13 @@
 
 /* ---------- Reusable component classes ---------- */
 @layer components {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+
   .kicker {
     font-family: var(--font-mono);
     font-size: 11px;
