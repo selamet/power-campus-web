@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 
-export type ButtonVariant = 'primary' | 'ghost' | 'soft' | 'quiet';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'soft' | 'quiet';
 export type ButtonSize = 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -17,6 +17,8 @@ const BASE =
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
     'bg-gradient-to-b from-accent to-accent-strong text-accent-contrast shadow-accent ring-1 ring-inset ring-white/15 hover:-translate-y-px hover:shadow-[0_12px_28px_-8px_hsl(var(--accent-h)_74%_50%/0.6)] before:absolute before:inset-x-0 before:top-0 before:h-1/2 before:bg-gradient-to-b before:from-white/25 before:to-transparent before:opacity-70 before:pointer-events-none',
+  secondary:
+    'bg-gradient-to-b from-accent-2 to-accent-2-strong text-white shadow-[0_6px_18px_-8px_hsl(var(--accent-2-h)_74%_52%/0.5)] ring-1 ring-inset ring-white/15 hover:-translate-y-px hover:shadow-[0_12px_28px_-8px_hsl(var(--accent-2-h)_74%_52%/0.6)] before:absolute before:inset-x-0 before:top-0 before:h-1/2 before:bg-gradient-to-b before:from-white/25 before:to-transparent before:opacity-70 before:pointer-events-none',
   ghost:
     'border border-line-strong bg-surface/60 text-ink-2 backdrop-blur-sm hover:-translate-y-px hover:border-ink-3 hover:bg-surface-2 hover:text-ink hover:shadow-card',
   soft: 'border border-accent-soft-border bg-accent-soft text-accent-strong hover:-translate-y-px hover:shadow-card dark:text-[hsl(var(--accent-h)_80%_75%)]',

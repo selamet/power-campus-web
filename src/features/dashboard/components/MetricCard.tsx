@@ -20,7 +20,7 @@ export function MetricCard({
   accent,
 }: MetricCardProps) {
   return (
-    <div className="card relative flex flex-col gap-3.5 overflow-hidden p-5">
+    <div className="card mesh-aurora relative flex flex-col gap-3.5 overflow-hidden p-5">
       <div className="flex items-center justify-between">
         <div
           className={cn(

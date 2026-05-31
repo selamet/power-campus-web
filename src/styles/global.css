@@ -20,6 +20,15 @@
   --accent-soft-border: hsl(var(--accent-h) 55% 90%);
   --accent-contrast: #fff;
 
+  /* Secondary accent — cool indigo that pairs with the red for depth. */
+  --accent-2-h: 232;
+  --accent-2-s: 74%;
+  --accent-2-l: 58%;
+  --accent-2: hsl(var(--accent-2-h) var(--accent-2-s) var(--accent-2-l));
+  --accent-2-strong: hsl(var(--accent-2-h) var(--accent-2-s) 50%);
+  --accent-2-soft: hsl(var(--accent-2-h) 70% 96.5%);
+  --accent-2-soft-border: hsl(var(--accent-2-h) 55% 90%);
+
   --ok: hsl(150 55% 40%);
   --ok-soft: hsl(150 50% 95%);
   --warn: hsl(38 92% 50%);
@@ -66,6 +75,8 @@
   --ink-3: hsl(240 4% 52%);
   --accent-soft: hsl(var(--accent-h) 40% 18%);
   --accent-soft-border: hsl(var(--accent-h) 45% 28%);
+  --accent-2-soft: hsl(var(--accent-2-h) 40% 18%);
+  --accent-2-soft-border: hsl(var(--accent-2-h) 45% 28%);
   --ok-soft: hsl(150 30% 16%);
   --warn-soft: hsl(38 40% 18%);
   --warn-ink: hsl(38 90% 65%);
@@ -94,6 +105,11 @@
   --color-accent-soft: var(--accent-soft);
   --color-accent-soft-border: var(--accent-soft-border);
   --color-accent-contrast: var(--accent-contrast);
+
+  --color-accent-2: var(--accent-2);
+  --color-accent-2-strong: var(--accent-2-strong);
+  --color-accent-2-soft: var(--accent-2-soft);
+  --color-accent-2-soft-border: var(--accent-2-soft-border);
 
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
@@ -201,6 +217,66 @@
 
   .topbar-menu {
     display: none;
+  }
+
+  /* Aurora mesh — dual-accent radial blend for premium surfaces.
+     Use on a relatively-positioned element; renders behind content. */
+  .mesh-aurora {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--surface);
+  }
+  .mesh-aurora::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      radial-gradient(
+        ellipse 70% 90% at 12% 8%,
+        hsl(var(--accent-h) var(--accent-s) 55% / 0.1),
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 80% 100% at 92% 22%,
+        hsl(var(--accent-2-h) var(--accent-2-s) 58% / 0.12),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 90% 80% at 70% 105%,
+        hsl(var(--accent-2-h) 60% 60% / 0.07),
+        transparent 60%
+      );
+  }
+  [data-theme='dark'] .mesh-aurora::before {
+    background:
+      radial-gradient(
+        ellipse 70% 90% at 12% 8%,
+        hsl(var(--accent-h) 72% 52% / 0.16),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 80% 100% at 92% 22%,
+        hsl(var(--accent-2-h) 74% 60% / 0.18),
+        transparent 56%
+      ),
+      radial-gradient(
+        ellipse 90% 80% at 70% 105%,
+        hsl(var(--accent-2-h) 70% 55% / 0.12),
+        transparent 60%
+      );
+  }
+
+  /* Dark hero variant — charcoal base with accent glow baked in. */
+  .mesh-hero {
+    position: relative;
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 82% 18%, hsl(var(--accent-h) 72% 52% / 0.18), transparent 46%),
+      radial-gradient(circle at 12% 92%, hsl(var(--accent-2-h) 74% 56% / 0.2), transparent 50%),
+      linear-gradient(155deg, hsl(240 9% 12%), hsl(240 11% 7%) 70%);
   }
 }
 

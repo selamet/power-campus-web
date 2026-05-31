@@ -43,19 +43,12 @@ export function LoginPage() {
       </button>
 
       {/* Brand panel */}
-      <div
-        className="grain relative hidden flex-col justify-between overflow-hidden px-[52px] py-14 text-white min-[900px]:flex"
-        style={{
-          background:
-            'linear-gradient(155deg, hsl(240 9% 12%), hsl(240 10% 8%) 60%, hsl(240 11% 6%))',
-        }}
-      >
+      <div className="grain mesh-hero relative hidden flex-col justify-between overflow-hidden px-[52px] py-14 text-white min-[900px]:flex">
         <div
           className="absolute -top-[180px] -right-[160px] size-[520px] rounded-full"
           style={{ border: '60px solid hsl(0 0% 100% / .06)' }}
         />
         <div className="absolute -bottom-[90px] -left-[70px] size-[280px] rounded-full bg-[hsl(0_0%_100%/0.05)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,hsl(var(--accent-h)_72%_52%/0.16),transparent_48%)]" />
 
         <div className="anim-fade-up relative flex items-center gap-3">
           <div className="flex rounded-[14px] bg-white px-3 py-2.5 shadow-[0_8px_24px_hsl(240_40%_4%/0.5)]">

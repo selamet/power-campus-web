@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 
-export type BadgeKind = 'ok' | 'warn' | 'accent' | 'neutral';
+export type BadgeKind = 'ok' | 'warn' | 'accent' | 'info' | 'neutral';
 
 interface BadgeProps {
   kind?: BadgeKind;
@@ -13,6 +13,7 @@ const KIND_CLASSES: Record<BadgeKind, string> = {
   ok: 'bg-ok-soft text-ok',
   warn: 'bg-warn-soft text-warn-ink',
   accent: 'bg-accent-soft text-accent-strong dark:text-[hsl(var(--accent-h)_80%_75%)]',
+  info: 'bg-accent-2-soft text-accent-2-strong dark:text-[hsl(var(--accent-2-h)_80%_78%)]',
   neutral: 'bg-bg-2 text-ink-2 border-line',
 };
 

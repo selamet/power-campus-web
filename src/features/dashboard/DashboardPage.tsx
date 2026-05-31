@@ -43,10 +43,7 @@ export function DashboardPage() {
     <div className="stagger mx-auto flex max-w-[1240px] flex-col gap-6">
       {/* Hero greeting */}
       <div className="card relative overflow-hidden p-0">
-        <div
-          className="grain relative overflow-hidden px-7 py-[26px] text-white"
-          style={{ background: 'linear-gradient(125deg, hsl(240 9% 12%), hsl(240 11% 8%))' }}
-        >
+        <div className="grain mesh-hero relative overflow-hidden px-7 py-[26px] text-white">
           <div
             className="absolute -top-[140px] -right-[60px] size-[300px] rounded-full"
             style={{ border: '44px solid hsl(0 0% 100% / .08)' }}
