@@ -1,11 +1,18 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Avatar, Badge, Button, Icon, Input, Select } from '@/components/ui';
-import { COURSES, LANGUAGES, LEVELS, PAYMENT_PLANS } from '@/constants/options';
+import { Avatar, Badge, type BadgeKind, Button, Icon, Input, Select } from '@/components/ui';
+import { COURSES, LANGUAGES, LEVELS, PAYMENT_PLANS, PAY_METHODS } from '@/constants/options';
 import { STATUS } from '@/constants/status';
 import type { Student } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { formatDate, formatMoney, paidPercent } from '@/utils/format';
-import type { StudentUpdateInput } from '../studentsApi';
+import {
+  studentsApi,
+  type Installment,
+  type InstallmentStatus,
+  type Payment,
+  type RecordPaymentInput,
+  type StudentUpdateInput,
+} from '../studentsApi';
 
 interface StudentDrawerProps {
   student: Student;
@@ -13,7 +20,17 @@ interface StudentDrawerProps {
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onUpdate: (id: string, patch: StudentUpdateInput) => Promise<boolean>;
+  onPay: (id: string, input: RecordPaymentInput) => Promise<Student | null>;
 }
+
+const INSTALLMENT_BADGE: Record<InstallmentStatus, { kind: BadgeKind; label: string }> = {
+  paid: { kind: 'ok', label: 'Ödendi' },
+  partial: { kind: 'accent', label: 'Kısmi' },
+  overdue: { kind: 'warn', label: 'Gecikmiş' },
+  pending: { kind: 'neutral', label: 'Bekliyor' },
+};
+
+const today = () => new Date().toISOString().slice(0, 10);
 
 interface Draft {
   name: string;
@@ -38,13 +55,75 @@ const toDraft = (s: Student): Draft => ({
 });
 
 /** Slide-over with student details, inline editing and approve/reject actions. */
-export function StudentDrawer({ student, onClose, onApprove, onReject, onUpdate }: StudentDrawerProps) {
+export function StudentDrawer({
+  student,
+  onClose,
+  onApprove,
+  onReject,
+  onUpdate,
+  onPay,
+}: StudentDrawerProps) {
   const [closing, setClosing] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [current, setCurrent] = useState<Student>(student);
   const [editing, setEditing] = useState(student.status === 'pending');
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => toDraft(student));
+  const [installments, setInstallments] = useState<Installment[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paying, setPaying] = useState(false);
+  const [savingPay, setSavingPay] = useState(false);
+  const [payForm, setPayForm] = useState({
+    amount: '',
+    method: PAY_METHODS[0] as string,
+    paidAt: today(),
+    note: '',
+  });
+
+  const reloadSchedule = async () => {
+    const [ins, pays] = await Promise.all([
+      studentsApi.installments(current.id),
+      studentsApi.payments(current.id),
+    ]);
+    setInstallments(ins);
+    setPayments(pays);
+  };
+
+  // Load the installment schedule once the student has been approved.
+  useEffect(() => {
+    if (student.status === 'pending') return;
+    let active = true;
+    Promise.all([studentsApi.installments(student.id), studentsApi.payments(student.id)])
+      .then(([ins, pays]) => {
+        if (active) {
+          setInstallments(ins);
+          setPayments(pays);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [student.id, student.status]);
+
+  const submitPayment = async () => {
+    const amount = Number(payForm.amount) || 0;
+    if (amount <= 0) return;
+    setSavingPay(true);
+    const updated = await onPay(current.id, {
+      amount,
+      paidAt: payForm.paidAt,
+      method: payForm.method,
+      note: payForm.note || undefined,
+    });
+    setSavingPay(false);
+    if (updated) {
+      setCurrent(updated);
+      setPaying(false);
+      setPayForm((prev) => ({ ...prev, amount: '', note: '' }));
+      await reloadSchedule();
+    }
+  };
 
   const close = () => {
     setClosing(true);
@@ -237,6 +316,46 @@ export function StudentDrawer({ student, onClose, onApprove, onReject, onUpdate 
                     />
                   </div>
                 </div>
+
+                {installments.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-1">
+                    <span className="kicker mb-1 block">TAKSİT PLANI</span>
+                    {installments.map((item) => {
+                      const badge = INSTALLMENT_BADGE[item.status];
+                      return (
+                        <div
+                          key={item.sequence}
+                          className="flex items-center justify-between border-b border-line py-[7px] text-[13px]"
+                        >
+                          <span className="text-ink-3">
+                            #{item.sequence} · {formatDate(item.dueDate)}
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <span className="font-mono tabular-nums">{formatMoney(item.amount)}</span>
+                            <Badge kind={badge.kind}>{badge.label}</Badge>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {payments.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-1">
+                    <span className="kicker mb-1 block">TAHSİLATLAR</span>
+                    {payments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="flex items-center justify-between py-[3px] text-[12.5px] text-ink-2"
+                      >
+                        <span>
+                          {formatDate(payment.paidAt)} · {payment.method}
+                        </span>
+                        <span className="font-mono tabular-nums">{formatMoney(payment.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </InfoBlock>
@@ -298,11 +417,65 @@ export function StudentDrawer({ student, onClose, onApprove, onReject, onUpdate 
                   {saving ? 'Kaydediliyor…' : 'Kaydet'}
                 </Button>
               </div>
+            ) : paying ? (
+              <div className="anim-fade-in flex flex-col gap-3">
+                <span className="kicker">ÖDEME AL</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <EditField label="Tutar (₺)">
+                    <Input
+                      value={payForm.amount}
+                      onChange={(e) =>
+                        setPayForm((p) => ({ ...p, amount: e.target.value.replace(/\D/g, '') }))
+                      }
+                      inputMode="numeric"
+                      className="font-mono"
+                      placeholder="0"
+                    />
+                  </EditField>
+                  <EditField label="Tarih">
+                    <Input
+                      type="date"
+                      value={payForm.paidAt}
+                      onChange={(e) => setPayForm((p) => ({ ...p, paidAt: e.target.value }))}
+                    />
+                  </EditField>
+                </div>
+                <EditField label="Yöntem">
+                  <Select
+                    value={payForm.method}
+                    onChange={(e) => setPayForm((p) => ({ ...p, method: e.target.value }))}
+                  >
+                    {PAY_METHODS.map((method) => (
+                      <option key={method}>{method}</option>
+                    ))}
+                  </Select>
+                </EditField>
+                <div className="flex items-center gap-3">
+                  <Button variant="ghost" block disabled={savingPay} onClick={() => setPaying(false)}>
+                    Vazgeç
+                  </Button>
+                  <Button
+                    variant="primary"
+                    block
+                    disabled={savingPay || !payForm.amount}
+                    onClick={submitPayment}
+                  >
+                    <Icon name="wallet" size={17} />
+                    {savingPay ? 'Kaydediliyor…' : 'Ödemeyi Kaydet'}
+                  </Button>
+                </div>
+              </div>
             ) : (
-              <Button variant="ghost" block onClick={() => setEditing(true)}>
-                <Icon name="edit" size={17} />
-                Düzenle
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" block onClick={() => setEditing(true)}>
+                  <Icon name="edit" size={17} />
+                  Düzenle
+                </Button>
+                <Button variant="soft" block onClick={() => setPaying(true)}>
+                  <Icon name="wallet" size={17} />
+                  Ödeme Al
+                </Button>
+              </div>
             )}
           </div>
         )}

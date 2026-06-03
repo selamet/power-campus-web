@@ -2,7 +2,7 @@ import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import type { ApiError } from '@/api/axiosClient';
 import type { RootState } from '@/app/store';
 import type { NewStudentInput, Student } from '@/types/domain';
-import { studentsApi, type StudentUpdateInput } from './studentsApi';
+import { studentsApi, type RecordPaymentInput, type StudentUpdateInput } from './studentsApi';
 
 export type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
@@ -45,6 +45,17 @@ export const updateStudent = createAsyncThunk(
   async ({ id, patch }: { id: string; patch: StudentUpdateInput }, { rejectWithValue }) => {
     try {
       return await studentsApi.update(id, patch);
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
+export const recordPayment = createAsyncThunk(
+  'students/recordPayment',
+  async ({ id, input }: { id: string; input: RecordPaymentInput }, { rejectWithValue }) => {
+    try {
+      return await studentsApi.recordPayment(id, input);
     } catch (error) {
       return rejectWithValue(toMessage(error));
     }
@@ -95,6 +106,10 @@ const studentsSlice = createSlice({
         state.items.unshift(action.payload);
       })
       .addCase(updateStudent.fulfilled, (state, action) => {
+        const index = state.items.findIndex((student) => student.id === action.payload.id);
+        if (index !== -1) state.items[index] = action.payload;
+      })
+      .addCase(recordPayment.fulfilled, (state, action) => {
         const index = state.items.findIndex((student) => student.id === action.payload.id);
         if (index !== -1) state.items[index] = action.payload;
       })

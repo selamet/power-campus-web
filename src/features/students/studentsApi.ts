@@ -6,6 +6,31 @@ import type { NewStudentInput, Student } from '@/types/domain';
 /** Editable subset of a student (everything except the generated id). */
 export type StudentUpdateInput = Partial<Omit<Student, 'id'>>;
 
+export type InstallmentStatus = 'paid' | 'partial' | 'overdue' | 'pending';
+
+export interface Installment {
+  sequence: number;
+  amount: number;
+  dueDate: string;
+  paidAmount: number;
+  status: InstallmentStatus;
+}
+
+export interface Payment {
+  id: number;
+  amount: number;
+  paidAt: string;
+  method: string;
+  note: string | null;
+}
+
+export interface RecordPaymentInput {
+  amount: number;
+  paidAt: string;
+  method: string;
+  note?: string;
+}
+
 /**
  * Students data access. Each function calls the REST API, or resolves bundled
  * mock data when VITE_USE_MOCKS is enabled. Swapping to the real backend is a
@@ -46,6 +71,35 @@ export const studentsApi = {
       return mockDelay(updated);
     }
     const { data } = await axiosClient.patch<Student>(`/students/${id}`, patch);
+    return data;
+  },
+
+  async installments(id: string): Promise<Installment[]> {
+    if (env.useMocks) {
+      return mockDelay([]);
+    }
+    const { data } = await axiosClient.get<Installment[]>(`/students/${id}/installments`);
+    return data;
+  },
+
+  async payments(id: string): Promise<Payment[]> {
+    if (env.useMocks) {
+      return mockDelay([]);
+    }
+    const { data } = await axiosClient.get<Payment[]>(`/students/${id}/payments`);
+    return data;
+  },
+
+  async recordPayment(id: string, input: RecordPaymentInput): Promise<Student> {
+    if (env.useMocks) {
+      mockStore = mockStore.map((student) =>
+        student.id === id ? { ...student, paid: student.paid + input.amount } : student,
+      );
+      const updated = mockStore.find((student) => student.id === id);
+      if (!updated) throw { status: 404, message: 'Öğrenci bulunamadı' };
+      return mockDelay(updated);
+    }
+    const { data } = await axiosClient.post<Student>(`/students/${id}/payments`, input);
     return data;
   },
 

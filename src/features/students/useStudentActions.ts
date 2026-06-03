@@ -4,12 +4,13 @@ import { useToast } from '@/components/ui';
 import {
   approveStudent,
   createStudent,
+  recordPayment,
   rejectStudent,
   selectStudents,
   updateStudent,
 } from './studentsSlice';
-import type { StudentUpdateInput } from './studentsApi';
-import type { NewStudentInput } from '@/types/domain';
+import type { RecordPaymentInput, StudentUpdateInput } from './studentsApi';
+import type { NewStudentInput, Student } from '@/types/domain';
 
 /** Encapsulates student mutations together with their user-facing toasts. */
 export function useStudentActions() {
@@ -55,5 +56,18 @@ export function useStudentActions() {
     [dispatch, toast],
   );
 
-  return { approve, reject, create, update };
+  const pay = useCallback(
+    async (id: string, input: RecordPaymentInput): Promise<Student | null> => {
+      const result = await dispatch(recordPayment({ id, input }));
+      if (recordPayment.fulfilled.match(result)) {
+        toast('Ödeme alındı', 'wallet');
+        return result.payload;
+      }
+      toast('Ödeme kaydedilemedi', 'xCircle');
+      return null;
+    },
+    [dispatch, toast],
+  );
+
+  return { approve, reject, create, update, pay };
 }
