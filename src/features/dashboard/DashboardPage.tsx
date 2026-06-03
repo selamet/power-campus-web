@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/app/hooks';
 import { Avatar, Badge, Button, Icon } from '@/components/ui';
@@ -7,11 +7,11 @@ import { selectStudents } from '@/features/students/studentsSlice';
 import { useStudentActions } from '@/features/students/useStudentActions';
 import { StudentDrawer } from '@/features/students/components/StudentDrawer';
 import { useShellContext } from '@/layout/shellContext';
-import { MOCK_ACTIVITY } from '@/mocks/data';
 import { paths } from '@/routes/paths';
-import type { Student } from '@/types/domain';
+import type { ActivityItem, Student } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { formatDate, formatMoney } from '@/utils/format';
+import { dashboardApi, type DashboardStats } from './dashboardApi';
 import { MetricCard } from './components/MetricCard';
 
 const TODAY_LABEL = new Date('2026-05-30').toLocaleDateString('tr-TR', {
@@ -27,9 +27,15 @@ export function DashboardPage() {
   const students = useAppSelector(selectStudents);
   const { approve, reject } = useStudentActions();
   const [selected, setSelected] = useState<Student | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+
+  useEffect(() => {
+    dashboardApi.stats().then(setStats).catch(() => {});
+    dashboardApi.activity().then(setActivity).catch(() => {});
+  }, []);
 
   const pending = useMemo(() => students.filter((s) => s.status === 'pending'), [students]);
-  const active = useMemo(() => students.filter((s) => s.status === 'active'), [students]);
   const upcoming = useMemo(
     () =>
       students
@@ -79,16 +85,20 @@ export function DashboardPage() {
 
       {/* Metrics */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-4">
-        <MetricCard icon="users" label="Toplam Öğrenci" value="1.248" delta="+12%" accent />
-        <MetricCard icon="graduation" label="Aktif Kayıt" value={active.length * 124} delta="+8%" />
+        <MetricCard icon="users" label="Toplam Öğrenci" value={stats?.totalStudents ?? '—'} accent />
+        <MetricCard icon="graduation" label="Aktif Kayıt" value={stats?.activeStudents ?? '—'} />
         <MetricCard
           icon="clock"
           label="Bekleyen Onay"
-          value={pending.length}
-          delta={pending.length ? 'yeni' : '0'}
+          value={stats?.pendingApprovals ?? pending.length}
+          delta={(stats?.pendingApprovals ?? pending.length) > 0 ? 'yeni' : undefined}
           deltaKind="warn"
         />
-        <MetricCard icon="wallet" label="Bu Ay Tahsilat" value="₺412K" delta="+23%" />
+        <MetricCard
+          icon="wallet"
+          label="Toplam Tahsilat"
+          value={stats ? formatMoney(stats.totalCollected) : '—'}
+        />
       </div>
 
       {/* Two columns */}
@@ -161,29 +171,32 @@ export function DashboardPage() {
           <div className="card p-[22px]">
             <h3 className="mb-4 text-[16.5px] font-bold">Son Hareketler</h3>
             <div className="flex flex-col">
-              {MOCK_ACTIVITY.map((activity, index) => (
+              {activity.length === 0 && (
+                <span className="py-2 text-[13px] text-ink-3">Henüz hareket yok.</span>
+              )}
+              {activity.map((item, index) => (
                 <div
-                  key={`${activity.who}-${index}`}
+                  key={`${item.who}-${index}`}
                   className={cn(
                     'flex items-start gap-3 py-[11px]',
-                    index < MOCK_ACTIVITY.length - 1 && 'border-b border-line',
+                    index < activity.length - 1 && 'border-b border-line',
                   )}
                 >
                   <div
                     className={cn(
                       'flex size-8 shrink-0 items-center justify-center rounded-[9px]',
-                      activity.kind === 'ok' && 'bg-ok-soft text-ok',
-                      activity.kind === 'accent' && 'bg-accent-soft text-accent',
-                      activity.kind === 'neutral' && 'bg-bg-2 text-ink-2',
+                      item.kind === 'ok' && 'bg-ok-soft text-ok',
+                      item.kind === 'accent' && 'bg-accent-soft text-accent',
+                      item.kind === 'neutral' && 'bg-bg-2 text-ink-2',
                     )}
                   >
-                    <Icon name={activity.icon} size={16} />
+                    <Icon name={item.icon} size={16} />
                   </div>
                   <div className="flex flex-1 flex-col gap-px">
                     <span className="text-[13.5px] leading-[1.4]">
-                      <strong className="font-semibold">{activity.who}</strong> {activity.what}
+                      <strong className="font-semibold">{item.who}</strong> {item.what}
                     </span>
-                    <span className="font-mono text-[10.5px] text-ink-3">{activity.time}</span>
+                    <span className="font-mono text-[10.5px] text-ink-3">{item.time}</span>
                   </div>
                 </div>
               ))}
