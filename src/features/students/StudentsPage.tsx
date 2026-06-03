@@ -4,7 +4,7 @@ import { Avatar, Badge, Button, Icon } from '@/components/ui';
 import { STATUS } from '@/constants/status';
 import { selectStudents } from '@/features/students/studentsSlice';
 import { useStudentActions } from '@/features/students/useStudentActions';
-import { StudentDrawer } from '@/features/students/components/StudentDrawer';
+import { StudentModal } from '@/features/students/components/StudentModal';
 import { useShellContext } from '@/layout/shellContext';
 import type { Student, StudentStatus } from '@/types/domain';
 import { cn } from '@/utils/cn';
@@ -173,7 +173,7 @@ export function StudentsPage() {
       </div>
 
       {selected && (
-        <StudentDrawer
+        <StudentModal
           student={selected}
           onClose={() => setSelected(null)}
           onApprove={approve}

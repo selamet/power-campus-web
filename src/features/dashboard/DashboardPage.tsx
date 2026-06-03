@@ -5,7 +5,7 @@ import { Avatar, Badge, Button, Icon } from '@/components/ui';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { selectStudents } from '@/features/students/studentsSlice';
 import { useStudentActions } from '@/features/students/useStudentActions';
-import { StudentDrawer } from '@/features/students/components/StudentDrawer';
+import { StudentModal } from '@/features/students/components/StudentModal';
 import { useShellContext } from '@/layout/shellContext';
 import { paths } from '@/routes/paths';
 import type { ActivityItem, Student } from '@/types/domain';
@@ -226,7 +226,7 @@ export function DashboardPage() {
       </div>
 
       {selected && (
-        <StudentDrawer
+        <StudentModal
           student={selected}
           onClose={() => setSelected(null)}
           onApprove={approve}
