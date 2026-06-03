@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { useAppSelector } from '@/app/hooks';
 import { Avatar, Icon, Logo } from '@/components/ui';
 import { selectCurrentUser } from '@/features/auth/authSlice';
+import { roleLabel } from '@/constants/roles';
 import { paths } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 
@@ -102,7 +103,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 {user?.name ?? 'Power Akademi'}
               </span>
               <span className="font-mono text-[10.5px] tracking-[0.04em] text-accent">
-                {(user?.role ?? 'Personel').toUpperCase()}
+                {roleLabel(user?.role).toUpperCase()}
               </span>
             </div>
           </div>

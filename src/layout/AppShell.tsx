@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAppSelector } from '@/app/hooks';
-import { selectCurrentUser } from '@/features/auth/authSlice';
-import { selectStudents } from '@/features/students/studentsSlice';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { fetchCurrentUser, selectCurrentUser } from '@/features/auth/authSlice';
+import { fetchStudents, selectStudents } from '@/features/students/studentsSlice';
 import { AddStudentModal } from '@/features/students/components/AddStudentModal';
 import { InviteFlowModal } from '@/features/students/components/InviteFlowModal';
 import { paths } from '@/routes/paths';
@@ -14,8 +14,15 @@ import { Topbar } from './Topbar';
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const user = useAppSelector(selectCurrentUser);
   const students = useAppSelector(selectStudents);
+
+  // Load the authenticated user and student list once the shell mounts.
+  useEffect(() => {
+    void dispatch(fetchCurrentUser());
+    void dispatch(fetchStudents());
+  }, [dispatch]);
 
   const [navOpen, setNavOpen] = useState(false);
   const [search, setSearch] = useState('');
