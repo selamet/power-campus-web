@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, DatePicker, Field, Icon, Input, Logo, Select, Steps, Textarea } from '@/components/ui';
 import {
@@ -65,13 +65,19 @@ const initialForm: FormState = {
   discount: '0',
 };
 
-const GRID = 'form-grid grid grid-cols-1 gap-4 sm:grid-cols-2';
+const GRID = 'form-grid grid grid-cols-1 gap-3.5 sm:grid-cols-2';
 
 export function RegistrationFormPage() {
   const navigate = useNavigate();
   const { create } = useStudentActions();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initialForm);
+
+  // Reset scroll to the top whenever the step changes so each step
+  // starts at the form header instead of inheriting the previous scroll.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
   const update =
     (key: keyof FormState) =>
@@ -119,17 +125,17 @@ export function RegistrationFormPage() {
         <Logo height={26} />
       </div>
 
-      <div className="mx-auto max-w-[720px] px-5 pt-8 pb-20">
-        <div className="mb-[26px] flex flex-col gap-1.5 text-center">
+      <div className="mx-auto max-w-[720px] px-5 pt-5 pb-8">
+        <div className="mb-4 flex flex-col gap-1 text-center">
           <span className="kicker">MANUEL KAYIT</span>
-          <h1 className="m-0 text-[27px] font-bold tracking-[-0.02em]">Yeni Öğrenci Kaydı</h1>
+          <h1 className="m-0 text-[22px] font-bold tracking-[-0.02em]">Yeni Öğrenci Kaydı</h1>
         </div>
 
-        <div className="mb-[30px]">
+        <div className="mb-5">
           <Steps steps={FORM_STEPS} current={step} />
         </div>
 
-        <div className="card p-7">
+        <div className="card p-6">
           {step === 0 && (
             <div className="anim-fade-in">
               <SectionHead
@@ -243,8 +249,8 @@ export function RegistrationFormPage() {
                   <Input value={form.phone} onChange={update('phone')} placeholder="0 (5__) ___ __ __" inputMode="tel" />
                 </Field>
               </div>
-              <div className="divider my-5" />
-              <span className="kicker mb-3.5 block">BİRİNCİL İLETİŞİM KİŞİSİ</span>
+              <div className="divider my-4" />
+              <span className="kicker mb-3 block">BİRİNCİL İLETİŞİM KİŞİSİ</span>
               <div className={GRID}>
                 <Field label="Ad Soyad">
                   <Input value={form.cName} onChange={update('cName')} placeholder="Veli / yakını" />
@@ -266,7 +272,7 @@ export function RegistrationFormPage() {
           {step === 3 && <FinanceSection form={form} update={update} patch={patch} />}
         </div>
 
-        <div className="mt-[22px] flex items-center gap-3">
+        <div className="mt-4 flex items-center gap-3">
           <Button variant="ghost" onClick={step === 0 ? close : back}>
             <Icon name="arrowL" size={17} />
             {step === 0 ? 'Vazgeç' : 'Geri'}
@@ -294,9 +300,9 @@ export function RegistrationFormPage() {
 
 function SectionHead({ icon, title, desc }: { icon: string; title: string; desc: string }) {
   return (
-    <div className="anim-fade-in mb-[22px] flex items-center gap-3">
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
-        <Icon name={icon} size={22} />
+    <div className="anim-fade-in mb-4 flex items-center gap-3">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+        <Icon name={icon} size={20} />
       </div>
       <div className="flex flex-col gap-0.5">
         <h3 className="m-0 text-lg font-bold tracking-[-0.01em]">{title}</h3>
@@ -370,7 +376,7 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
       </div>
 
       {/* summary */}
-      <div className="mt-[22px] rounded-[14px] border border-accent-soft-border bg-accent-soft p-[18px]">
+      <div className="mt-4 rounded-[14px] border border-accent-soft-border bg-accent-soft p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-[13.5px] text-ink-2">Kayıt Ücreti</span>
           <span className="font-mono text-sm tabular-nums">{formatMoney(fee)}</span>
