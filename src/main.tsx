@@ -9,6 +9,7 @@ import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { RegistrationFormPage } from '@/features/students/RegistrationFormPage';
 import { StudentsPage } from '@/features/students/StudentsPage';
+import { WelcomeFormPage } from '@/features/students/WelcomeFormPage';
 import { AppShell } from '@/layout/AppShell';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { paths } from '@/routes/paths';
@@ -16,6 +17,9 @@ import '@/styles/global.css';
 
 const router = createBrowserRouter([
   { path: paths.login, element: <LoginPage /> },
+  // Public, no-auth routes: the invite link the student fills in themselves.
+  { path: paths.welcome, element: <WelcomeFormPage /> },
+  { path: paths.welcomePreview, element: <WelcomeFormPage /> },
   {
     element: <ProtectedRoute />,
     children: [

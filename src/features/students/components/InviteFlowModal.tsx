@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import type { ApiError } from '@/api/axiosClient';
 import { Button, Field, Icon, Input, Modal, Select, useToast } from '@/components/ui';
 import { COURSES, LANGUAGES } from '@/constants/options';
+import { welcomeLink } from '@/routes/paths';
+import { invitesApi } from '../invitesApi';
 
 interface InviteFlowModalProps {
   open: boolean;
@@ -18,9 +21,9 @@ export function InviteFlowModal({ open, onClose, onPreview }: InviteFlowModalPro
   const [lang, setLang] = useState<string>(LANGUAGES[0]);
   const [course, setCourse] = useState<string>('Hafta İçi Akşam');
   const [copied, setCopied] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-  const token = tckn ? `${tckn.slice(0, 4)}X${tckn.slice(-3) || '728'}` : '54091X728';
-  const link = `app.powerakademi.com/hosgeldin/${token}`;
+  const link = `app.powerakademi.com${welcomeLink(tckn || '54091123456')}`;
   const valid = tckn.length === 11 && phone.replace(/\D/g, '').length >= 10;
 
   const reset = () => {
@@ -29,6 +32,19 @@ export function InviteFlowModal({ open, onClose, onPreview }: InviteFlowModalPro
     setPhone('');
     setName('');
     setCopied(false);
+    setCreating(false);
+  };
+
+  const generate = async () => {
+    setCreating(true);
+    try {
+      await invitesApi.create({ tckn, phone, name: name || undefined, lang, course });
+      setStep(1);
+    } catch (error) {
+      toast((error as ApiError)?.message ?? 'Davet oluşturulamadı, tekrar deneyin.', 'xCircle');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const close = () => {
@@ -116,9 +132,9 @@ export function InviteFlowModal({ open, onClose, onPreview }: InviteFlowModalPro
             <Button variant="ghost" block onClick={close}>
               Vazgeç
             </Button>
-            <Button variant="primary" block disabled={!valid} onClick={() => setStep(1)}>
+            <Button variant="primary" block disabled={!valid || creating} onClick={generate}>
               <Icon name="sparkle" size={17} />
-              Link Oluştur
+              {creating ? 'Oluşturuluyor…' : 'Link Oluştur'}
             </Button>
           </div>
         </div>
