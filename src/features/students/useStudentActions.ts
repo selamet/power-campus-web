@@ -6,7 +6,9 @@ import {
   createStudent,
   rejectStudent,
   selectStudents,
+  updateStudent,
 } from './studentsSlice';
+import type { StudentUpdateInput } from './studentsApi';
 import type { NewStudentInput } from '@/types/domain';
 
 /** Encapsulates student mutations together with their user-facing toasts. */
@@ -40,5 +42,18 @@ export function useStudentActions() {
     [dispatch, toast],
   );
 
-  return { approve, reject, create };
+  const update = useCallback(
+    async (id: string, patch: StudentUpdateInput): Promise<boolean> => {
+      const result = await dispatch(updateStudent({ id, patch }));
+      if (updateStudent.fulfilled.match(result)) {
+        toast('Öğrenci bilgileri güncellendi', 'check');
+        return true;
+      }
+      toast('Güncelleme başarısız oldu', 'xCircle');
+      return false;
+    },
+    [dispatch, toast],
+  );
+
+  return { approve, reject, create, update };
 }

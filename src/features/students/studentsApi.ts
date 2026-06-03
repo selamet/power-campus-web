@@ -3,6 +3,9 @@ import { env } from '@/config/env';
 import { MOCK_STUDENTS, mockDelay } from '@/mocks/data';
 import type { NewStudentInput, Student } from '@/types/domain';
 
+/** Editable subset of a student (everything except the generated id). */
+export type StudentUpdateInput = Partial<Omit<Student, 'id'>>;
+
 /**
  * Students data access. Each function calls the REST API, or resolves bundled
  * mock data when VITE_USE_MOCKS is enabled. Swapping to the real backend is a
@@ -30,6 +33,19 @@ export const studentsApi = {
       return mockDelay(created);
     }
     const { data } = await axiosClient.post<Student>('/students', input);
+    return data;
+  },
+
+  async update(id: string, patch: StudentUpdateInput): Promise<Student> {
+    if (env.useMocks) {
+      mockStore = mockStore.map((student) =>
+        student.id === id ? { ...student, ...patch } : student,
+      );
+      const updated = mockStore.find((student) => student.id === id);
+      if (!updated) throw { status: 404, message: 'Öğrenci bulunamadı' };
+      return mockDelay(updated);
+    }
+    const { data } = await axiosClient.patch<Student>(`/students/${id}`, patch);
     return data;
   },
 

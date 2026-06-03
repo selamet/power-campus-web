@@ -15,7 +15,7 @@ type FilterValue = 'all' | StudentStatus;
 export function StudentsPage() {
   const { search, openAddFlow } = useShellContext();
   const students = useAppSelector(selectStudents);
-  const { approve, reject } = useStudentActions();
+  const { approve, reject, update } = useStudentActions();
   const [filter, setFilter] = useState<FilterValue>('all');
   const [selected, setSelected] = useState<Student | null>(null);
 
@@ -178,6 +178,7 @@ export function StudentsPage() {
           onClose={() => setSelected(null)}
           onApprove={approve}
           onReject={reject}
+          onUpdate={update}
         />
       )}
     </div>

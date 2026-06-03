@@ -25,7 +25,7 @@ export function DashboardPage() {
   const { openAddFlow } = useShellContext();
   const user = useAppSelector(selectCurrentUser);
   const students = useAppSelector(selectStudents);
-  const { approve, reject } = useStudentActions();
+  const { approve, reject, update } = useStudentActions();
   const [selected, setSelected] = useState<Student | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
@@ -231,6 +231,7 @@ export function DashboardPage() {
           onClose={() => setSelected(null)}
           onApprove={approve}
           onReject={reject}
+          onUpdate={update}
         />
       )}
     </div>
