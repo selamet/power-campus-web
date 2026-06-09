@@ -346,6 +346,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
                     >
                       <span>
                         {formatDate(payment.paidAt)} · {payment.method}
+                        {payment.note ? ` · ${payment.note}` : ''}
                       </span>
                       <span className="font-mono tabular-nums">{formatMoney(payment.amount)}</span>
                     </div>
@@ -437,6 +438,13 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
                   <option key={method}>{method}</option>
                 ))}
               </Select>
+            </EditField>
+            <EditField label="Not (opsiyonel)">
+              <Input
+                value={payForm.note}
+                onChange={(e) => setPayForm((p) => ({ ...p, note: e.target.value }))}
+                placeholder="Açıklama"
+              />
             </EditField>
             <div className="flex items-center gap-3">
               <Button variant="ghost" block disabled={savingPay} onClick={() => setPaying(false)}>
