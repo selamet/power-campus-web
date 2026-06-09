@@ -50,11 +50,17 @@ export function DatePicker({
   className,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<'days' | 'months' | 'years'>('days');
   const selected = parseIso(value);
   const today = new Date();
   const [view, setView] = useState(() => selected ?? today);
   const ref = useRef<HTMLDivElement>(null);
   const labelId = useId();
+
+  // Always reopen on the day grid, regardless of where the user last drilled to.
+  useEffect(() => {
+    if (!open) setMode('days');
+  }, [open]);
 
   // Keep the visible month in sync when an external value arrives.
   useEffect(() => {
@@ -92,11 +98,34 @@ export function DatePicker({
     !!a && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
   const moveMonth = (delta: number) => setView(new Date(year, month + delta, 1));
+  const moveYear = (delta: number) => setView(new Date(year + delta, month, 1));
+  // 12-year page the current view falls into, e.g. 1992–2003.
+  const yearPageStart = Math.floor(year / 12) * 12;
+
+  const yearDisabled = (y: number) =>
+    (!!minDate && y < minDate.getFullYear()) || (!!maxDate && y > maxDate.getFullYear());
+  const monthDisabled = (m: number) => {
+    const start = new Date(year, m, 1);
+    const end = new Date(year, m + 1, 0);
+    return (!!minDate && end < minDate) || (!!maxDate && start > maxDate);
+  };
 
   const cells: Array<number | null> = [
     ...Array.from({ length: firstWeekday }, () => null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
+
+  // Header label + arrow step adapt to the active drill-down level.
+  const headerLabel =
+    mode === 'days'
+      ? `${MONTHS[month]} ${year}`
+      : mode === 'months'
+        ? `${year}`
+        : `${yearPageStart}–${yearPageStart + 11}`;
+  const stepHeader = (delta: number) =>
+    mode === 'days' ? moveMonth(delta) : moveYear(mode === 'years' ? delta * 12 : delta);
+  const drillDown = () =>
+    setMode(mode === 'days' ? 'months' : mode === 'months' ? 'years' : 'days');
 
   return (
     <div className={cn('relative', className)} ref={ref}>
@@ -126,68 +155,133 @@ export function DatePicker({
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => moveMonth(-1)}
+              onClick={() => stepHeader(-1)}
               className="flex size-8 items-center justify-center rounded-token-sm text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-              aria-label="Önceki ay"
+              aria-label="Önceki"
             >
               <Icon name="chevL" size={18} />
             </button>
-            <span className="text-sm font-semibold text-ink">
-              {MONTHS[month]} {year}
-            </span>
             <button
               type="button"
-              onClick={() => moveMonth(1)}
+              onClick={drillDown}
+              className="rounded-token-sm px-3 py-1 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+            >
+              {headerLabel}
+            </button>
+            <button
+              type="button"
+              onClick={() => stepHeader(1)}
               className="flex size-8 items-center justify-center rounded-token-sm text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
-              aria-label="Sonraki ay"
+              aria-label="Sonraki"
             >
               <Icon name="chevR" size={18} />
             </button>
           </div>
 
-          {/* weekday header */}
-          <div className="mb-1 grid grid-cols-7 gap-1">
-            {WEEKDAYS.map((w) => (
-              <span
-                key={w}
-                className="flex h-7 items-center justify-center font-mono text-[10.5px] font-bold uppercase tracking-[0.04em] text-ink-3"
-              >
-                {w}
-              </span>
-            ))}
-          </div>
+          {mode === 'days' && (
+            <>
+              {/* weekday header */}
+              <div className="mb-1 grid grid-cols-7 gap-1">
+                {WEEKDAYS.map((w) => (
+                  <span
+                    key={w}
+                    className="flex h-7 items-center justify-center font-mono text-[10.5px] font-bold uppercase tracking-[0.04em] text-ink-3"
+                  >
+                    {w}
+                  </span>
+                ))}
+              </div>
 
-          {/* day grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {cells.map((day, i) => {
-              if (day === null) return <span key={`e${i}`} />;
-              const date = new Date(year, month, day);
-              const disabled = isDisabled(date);
-              const isSelected = sameDay(selected, date);
-              const isToday = sameDay(today, date);
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => {
-                    onChange(toIso(year, month, day));
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    'flex h-9 items-center justify-center rounded-token-sm text-[13.5px] font-medium tabular-nums transition-colors',
-                    'disabled:cursor-not-allowed disabled:opacity-30',
-                    isSelected
-                      ? 'bg-accent font-semibold text-accent-contrast'
-                      : 'text-ink hover:bg-surface-2',
-                    !isSelected && isToday && 'font-bold text-accent ring-1 ring-accent-soft-border',
-                  )}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
+              {/* day grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {cells.map((day, i) => {
+                  if (day === null) return <span key={`e${i}`} />;
+                  const date = new Date(year, month, day);
+                  const disabled = isDisabled(date);
+                  const isSelected = sameDay(selected, date);
+                  const isToday = sameDay(today, date);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => {
+                        onChange(toIso(year, month, day));
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        'flex h-9 items-center justify-center rounded-token-sm text-[13.5px] font-medium tabular-nums transition-colors',
+                        'disabled:cursor-not-allowed disabled:opacity-30',
+                        isSelected
+                          ? 'bg-accent font-semibold text-accent-contrast'
+                          : 'text-ink hover:bg-surface-2',
+                        !isSelected && isToday && 'font-bold text-accent ring-1 ring-accent-soft-border',
+                      )}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {mode === 'months' && (
+            <div className="grid grid-cols-3 gap-1">
+              {MONTHS.map((label, m) => {
+                const isSelected =
+                  !!selected && selected.getFullYear() === year && selected.getMonth() === m;
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    disabled={monthDisabled(m)}
+                    onClick={() => {
+                      setView(new Date(year, m, 1));
+                      setMode('days');
+                    }}
+                    className={cn(
+                      'flex h-10 items-center justify-center rounded-token-sm text-[13px] font-medium transition-colors',
+                      'disabled:cursor-not-allowed disabled:opacity-30',
+                      isSelected
+                        ? 'bg-accent font-semibold text-accent-contrast'
+                        : 'text-ink hover:bg-surface-2',
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {mode === 'years' && (
+            <div className="grid grid-cols-4 gap-1">
+              {Array.from({ length: 12 }, (_, i) => yearPageStart + i).map((y) => {
+                const isSelected = !!selected && selected.getFullYear() === y;
+                return (
+                  <button
+                    key={y}
+                    type="button"
+                    disabled={yearDisabled(y)}
+                    onClick={() => {
+                      setView(new Date(y, month, 1));
+                      setMode('months');
+                    }}
+                    className={cn(
+                      'flex h-10 items-center justify-center rounded-token-sm text-[13px] font-medium tabular-nums transition-colors',
+                      'disabled:cursor-not-allowed disabled:opacity-30',
+                      isSelected
+                        ? 'bg-accent font-semibold text-accent-contrast'
+                        : 'text-ink hover:bg-surface-2',
+                    )}
+                  >
+                    {y}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* footer */}
           <div className="mt-2 flex items-center justify-between border-t border-line pt-2">
