@@ -5,10 +5,16 @@ import { Icon } from './Icon';
 interface StepsProps {
   steps: readonly string[];
   current: number;
+  /**
+   * Fractional completion (0–1) of the current step, used to partially fill
+   * the connector after the active node. Omit to keep the connector empty
+   * until the step is completed.
+   */
+  progress?: number;
 }
 
 /** Horizontal numbered progress indicator with completed/active states. */
-export function Steps({ steps, current }: StepsProps) {
+export function Steps({ steps, current, progress = 0 }: StepsProps) {
   return (
     <div className="flex items-center">
       {steps.map((step, index) => {
@@ -37,12 +43,14 @@ export function Steps({ steps, current }: StepsProps) {
               </span>
             </div>
             {index < steps.length - 1 && (
-              <div
-                className={cn(
-                  'mb-[22px] h-0.5 min-w-4 flex-1 mx-1.5 transition-colors duration-300',
-                  done ? 'bg-accent' : 'bg-line-strong',
-                )}
-              />
+              <div className="relative mx-1.5 mb-[22px] h-0.5 min-w-4 flex-1 overflow-hidden rounded-full bg-line-strong">
+                <div
+                  className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
+                  style={{
+                    width: `${index < current ? 100 : active ? Math.min(100, Math.max(0, progress * 100)) : 0}%`,
+                  }}
+                />
+              </div>
             )}
           </Fragment>
         );

@@ -120,6 +120,18 @@ export function WelcomeFormPage() {
     return /.+@.+\..+/.test(form.email) && form.phone.replace(/\D/g, '').length >= 10;
   }, [step, form]);
 
+  // Fraction (0–1) of the current step's fields filled — drives the connector
+  // fill that grows as the student types and completes when they advance.
+  const stepProgress = useMemo(() => {
+    const checks =
+      step === 0
+        ? [form.name.trim().length > 1, form.tckn.length === 11, Boolean(form.birth), Boolean(form.gender), Boolean(form.addr.trim())]
+        : step === 1
+          ? [Boolean(form.school.trim()), Boolean(form.department.trim()), Boolean(form.grade.trim())]
+          : [/.+@.+\..+/.test(form.email), form.phone.replace(/\D/g, '').length >= 10, Boolean(form.cName.trim()), Boolean(form.cPhone.trim())];
+    return checks.filter(Boolean).length / checks.length;
+  }, [step, form]);
+
   const submit = async () => {
     if (isPreview) {
       toast('Önizleme — gönderim devre dışı', 'eye');
@@ -199,13 +211,7 @@ export function WelcomeFormPage() {
 
       <div className="mx-auto max-w-[720px] px-5 pt-6 pb-8">
         <div className="mb-5">
-          <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-line">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-accent to-accent-2 shadow-accent transition-[width] duration-500 ease-out"
-              style={{ width: `${((step + 1) / FORM_STEPS.length) * 100}%` }}
-            />
-          </div>
-          <Steps steps={FORM_STEPS} current={step} />
+          <Steps steps={FORM_STEPS} current={step} progress={stepProgress} />
         </div>
 
         <div className="card p-6">
