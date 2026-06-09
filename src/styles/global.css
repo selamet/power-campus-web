@@ -3,8 +3,9 @@
    Tailwind CSS v4 entry + design tokens (light/dark theme)
    ============================================================ */
 
-@import 'tailwindcss';
+/* Font @import must come before all other rules (incl. Tailwind's expanded output). */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import 'tailwindcss';
 
 /* Tailwind's form-control reset/normalization. Our token-based input styles
    (.field-focus, .select-chevron, inputBase) sit in later layers and win, so
