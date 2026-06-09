@@ -341,25 +341,10 @@ export function WelcomeFormPage() {
             </Button>
           )}
         </div>
-
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13px] text-ink-3">
-          {PERKS.map((perk) => (
-            <span key={perk.label} className="flex items-center gap-1.5">
-              <Icon name={perk.icon} size={15} className="text-accent" />
-              {perk.label}
-            </span>
-          ))}
-        </div>
       </div>
     </div>
   );
 }
-
-const PERKS = [
-  { icon: 'graduation', label: 'Uzman eğitmenler' },
-  { icon: 'wallet', label: 'Esnek ödeme planı' },
-  { icon: 'shield', label: 'Uluslararası sertifika' },
-] as const;
 
 function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   return (
