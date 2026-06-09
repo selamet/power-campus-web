@@ -357,15 +357,11 @@ const PERKS = [
 
 function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   return (
-    <div className="sticky top-0 z-20 flex items-center gap-3.5 border-b border-line bg-[hsl(30_24%_97%/0.85)] px-6 py-3 backdrop-blur-[12px] dark:bg-[hsl(24_12%_8%/0.85)]">
+    <div className="sticky top-0 z-20 flex items-center border-b border-line bg-[hsl(30_24%_97%/0.85)] px-6 py-3 backdrop-blur-[12px] dark:bg-[hsl(24_12%_8%/0.85)]">
       <Logo height={26} />
-      <span className="h-7 w-px bg-line" />
-      <div className="flex flex-col leading-tight">
-        <span className="kicker">POWER AKADEMİ</span>
-        <span className="text-[15px] font-semibold tracking-[-0.01em] text-ink">
-          Power'ın ayrıcalıklı dünyasına ilk adımı atıyorsun
-        </span>
-      </div>
+      <span className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 whitespace-nowrap font-script text-[26px] leading-none text-accent sm:block">
+        Power'ın ayrıcalıklı dünyasına ilk adımı atıyorsun
+      </span>
       <div className="flex-1" />
       {isPreview && (
         <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-semibold text-accent">
