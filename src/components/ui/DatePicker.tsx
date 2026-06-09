@@ -1,8 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
 import { formatDate } from '@/utils/format';
 import { Icon } from './Icon';
 import { inputBase } from './inputs';
+import { useAnchoredPosition } from './useAnchoredPosition';
 
 interface DatePickerProps {
   value: string;
@@ -54,8 +56,10 @@ export function DatePicker({
   const selected = parseIso(value);
   const today = new Date();
   const [view, setView] = useState(() => selected ?? today);
-  const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
+  const pos = useAnchoredPosition(open, triggerRef, 380);
 
   // Always reopen on the day grid, regardless of where the user last drilled to.
   useEffect(() => {
@@ -68,20 +72,29 @@ export function DatePicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  // Close on outside click or Escape.
+  // Close on outside click, Escape, or scroll/resize (panel is portaled, so
+  // check both the trigger and the panel itself).
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (!triggerRef.current?.contains(target) && !panelRef.current?.contains(target)) {
+        setOpen(false);
+      }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
+    const onReflow = () => setOpen(false);
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onReflow, true);
+    window.addEventListener('resize', onReflow);
     return () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onReflow, true);
+      window.removeEventListener('resize', onReflow);
     };
   }, [open]);
 
@@ -128,8 +141,9 @@ export function DatePicker({
     setMode(mode === 'days' ? 'months' : mode === 'months' ? 'years' : 'days');
 
   return (
-    <div className={cn('relative', className)} ref={ref}>
+    <div className={cn('relative', className)}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="dialog"
@@ -145,12 +159,18 @@ export function DatePicker({
         <Icon name="calendar" size={17} className="shrink-0 text-ink-3" />
       </button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-label={labelId}
-          className="anim-scale-in card absolute z-50 mt-2 w-[296px] origin-top p-3 shadow-float"
-        >
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-label={labelId}
+            style={{ position: 'fixed', left: pos.left, top: pos.top }}
+            className={cn(
+              'anim-scale-in card z-[100] w-[296px] p-3 shadow-float',
+              pos.openUp ? '-translate-y-full origin-bottom' : 'origin-top',
+            )}
+          >
           {/* header */}
           <div className="mb-2 flex items-center justify-between">
             <button
@@ -309,8 +329,9 @@ export function DatePicker({
               </button>
             )}
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
     </div>
   );
 }
