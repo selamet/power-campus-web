@@ -229,7 +229,7 @@ export function WelcomeFormPage() {
                   <DatePicker
                     value={form.birth}
                     onChange={(iso) => patch({ birth: iso })}
-                    placeholder="Örn. 12 Mart 1996"
+                    placeholder="gg.aa.yyyy"
                     max={new Date().toISOString().slice(0, 10)}
                   />
                 </Field>

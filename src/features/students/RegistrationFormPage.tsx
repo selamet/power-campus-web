@@ -162,7 +162,7 @@ export function RegistrationFormPage() {
                   <DatePicker
                     value={form.birth}
                     onChange={(iso) => patch({ birth: iso })}
-                    placeholder="Örn. 12 Mart 1996"
+                    placeholder="gg.aa.yyyy"
                     max={new Date().toISOString().slice(0, 10)}
                   />
                 </Field>
@@ -228,7 +228,7 @@ export function RegistrationFormPage() {
                   <DatePicker
                     value={form.start}
                     onChange={(iso) => patch({ start: iso })}
-                    placeholder="Başlangıç tarihi seç"
+                    placeholder="gg.aa.yyyy"
                   />
                 </Field>
               </div>
@@ -371,7 +371,7 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
           <DatePicker
             value={form.firstDate}
             onChange={(iso) => patch({ firstDate: iso })}
-            placeholder="İlk ödeme tarihi seç"
+            placeholder="gg.aa.yyyy"
           />
         </Field>
       </div>

@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
-import { formatDate } from '@/utils/format';
 import { Icon } from './Icon';
 import { inputBase } from './inputs';
 import { useAnchoredPosition } from './useAnchoredPosition';
@@ -42,11 +41,34 @@ const parseIso = (iso: string): Date | null => {
 /** Monday-first weekday index (0 = Mon ... 6 = Sun). */
 const mondayIndex = (jsDay: number) => (jsDay + 6) % 7;
 
+/** ISO (yyyy-mm-dd) → typed display (gg.aa.yyyy). */
+const isoToTyped = (iso: string): string => {
+  const d = parseIso(iso);
+  return d ? `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}` : '';
+};
+/** Insert dots as the user types digits: "12031996" → "12.03.1996". */
+const formatTyping = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean).join('.');
+};
+/** Parse a complete "gg.aa.yyyy" string into a real calendar date, or null. */
+const parseTyped = (text: string): Date | null => {
+  const d = text.replace(/\D/g, '');
+  if (d.length !== 8) return null;
+  const day = +d.slice(0, 2);
+  const mon = +d.slice(2, 4);
+  const yr = +d.slice(4, 8);
+  const date = new Date(yr, mon - 1, day);
+  return date.getDate() === day && date.getMonth() === mon - 1 && date.getFullYear() === yr
+    ? date
+    : null;
+};
+
 /** Token-styled date field with a custom calendar popover; no native date input. */
 export function DatePicker({
   value,
   onChange,
-  placeholder = 'Tarih seç',
+  placeholder = 'gg.aa.yyyy',
   min,
   max,
   className,
@@ -56,10 +78,16 @@ export function DatePicker({
   const selected = parseIso(value);
   const today = new Date();
   const [view, setView] = useState(() => selected ?? today);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [text, setText] = useState(() => isoToTyped(value));
+  const triggerRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const pos = useAnchoredPosition(open, triggerRef, 380);
+
+  // Mirror the field text whenever the value changes from outside or a pick.
+  useEffect(() => {
+    setText(isoToTyped(value));
+  }, [value]);
 
   // Always reopen on the day grid, regardless of where the user last drilled to.
   useEffect(() => {
@@ -140,24 +168,42 @@ export function DatePicker({
   const drillDown = () =>
     setMode(mode === 'days' ? 'months' : mode === 'months' ? 'years' : 'days');
 
+  const handleType = (raw: string) => {
+    const formatted = formatTyping(raw);
+    setText(formatted);
+    if (!open) setOpen(true);
+    const date = parseTyped(formatted);
+    if (date && !isDisabled(date)) {
+      onChange(toIso(date.getFullYear(), date.getMonth(), date.getDate()));
+      setView(date);
+    }
+  };
+
   return (
     <div className={cn('relative', className)}>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        className={cn(
-          inputBase,
-          'flex cursor-pointer items-center justify-between text-left',
-          !selected && 'text-ink-3',
-          open && 'border-accent shadow-[0_0_0_4px_hsl(var(--accent-h)_var(--accent-s)_50%/0.14)]',
-        )}
-      >
-        <span>{selected ? formatDate(value) : placeholder}</span>
-        <Icon name="calendar" size={17} className="shrink-0 text-ink-3" />
-      </button>
+      <div className="relative">
+        <input
+          ref={triggerRef}
+          type="text"
+          inputMode="numeric"
+          value={text}
+          placeholder={placeholder}
+          onChange={(e) => handleType(e.target.value)}
+          onFocus={() => setOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          className={cn(
+            inputBase,
+            'pr-[38px]',
+            open && 'border-accent shadow-[0_0_0_4px_hsl(var(--accent-h)_var(--accent-s)_50%/0.14)]',
+          )}
+        />
+        <Icon
+          name="calendar"
+          size={17}
+          className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-ink-3"
+        />
+      </div>
 
       {open &&
         createPortal(
