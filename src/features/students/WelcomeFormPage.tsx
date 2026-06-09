@@ -195,13 +195,9 @@ export function WelcomeFormPage() {
       <WelcomeHeader isPreview={isPreview} />
 
       <div className="mx-auto max-w-[720px] px-5 pt-5 pb-8">
-        <div className="mb-4 flex flex-col gap-1 text-center">
-          <span className="kicker">POWER AKADEMİ</span>
-          <h1 className="m-0 text-[22px] font-bold tracking-[-0.02em]">Hoş geldin! 👋</h1>
-          <p className="mt-1 mb-0 text-[14.5px] text-ink-2">
-            Kaydını başlatmak için bilgilerini doldur — sadece birkaç dakika sürer.
-          </p>
-        </div>
+        <p className="mb-4 text-center text-[14.5px] text-ink-2">
+          Kaydını başlatmak için bilgilerini doldur — sadece birkaç dakika sürer.
+        </p>
 
         <div className="mb-5">
           <Steps steps={FORM_STEPS} current={step} />
@@ -341,8 +337,13 @@ export function WelcomeFormPage() {
 
 function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   return (
-    <div className="sticky top-0 z-20 flex items-center border-b border-line bg-[hsl(30_24%_97%/0.85)] px-6 py-3.5 backdrop-blur-[12px] dark:bg-[hsl(24_12%_8%/0.85)]">
+    <div className="sticky top-0 z-20 flex items-center gap-3.5 border-b border-line bg-[hsl(30_24%_97%/0.85)] px-6 py-3 backdrop-blur-[12px] dark:bg-[hsl(24_12%_8%/0.85)]">
       <Logo height={26} />
+      <span className="h-7 w-px bg-line" />
+      <div className="flex flex-col leading-tight">
+        <span className="kicker">POWER AKADEMİ</span>
+        <span className="text-[15px] font-bold tracking-[-0.01em]">Hoş geldin! 👋</span>
+      </div>
       <div className="flex-1" />
       {isPreview && (
         <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-semibold text-accent">
