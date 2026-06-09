@@ -53,7 +53,7 @@ const initialForm: FormState = {
   cPhone: '',
 };
 
-const GRID = 'form-grid grid grid-cols-1 gap-3.5 sm:grid-cols-2';
+const GRID = 'stagger form-grid grid grid-cols-1 gap-3.5 sm:grid-cols-2';
 
 /**
  * Public, self-service form reached through the invite link shared with the
@@ -175,14 +175,17 @@ export function WelcomeFormPage() {
       <div className="flex min-h-screen flex-col bg-bg">
         <WelcomeHeader isPreview={isPreview} />
         <div className="flex flex-1 items-center justify-center px-5 py-10">
-          <div className="card anim-scale-in max-w-[460px] p-8 text-center">
-            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-[18px] bg-ok-soft text-ok">
+          <div className="card mesh-aurora anim-scale-in max-w-[460px] p-8 text-center">
+            <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-[18px] bg-ok-soft text-ok" style={{ animation: 'pop 0.45s cubic-bezier(0.2,0.8,0.3,1) both' }}>
               <Icon name="checkCircle" size={34} />
+              <Icon name="partyPopper" size={20} className="absolute -right-2 -top-2 text-accent-2" />
             </div>
-            <h1 className="m-0 text-[22px] font-bold tracking-[-0.02em]">Teşekkürler{form.name ? `, ${form.name.split(' ')[0]}` : ''}!</h1>
+            <h1 className="m-0 text-[22px] font-bold tracking-[-0.02em]">
+              Aramıza hoş geldin{form.name ? `, ${form.name.split(' ')[0]}` : ''}!
+            </h1>
             <p className="mt-2.5 mb-0 text-[14.5px] text-ink-2">
-              Bilgilerin bize ulaştı. Kayıt ekibimiz en kısa sürede seninle iletişime geçip
-              kaydını tamamlayacak.
+              Power ailesinin bir parçası olmana çok az kaldı. Kayıt ekibimiz en kısa sürede
+              seninle iletişime geçip kaydını tamamlayacak.
             </p>
           </div>
         </div>
@@ -195,18 +198,32 @@ export function WelcomeFormPage() {
       <WelcomeHeader isPreview={isPreview} />
 
       <div className="mx-auto max-w-[720px] px-5 pt-5 pb-8">
-        <p className="mb-4 text-center text-[14.5px] text-ink-2">
-          Kaydını başlatmak için bilgilerini doldur — sadece birkaç dakika sürer.
-        </p>
+        <div className="anim-fade-up mb-5 flex flex-col items-center gap-1.5 text-center">
+          <h2 className="m-0 flex items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
+            <Icon name="sparkle" size={20} className="text-accent-2" />
+            <span className="bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
+              Power'ın ayrıcalıklı dünyasına ilk adımı atıyorsun
+            </span>
+          </h2>
+          <p className="m-0 text-[14px] text-ink-2">
+            Kaydını başlat — sadece birkaç dakika sürer.
+          </p>
+        </div>
 
         <div className="mb-5">
+          <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-accent to-accent-2 shadow-accent transition-[width] duration-500 ease-out"
+              style={{ width: `${((step + 1) / FORM_STEPS.length) * 100}%` }}
+            />
+          </div>
           <Steps steps={FORM_STEPS} current={step} />
         </div>
 
         <div className="card p-6">
           {step === 0 && (
             <div className="anim-fade-in">
-              <SectionHead icon="user" title="Senin Bilgilerin" desc="Kimlik ve temel bilgiler" />
+              <SectionHead icon="user" title="Senin Bilgilerin" desc="Kimlik ve temel bilgiler" tone="accent" />
               <div className={GRID}>
                 <Field label="Ad Soyad" required full>
                   <Input value={form.name} onChange={update('name')} placeholder="Örn. Ayşe Yılmaz" />
@@ -253,7 +270,7 @@ export function WelcomeFormPage() {
 
           {step === 1 && (
             <div className="anim-fade-in">
-              <SectionHead icon="graduation" title="Eğitim Bilgilerin" desc="Hangi okulda okuyorsun, hangi bölüm" />
+              <SectionHead icon="graduation" title="Eğitim Bilgilerin" desc="Hangi okulda okuyorsun, hangi bölüm" tone="accent-2" />
               <div className={GRID}>
                 <Field label="Öğrenim Durumu" icon="trend" required>
                   <Select value={form.eduLevel} onChange={update('eduLevel')}>
@@ -277,7 +294,7 @@ export function WelcomeFormPage() {
 
           {step === 2 && (
             <div className="anim-fade-in">
-              <SectionHead icon="phone" title="İletişim Bilgilerin" desc="Sana ve birincil iletişim kişisine ulaşalım" />
+              <SectionHead icon="phone" title="İletişim Bilgilerin" desc="Sana ve birincil iletişim kişisine ulaşalım" tone="ok" />
               <div className={GRID}>
                 <Field label="E-posta" icon="mail" required>
                   <Input type="email" value={form.email} onChange={update('email')} placeholder="ornek@mail.com" />
@@ -330,10 +347,25 @@ export function WelcomeFormPage() {
             </Button>
           )}
         </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13px] text-ink-3">
+          {PERKS.map((perk) => (
+            <span key={perk.label} className="flex items-center gap-1.5">
+              <Icon name={perk.icon} size={15} className="text-accent" />
+              {perk.label}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
+
+const PERKS = [
+  { icon: 'graduation', label: 'Uzman eğitmenler' },
+  { icon: 'wallet', label: 'Esnek ödeme planı' },
+  { icon: 'shield', label: 'Uluslararası sertifika' },
+] as const;
 
 function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   return (
@@ -342,7 +374,10 @@ function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
       <span className="h-7 w-px bg-line" />
       <div className="flex flex-col leading-tight">
         <span className="kicker">POWER AKADEMİ</span>
-        <span className="text-[15px] font-bold tracking-[-0.01em]">Hoş geldin! 👋</span>
+        <span className="flex items-center gap-1.5 text-[15px] font-bold tracking-[-0.01em]">
+          Hoş geldin!
+          <Icon name="handWave" size={16} className="text-accent" />
+        </span>
       </div>
       <div className="flex-1" />
       {isPreview && (
@@ -355,10 +390,26 @@ function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   );
 }
 
-function SectionHead({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+const SECTION_TONES = {
+  accent: 'bg-accent-soft text-accent',
+  'accent-2': 'bg-accent-2-soft text-accent-2',
+  ok: 'bg-ok-soft text-ok',
+} as const;
+
+function SectionHead({
+  icon,
+  title,
+  desc,
+  tone = 'accent',
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+  tone?: keyof typeof SECTION_TONES;
+}) {
   return (
     <div className="anim-fade-in mb-4 flex items-center gap-3">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+      <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${SECTION_TONES[tone]}`}>
         <Icon name={icon} size={20} />
       </div>
       <div className="flex flex-col gap-0.5">
