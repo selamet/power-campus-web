@@ -6,6 +6,11 @@
 @import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
+/* Tailwind's form-control reset/normalization. Our token-based input styles
+   (.field-focus, .select-chevron, inputBase) sit in later layers and win, so
+   this only normalizes elements we haven't explicitly styled. */
+@plugin '@tailwindcss/forms';
+
 /* Dark mode is driven by [data-theme="dark"] on <html>, not the OS preference. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
