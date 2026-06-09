@@ -197,19 +197,7 @@ export function WelcomeFormPage() {
     <div className="min-h-screen bg-bg">
       <WelcomeHeader isPreview={isPreview} />
 
-      <div className="mx-auto max-w-[720px] px-5 pt-5 pb-8">
-        <div className="anim-fade-up mb-5 flex flex-col items-center gap-1.5 text-center">
-          <h2 className="m-0 flex items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
-            <Icon name="sparkle" size={20} className="text-accent-2" />
-            <span className="bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
-              Power'ın ayrıcalıklı dünyasına ilk adımı atıyorsun
-            </span>
-          </h2>
-          <p className="m-0 text-[14px] text-ink-2">
-            Kaydını başlat — sadece birkaç dakika sürer.
-          </p>
-        </div>
-
+      <div className="mx-auto max-w-[720px] px-5 pt-6 pb-8">
         <div className="mb-5">
           <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-line">
             <div
@@ -374,9 +362,8 @@ function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
       <span className="h-7 w-px bg-line" />
       <div className="flex flex-col leading-tight">
         <span className="kicker">POWER AKADEMİ</span>
-        <span className="flex items-center gap-1.5 text-[15px] font-bold tracking-[-0.01em]">
-          Hoş geldin!
-          <Icon name="handWave" size={16} className="text-accent" />
+        <span className="text-[15px] font-semibold tracking-[-0.01em] text-ink">
+          Power'ın ayrıcalıklı dünyasına ilk adımı atıyorsun
         </span>
       </div>
       <div className="flex-1" />
