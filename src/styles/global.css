@@ -285,6 +285,29 @@
       radial-gradient(circle at 12% 92%, hsl(var(--accent-2-h) 74% 56% / 0.2), transparent 50%),
       linear-gradient(155deg, hsl(240 9% 12%), hsl(240 11% 7%) 70%);
   }
+
+  /* Subtle brand-red glow anchored to the viewport — for the public welcome
+     page background. Renders behind content; readability stays intact. */
+  .welcome-bg {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--bg);
+  }
+  .welcome-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 52% 42% at 100% 0%, hsl(var(--accent-h) var(--accent-s) 51% / 0.08), transparent 62%),
+      radial-gradient(ellipse 48% 40% at 0% 100%, hsl(var(--accent-h) var(--accent-s) 51% / 0.06), transparent 60%);
+  }
+  [data-theme='dark'] .welcome-bg::before {
+    background:
+      radial-gradient(ellipse 52% 42% at 100% 0%, hsl(var(--accent-h) 72% 52% / 0.16), transparent 60%),
+      radial-gradient(ellipse 48% 40% at 0% 100%, hsl(var(--accent-h) 72% 52% / 0.12), transparent 60%);
+  }
 }
 
 /* ---------- Students table (grid + responsive card fallback) ---------- */

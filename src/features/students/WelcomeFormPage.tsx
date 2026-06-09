@@ -167,7 +167,7 @@ export function WelcomeFormPage() {
 
   if (linkError) {
     return (
-      <div className="flex min-h-screen flex-col bg-bg">
+      <div className="welcome-bg flex min-h-screen flex-col">
         <WelcomeHeader isPreview={isPreview} />
         <div className="flex flex-1 items-center justify-center px-5 py-10">
           <div className="card anim-scale-in max-w-[460px] p-8 text-center">
@@ -184,7 +184,7 @@ export function WelcomeFormPage() {
 
   if (done) {
     return (
-      <div className="flex min-h-screen flex-col bg-bg">
+      <div className="welcome-bg flex min-h-screen flex-col">
         <WelcomeHeader isPreview={isPreview} />
         <div className="flex flex-1 items-center justify-center px-5 py-10">
           <div className="card mesh-aurora anim-scale-in max-w-[460px] p-8 text-center">
@@ -206,7 +206,7 @@ export function WelcomeFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="welcome-bg min-h-screen">
       <WelcomeHeader isPreview={isPreview} />
 
       <div className="mx-auto max-w-[720px] px-5 pt-6 pb-8">
