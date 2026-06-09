@@ -359,8 +359,10 @@ function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   return (
     <div className="sticky top-0 z-20 flex items-center border-b border-line bg-[hsl(30_24%_97%/0.85)] px-6 py-3 backdrop-blur-[12px] dark:bg-[hsl(24_12%_8%/0.85)]">
       <Logo height={26} />
-      <span className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 whitespace-nowrap font-script text-[26px] leading-none text-accent sm:block">
-        Power'ın ayrıcalıklı dünyasına ilk adımı atıyorsun
+      <span className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[15.5px] font-semibold tracking-[-0.01em] text-ink sm:block">
+        Power'ın{' '}
+        <span className="font-script text-[26px] font-semibold leading-none text-accent">ayrıcalıklı</span>{' '}
+        dünyasına ilk adımı atıyorsun
       </span>
       <div className="flex-1" />
       {isPreview && (
