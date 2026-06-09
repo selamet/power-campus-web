@@ -145,7 +145,7 @@ export function RegistrationFormPage() {
               />
               <div className={GRID}>
                 <Field label="Ad Soyad" required full>
-                  <Input value={form.name} onChange={update('name')} placeholder="Ad Soyad" />
+                  <Input value={form.name} onChange={update('name')} placeholder="Örn. Ayşe Yılmaz" />
                 </Field>
                 <Field label="T.C. Kimlik No" required>
                   <Input
@@ -153,7 +153,7 @@ export function RegistrationFormPage() {
                     onChange={(event) =>
                       patch({ tckn: event.target.value.replace(/\D/g, '').slice(0, 11) })
                     }
-                    placeholder="11 haneli"
+                    placeholder="Örn. 12345678901"
                     className="font-mono"
                     inputMode="numeric"
                   />
@@ -162,7 +162,8 @@ export function RegistrationFormPage() {
                   <DatePicker
                     value={form.birth}
                     onChange={(iso) => patch({ birth: iso })}
-                    placeholder="Doğum tarihi seç"
+                    placeholder="Örn. 12 Mart 1996"
+                    max={new Date().toISOString().slice(0, 10)}
                   />
                 </Field>
                 <Field label="Cinsiyet">
@@ -181,7 +182,7 @@ export function RegistrationFormPage() {
                   </Select>
                 </Field>
                 <Field label="Adres" full>
-                  <Textarea rows={2} value={form.addr} onChange={update('addr')} placeholder="Açık adres" />
+                  <Textarea rows={2} value={form.addr} onChange={update('addr')} placeholder="Mahalle, cadde, kapı no, ilçe" />
                 </Field>
               </div>
             </div>
@@ -337,7 +338,7 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
           <Input
             value={form.fee}
             onChange={(event) => patch({ fee: event.target.value.replace(/\D/g, '') })}
-            placeholder="18500"
+            placeholder="Örn. 18500"
             className="font-mono"
             inputMode="numeric"
           />

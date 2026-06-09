@@ -213,20 +213,25 @@ export function WelcomeFormPage() {
               <SectionHead icon="user" title="Senin Bilgilerin" desc="Kimlik ve temel bilgiler" />
               <div className={GRID}>
                 <Field label="Ad Soyad" required full>
-                  <Input value={form.name} onChange={update('name')} placeholder="Ad Soyad" />
+                  <Input value={form.name} onChange={update('name')} placeholder="Örn. Ayşe Yılmaz" />
                 </Field>
                 <Field label="T.C. Kimlik No" required hint={!isPreview ? 'Davet linkinden alındı' : undefined}>
                   <Input
                     value={form.tckn}
                     onChange={(event) => patch({ tckn: event.target.value.replace(/\D/g, '').slice(0, 11) })}
-                    placeholder="11 haneli"
+                    placeholder="Örn. 12345678901"
                     className="font-mono"
                     inputMode="numeric"
                     readOnly={!isPreview}
                   />
                 </Field>
                 <Field label="Doğum Tarihi">
-                  <DatePicker value={form.birth} onChange={(iso) => patch({ birth: iso })} placeholder="Doğum tarihi seç" />
+                  <DatePicker
+                    value={form.birth}
+                    onChange={(iso) => patch({ birth: iso })}
+                    placeholder="Örn. 12 Mart 1996"
+                    max={new Date().toISOString().slice(0, 10)}
+                  />
                 </Field>
                 <Field label="Cinsiyet">
                   <Select value={form.gender} onChange={update('gender')}>
@@ -244,7 +249,7 @@ export function WelcomeFormPage() {
                   </Select>
                 </Field>
                 <Field label="Adres" full>
-                  <Textarea rows={2} value={form.addr} onChange={update('addr')} placeholder="Açık adres" />
+                  <Textarea rows={2} value={form.addr} onChange={update('addr')} placeholder="Mahalle, cadde, kapı no, ilçe" />
                 </Field>
               </div>
             </div>
