@@ -426,7 +426,7 @@ function WelcomeFooter() {
           href="https://selamet.dev"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-ink-2 underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent"
+          className="text-inherit no-underline"
         >
           selamet.dev
         </a>
