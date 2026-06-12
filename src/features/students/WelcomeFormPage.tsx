@@ -405,8 +405,11 @@ function WelcomeDecor({ isPreview }: { isPreview: boolean }) {
 /** Brand mark anchored at the bottom of every welcome screen. */
 function WelcomeFooter() {
   return (
-    <div className="flex justify-center pb-7 pt-4">
-      <Logo height={26} />
+    <div className="flex flex-col items-center gap-2 pb-7 pt-4">
+      <Logo height={38} />
+      <span className="font-mono text-[11px] tracking-[0.08em] text-ink-3">
+        Crafted by selamet.dev
+      </span>
     </div>
   );
 }
