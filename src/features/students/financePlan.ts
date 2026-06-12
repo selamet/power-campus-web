@@ -63,3 +63,44 @@ export function planInstallmentCount(plan: string, terms: number): number {
 export function resolvePlan(plan: string, terms: number): string {
   return plan === PER_TERM_PLAN ? `${terms} Taksit` : plan;
 }
+
+/** String-typed finance fields shared by the registration form and approval modal. */
+export interface FinanceCoreForm {
+  terms: string;
+  termFee: string;
+  discount: string;
+  discountType: DiscountType;
+  plan: string;
+  paidNow: string;
+  firstDate: string;
+  note: string;
+  payMethod?: string;
+}
+
+export const FINANCE_FORM_DEFAULTS: FinanceCoreForm = {
+  terms: '1',
+  termFee: '',
+  discount: '0',
+  discountType: 'percent',
+  plan: 'Peşin',
+  paidNow: '',
+  firstDate: '',
+  note: '',
+};
+
+/** Totals derived from the string form state. */
+export function financeFromForm(form: FinanceCoreForm) {
+  const terms = Number(form.terms) || 1;
+  const termFee = Number(form.termFee) || 0;
+  return {
+    terms,
+    termFee,
+    ...computeFinance({
+      terms,
+      termFee,
+      discount: Number(form.discount) || 0,
+      discountType: form.discountType,
+      paidNow: Number(form.paidNow) || 0,
+    }),
+  };
+}

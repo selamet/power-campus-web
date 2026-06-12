@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Avatar, Badge, type BadgeKind, Button, Icon, Input, Modal, Select } from '@/components/ui';
+import { Avatar, Badge, type BadgeKind, Button, DatePicker, Field, Icon, Input, Modal, Select } from '@/components/ui';
 import {
   COURSES,
   CUSTOM_PLAN,
@@ -8,7 +8,6 @@ import {
   LEVELS,
   PAYMENT_PLANS,
   PAY_METHODS,
-  PER_TERM_PLAN,
   RELATIONS,
   TERM_COUNTS,
 } from '@/constants/options';
@@ -17,18 +16,18 @@ import type { Student } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { formatDate, formatMoney, paidPercent } from '@/utils/format';
 import { isValidTckn } from '@/utils/tckn';
+import { FinanceFields } from './FinanceFields';
 import {
   ContactFields,
   EducationFields,
   PersonalFields,
 } from './StudentFormKit';
-import type { EducationCoreForm, FieldUpdater, PersonCoreForm } from './useStepForm';
+import { FORM_GRID, type EducationCoreForm, type FieldUpdater, type PersonCoreForm } from './useStepForm';
 import {
-  computeFinance,
-  planInstallmentCount,
-  previewInstallments,
+  FINANCE_FORM_DEFAULTS,
+  financeFromForm,
   resolvePlan,
-  type DiscountType,
+  type FinanceCoreForm,
 } from '../financePlan';
 import {
   studentsApi,
@@ -49,18 +48,10 @@ interface StudentModalProps {
 }
 
 /** Education + finance choices made while approving a pending student. */
-interface ApprovalDraft {
+interface ApprovalDraft extends FinanceCoreForm {
   lang: string;
   level: string;
   course: string;
-  terms: string;
-  termFee: string;
-  discount: string;
-  discountType: DiscountType;
-  plan: string;
-  paidNow: string;
-  firstDate: string;
-  note: string;
 }
 
 /** Simple field edits for an already-active student. */
@@ -106,16 +97,14 @@ const toInfoDraft = (s: Student): InfoDraft => ({
 const toApprovalDraft = (s: Student): ApprovalDraft => {
   const terms = s.terms && s.terms > 0 ? s.terms : 1;
   return {
+    ...FINANCE_FORM_DEFAULTS,
     lang: s.lang,
     level: s.level,
     course: s.course,
     terms: String(terms),
     termFee: s.fee > 0 ? String(Math.round(s.fee / terms)) : '',
-    discount: '0',
-    discountType: 'percent',
     plan: s.plan || 'Peşin',
     paidNow: s.paid > 0 ? String(s.paid) : '',
-    firstDate: '',
     note: s.note ?? '',
   };
 };
@@ -130,22 +119,6 @@ const toEditDraft = (s: Student): EditDraft => ({
   plan: s.plan,
   fee: String(s.fee),
 });
-
-const approvalFinance = (draft: ApprovalDraft) => {
-  const terms = Number(draft.terms) || 1;
-  const termFee = Number(draft.termFee) || 0;
-  return {
-    terms,
-    termFee,
-    ...computeFinance({
-      terms,
-      termFee,
-      discount: Number(draft.discount) || 0,
-      discountType: draft.discountType,
-      paidNow: Number(draft.paidNow) || 0,
-    }),
-  };
-};
 
 const today = () => new Date().toISOString().slice(0, 10);
 const digits = (value: string) => value.replace(/\D/g, '');
@@ -194,13 +167,15 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
 
   const setApprovalField = (partial: Partial<ApprovalDraft>) =>
     setApproval((prev) => ({ ...prev, ...partial }));
+  const updateApproval: FieldUpdater<ApprovalDraft> = (key) => (event) =>
+    setApproval((prev) => ({ ...prev, [key]: event.target.value }));
   const setEditField = (key: keyof EditDraft, value: string) =>
     setDraft((prev) => ({ ...prev, [key]: value }));
   const updateInfo: FieldUpdater<InfoDraft> = (key) => (event) =>
     setInfo((prev) => ({ ...prev, [key]: event.target.value }));
   const patchInfo = (partial: Partial<InfoDraft>) => setInfo((prev) => ({ ...prev, ...partial }));
 
-  const fin = approvalFinance(approval);
+  const fin = financeFromForm(approval);
   const tcknError =
     info.tckn && !isValidTckn(info.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
   const canApprove = fin.termFee > 0 && !tcknError;
@@ -358,39 +333,39 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
           <>
             <Section icon="user" title="Kişisel & İletişim">
               <div className="flex flex-col gap-3 pt-1">
-                <EditField label="Ad Soyad">
+                <Field label="Ad Soyad">
                   <Input value={draft.name} onChange={(e) => setEditField('name', e.target.value)} />
-                </EditField>
-                <EditField label="E-posta">
+                </Field>
+                <Field label="E-posta">
                   <Input type="email" value={draft.email} onChange={(e) => setEditField('email', e.target.value)} />
-                </EditField>
-                <EditField label="Telefon">
+                </Field>
+                <Field label="Telefon">
                   <Input value={draft.phone} onChange={(e) => setEditField('phone', e.target.value)} inputMode="tel" />
-                </EditField>
+                </Field>
               </div>
             </Section>
             <Section icon="graduation" title="Eğitim & Finans">
               <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-                <EditField label="Dil">
+                <Field label="Dil">
                   <OptionSelect value={draft.lang} onChange={(v) => setEditField('lang', v)} options={LANGUAGES} />
-                </EditField>
-                <EditField label="Seviye">
+                </Field>
+                <Field label="Seviye">
                   <OptionSelect value={draft.level} onChange={(v) => setEditField('level', v)} options={LEVELS} />
-                </EditField>
-                <EditField label="Kur / Program">
+                </Field>
+                <Field label="Kur / Program">
                   <OptionSelect value={draft.course} onChange={(v) => setEditField('course', v)} options={COURSES} />
-                </EditField>
-                <EditField label="Ödeme Planı">
+                </Field>
+                <Field label="Ödeme Planı">
                   <OptionSelect value={draft.plan} onChange={(v) => setEditField('plan', v)} options={PAYMENT_PLANS} />
-                </EditField>
-                <EditField label="Kayıt Ücreti (₺)">
+                </Field>
+                <Field label="Kayıt Ücreti (₺)">
                   <Input
                     value={draft.fee}
                     onChange={(e) => setEditField('fee', digits(e.target.value))}
                     inputMode="numeric"
                     className="font-mono"
                   />
-                </EditField>
+                </Field>
               </div>
             </Section>
           </>
@@ -398,8 +373,8 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
           <ApprovalFinance
             student={current}
             draft={approval}
+            update={updateApproval}
             patch={setApprovalField}
-            fin={fin}
           />
         ) : isPending && tab === 'bilgiler' ? (
           <>
@@ -523,7 +498,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
           <div className="anim-fade-in flex flex-col gap-3">
             <span className="kicker">ÖDEME AL</span>
             <div className="grid grid-cols-2 gap-3">
-              <EditField label="Tutar (₺)">
+              <Field label="Tutar (₺)">
                 <Input
                   value={payForm.amount}
                   onChange={(e) => setPayForm((p) => ({ ...p, amount: digits(e.target.value) }))}
@@ -531,29 +506,29 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
                   className="font-mono"
                   placeholder="0"
                 />
-              </EditField>
-              <EditField label="Tarih">
-                <Input
-                  type="date"
+              </Field>
+              <Field label="Tarih">
+                <DatePicker
                   value={payForm.paidAt}
-                  onChange={(e) => setPayForm((p) => ({ ...p, paidAt: e.target.value }))}
+                  onChange={(iso) => setPayForm((p) => ({ ...p, paidAt: iso }))}
+                  placeholder="gg.aa.yyyy"
                 />
-              </EditField>
+              </Field>
             </div>
-            <EditField label="Yöntem">
+            <Field label="Yöntem">
               <Select value={payForm.method} onChange={(e) => setPayForm((p) => ({ ...p, method: e.target.value }))}>
                 {PAY_METHODS.map((method) => (
                   <option key={method}>{method}</option>
                 ))}
               </Select>
-            </EditField>
-            <EditField label="Not (opsiyonel)">
+            </Field>
+            <Field label="Not (opsiyonel)">
               <Input
                 value={payForm.note}
                 onChange={(e) => setPayForm((p) => ({ ...p, note: e.target.value }))}
                 placeholder="Açıklama"
               />
-            </EditField>
+            </Field>
             <div className="flex items-center gap-3">
               <Button variant="ghost" block disabled={savingPay} onClick={() => setPaying(false)}>
                 Vazgeç
@@ -591,21 +566,12 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
 interface ApprovalFinanceProps {
   student: Student;
   draft: ApprovalDraft;
+  update: FieldUpdater<ApprovalDraft>;
   patch: (partial: Partial<ApprovalDraft>) => void;
-  fin: ReturnType<typeof approvalFinance>;
 }
 
-/** Manual-registration style education + finance editor used before approval. */
-function ApprovalFinance({ student, draft, patch, fin }: ApprovalFinanceProps) {
-  const { terms, termFee, fee, discountValue, net, paidNow, remaining } = fin;
-  const isCustom = draft.plan === CUSTOM_PLAN;
-  const isPerTerm = draft.plan === PER_TERM_PLAN;
-  const installmentCount = planInstallmentCount(draft.plan, terms);
-  const showSchedule = installmentCount > 0 && remaining > 0;
-  const schedule = showSchedule
-    ? previewInstallments(remaining, installmentCount, draft.firstDate || student.start)
-    : [];
-
+/** Education choices + the shared finance editor, filled in before approval. */
+function ApprovalFinance({ student, draft, update, patch }: ApprovalFinanceProps) {
   return (
     <>
       <p className="m-0 flex items-start gap-2.5 rounded-xl bg-accent-soft px-3.5 py-3 text-[13px] leading-[1.5] text-ink-2">
@@ -619,165 +585,30 @@ function ApprovalFinance({ student, draft, patch, fin }: ApprovalFinanceProps) {
       </p>
 
       <Section icon="graduation" title="Eğitim">
-        <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-          <EditField label="Dil">
+        <div className={FORM_GRID}>
+          <Field label="Dil" icon="globe">
             <OptionSelect value={draft.lang} onChange={(v) => patch({ lang: v })} options={LANGUAGES} />
-          </EditField>
-          <EditField label="Seviye">
+          </Field>
+          <Field label="Seviye" icon="trend">
             <OptionSelect value={draft.level} onChange={(v) => patch({ level: v })} options={LEVELS} />
-          </EditField>
-          <EditField label="Kur / Program">
+          </Field>
+          <Field label="Kur / Program" icon="book">
             <OptionSelect value={draft.course} onChange={(v) => patch({ course: v })} options={COURSES} />
-          </EditField>
-          <EditField label="Kur Sayısı">
-            <Select value={draft.terms} onChange={(e) => patch({ terms: e.target.value })}>
+          </Field>
+          <Field label="Kur Sayısı" icon="layers" hint="Kayıt kapsamındaki kur adedi">
+            <Select value={draft.terms} onChange={update('terms')}>
               {TERM_COUNTS.map((count) => (
                 <option key={count} value={count}>
                   {count} Kur
                 </option>
               ))}
             </Select>
-          </EditField>
+          </Field>
         </div>
       </Section>
 
       <Section icon="wallet" title="Finans & Ödeme Planı" subtitle="Onaydan önce belirleyin">
-        <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-          <EditField label="Kur Ücreti (₺)">
-            <Input
-              value={draft.termFee}
-              onChange={(e) => patch({ termFee: digits(e.target.value) })}
-              inputMode="numeric"
-              className="font-mono"
-              placeholder="Örn. 2000"
-            />
-          </EditField>
-          <EditField label="İndirim">
-            <div className="flex gap-1.5">
-              <Input
-                value={draft.discount}
-                onChange={(e) => patch({ discount: digits(e.target.value) })}
-                inputMode="numeric"
-                className="flex-1 font-mono"
-              />
-              <div className="flex shrink-0 overflow-hidden rounded-[10px] border border-line">
-                {(
-                  [
-                    ['percent', '%'],
-                    ['amount', '₺'],
-                  ] as const
-                ).map(([type, symbol]) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => patch({ discountType: type })}
-                    className={cn(
-                      'px-3 text-sm font-semibold transition-colors',
-                      draft.discountType === type
-                        ? 'bg-accent text-white'
-                        : 'bg-transparent text-ink-3 hover:text-ink-2',
-                    )}
-                  >
-                    {symbol}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </EditField>
-          <EditField label="Ödeme Planı">
-            <Select value={draft.plan} onChange={(e) => patch({ plan: e.target.value })}>
-              <option>Peşin</option>
-              <option value={PER_TERM_PLAN}>{`Kur Başına (${terms} ödeme)`}</option>
-              {PAYMENT_PLANS.filter((item) => item !== 'Peşin').map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </Select>
-          </EditField>
-          <EditField label="Ödenen Tutar (₺)">
-            <Input
-              value={draft.paidNow}
-              onChange={(e) => patch({ paidNow: digits(e.target.value) })}
-              inputMode="numeric"
-              className="font-mono"
-              placeholder="0"
-            />
-          </EditField>
-          <EditField label="İlk Ödeme Tarihi">
-            <Input
-              type="date"
-              value={draft.firstDate}
-              onChange={(e) => patch({ firstDate: e.target.value })}
-            />
-          </EditField>
-          <EditField label="Finans Notu">
-            <Input
-              value={draft.note}
-              onChange={(e) => patch({ note: e.target.value })}
-              placeholder="Örn. ikinci taksiti velisi ödeyecek"
-            />
-          </EditField>
-        </div>
-
-        {/* summary */}
-        {termFee > 0 ? (
-          <div className="mt-3 rounded-xl border border-accent-soft-border bg-accent-soft p-3.5">
-            <SummaryRow label={terms > 1 ? `Toplam (${terms} Kur × ${formatMoney(termFee)})` : 'Kayıt Ücreti'} value={formatMoney(fee)} />
-            {discountValue > 0 && (
-              <SummaryRow
-                label={`İndirim${draft.discountType === 'percent' ? ` (%${Number(draft.discount)})` : ''}`}
-                value={`−${formatMoney(discountValue)}`}
-                ok
-              />
-            )}
-            {paidNow > 0 && <SummaryRow label="Ödenen" value={`−${formatMoney(paidNow)}`} ok />}
-            <div className="divider my-2" style={{ background: 'var(--accent-soft-border)' }} />
-            <div className="flex items-center justify-between">
-              <span className="text-[14px] font-bold text-accent-strong">
-                {paidNow > 0 ? 'Kalan Tutar' : 'Net Tutar'}
-              </span>
-              <span className="font-mono text-[18px] font-bold text-accent-strong tabular-nums">
-                {formatMoney(paidNow > 0 ? remaining : net)}
-              </span>
-            </div>
-            {isCustom && net > 0 && (
-              <p className="mt-1.5 mb-0 text-right font-mono text-[11px] text-ink-3">
-                Özel plan · ödeme tarihleri esnek
-              </p>
-            )}
-            {showSchedule && (
-              <p className="mt-1.5 mb-0 text-right font-mono text-[11px] text-ink-3">
-                {isPerTerm ? 'Kur Başına' : draft.plan} · {installmentCount} ×{' '}
-                {formatMoney(Math.round(remaining / installmentCount))}
-              </p>
-            )}
-          </div>
-        ) : (
-          <p className="m-0 mt-3 flex items-center gap-2 rounded-lg bg-warn-soft px-3.5 py-2.5 text-[12.5px] font-medium text-warn-ink">
-            <Icon name="info" size={15} className="shrink-0" />
-            Kur ücreti girilmeden onay yapılamaz.
-          </p>
-        )}
-
-        {/* installment preview — mirrors the schedule the backend will create */}
-        {showSchedule && (
-          <div className="mt-3 flex flex-col">
-            <span className="kicker mb-1.5 block">TAKSİT ÖNİZLEME</span>
-            {schedule.map((item) => (
-              <div
-                key={item.sequence}
-                className="flex items-center justify-between border-b border-line py-[7px] text-[13px] last:border-b-0"
-              >
-                <span className="text-ink-3">
-                  {item.sequence}. {isPerTerm ? 'Kur' : 'Taksit'}
-                </span>
-                <span className="font-mono text-[12px] text-ink-3">
-                  {item.due ? formatDate(item.due) : '—'}
-                </span>
-                <span className="font-mono tabular-nums">{formatMoney(item.amount)}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        <FinanceFields form={draft} update={update} patch={patch} startDate={student.start} />
       </Section>
     </>
   );
@@ -869,15 +700,6 @@ function FinanceTab({ student, installments, payments }: FinanceTabProps) {
   );
 }
 
-function SummaryRow({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
-  return (
-    <div className="mb-1.5 flex items-center justify-between last:mb-0">
-      <span className="text-[13px] text-ink-2">{label}</span>
-      <span className={cn('font-mono text-[13px] tabular-nums', ok && 'text-ok')}>{value}</span>
-    </div>
-  );
-}
-
 /** Profile details submitted through the welcome or manual form; only filled rows. */
 function ProfileSection({ student }: { student: Student }) {
   const rows: { label: string; value?: string; mono?: boolean }[] = [
@@ -922,15 +744,6 @@ function ContactRows({ student }: { student: Student }) {
         <InfoRow label="İletişim Telefonu" value={student.contactPhone} mono />
       )}
     </>
-  );
-}
-
-function EditField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-[12.5px] font-medium text-ink-2">{label}</span>
-      {children}
-    </label>
   );
 }
 
