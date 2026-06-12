@@ -7,6 +7,9 @@ import { invitesApi } from './invitesApi';
 
 const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim'] as const;
 
+/** Adjectives the hero headline cycles through — all fit "Power'ın ___ dünyası". */
+const HERO_WORDS = ['ayrıcalıklı', 'başarı dolu', 'ilham veren', 'enerji dolu'] as const;
+
 const EDU_LEVELS = [
   'Lise',
   'Ön Lisans',
@@ -75,6 +78,13 @@ export function WelcomeFormPage() {
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [heroWord, setHeroWord] = useState(0);
+
+  // Cycle the hero adjective for a lively first impression.
+  useEffect(() => {
+    const id = setInterval(() => setHeroWord((i) => (i + 1) % HERO_WORDS.length), 2600);
+    return () => clearInterval(id);
+  }, []);
 
   // Each step starts at the top instead of inheriting the previous scroll.
   useEffect(() => {
@@ -229,8 +239,11 @@ export function WelcomeFormPage() {
           </span>
           <h1 className="m-0 text-[clamp(28px,7.5vw,42px)] font-bold leading-[1.1] tracking-[-0.03em]">
             Power'ın{' '}
-            <span className="font-script text-gradient-brand block py-1 text-[clamp(48px,13vw,76px)] font-semibold leading-[1.05]">
-              ayrıcalıklı
+            <span
+              key={HERO_WORDS[heroWord]}
+              className="font-script text-gradient-brand word-swap block py-1 text-[clamp(48px,13vw,76px)] font-semibold leading-[1.05]"
+            >
+              {HERO_WORDS[heroWord]}
             </span>{' '}
             dünyasına hoş geldin{firstName ? `, ${firstName}` : ''}!
           </h1>
