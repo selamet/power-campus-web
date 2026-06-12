@@ -213,7 +213,8 @@ export function DatePicker({
             aria-label={labelId}
             style={{ position: 'fixed', left: pos.left, top: pos.top }}
             className={cn(
-              'anim-scale-in card z-[100] w-[296px] p-3 shadow-float',
+              // Above the modal layer (z-150) so the calendar works inside dialogs.
+              'anim-scale-in card z-[200] w-[296px] p-3 shadow-float',
               pos.openUp ? '-translate-y-full origin-bottom' : 'origin-top',
             )}
           >

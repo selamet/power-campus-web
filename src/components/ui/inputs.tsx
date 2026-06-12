@@ -218,7 +218,8 @@ export function Select({
             role="listbox"
             style={{ position: 'fixed', left: pos.left, top: pos.top, width: pos.width }}
             className={cn(
-              'anim-scale-in card z-[100] max-h-[280px] overflow-y-auto p-1.5 shadow-float',
+              // Above the modal layer (z-150) so dropdowns work inside dialogs.
+              'anim-scale-in card z-[200] max-h-[280px] overflow-y-auto p-1.5 shadow-float',
               pos.openUp ? '-translate-y-full origin-bottom' : 'origin-top',
             )}
           >
