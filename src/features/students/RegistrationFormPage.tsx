@@ -1,15 +1,19 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, DatePicker, Field, Icon, Input, Logo, Select, Steps, Textarea } from '@/components/ui';
+import { Button, DatePicker, Field, Icon, Input, Select, Steps } from '@/components/ui';
+import { COURSES, GOALS, LANGUAGES, LEVELS, PAYMENT_PLANS, PAY_METHODS } from '@/constants/options';
 import {
-  CITIES,
-  COURSES,
-  GOALS,
-  LANGUAGES,
-  LEVELS,
-  PAYMENT_PLANS,
-  PAY_METHODS,
-} from '@/constants/options';
+  ContactFields,
+  PersonalFields,
+  SectionHead,
+  WelcomeShell,
+} from '@/features/students/components/StudentFormKit';
+import {
+  FORM_GRID,
+  PERSON_FORM_DEFAULTS,
+  useStepForm,
+  type FieldUpdater,
+  type PersonCoreForm,
+} from '@/features/students/components/useStepForm';
 import { useStudentActions } from '@/features/students/useStudentActions';
 import { paths } from '@/routes/paths';
 import type { NewStudentInput } from '@/types/domain';
@@ -17,23 +21,12 @@ import { formatMoney } from '@/utils/format';
 
 const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim', 'Finans'] as const;
 
-interface FormState {
-  name: string;
-  tckn: string;
-  birth: string;
-  gender: string;
-  city: string;
-  addr: string;
-  email: string;
-  phone: string;
+interface FormState extends PersonCoreForm {
   lang: string;
   level: string;
   goal: string;
   course: string;
   start: string;
-  cName: string;
-  cRelation: string;
-  cPhone: string;
   fee: string;
   plan: string;
   payMethod: string;
@@ -42,22 +35,12 @@ interface FormState {
 }
 
 const initialForm: FormState = {
-  name: '',
-  tckn: '',
-  birth: '',
-  gender: '',
-  city: 'İstanbul',
-  addr: '',
-  email: '',
-  phone: '',
+  ...PERSON_FORM_DEFAULTS,
   lang: LANGUAGES[0],
   level: LEVELS[0],
   goal: GOALS[0],
   course: COURSES[0],
   start: '',
-  cName: '',
-  cRelation: 'Anne',
-  cPhone: '',
   fee: '',
   plan: 'Peşin',
   payMethod: PAY_METHODS[0],
@@ -65,30 +48,19 @@ const initialForm: FormState = {
   discount: '0',
 };
 
-const GRID = 'form-grid grid grid-cols-1 gap-3.5 sm:grid-cols-2';
-
+/**
+ * Staff-only manual registration (`/kayit/yeni`). Shares the welcome theme
+ * with the public invite form but adds the admin-only education and finance
+ * steps plus navigation back to the dashboard.
+ */
 export function RegistrationFormPage() {
   const navigate = useNavigate();
   const { create } = useStudentActions();
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(initialForm);
+  const { step, form, update, patch, next, back, isLast } = useStepForm(
+    initialForm,
+    FORM_STEPS.length,
+  );
 
-  // Reset scroll to the top whenever the step changes so each step
-  // starts at the form header instead of inheriting the previous scroll.
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [step]);
-
-  const update =
-    (key: keyof FormState) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-      setForm((prev) => ({ ...prev, [key]: event.target.value }));
-
-  const patch = (partial: Partial<FormState>) => setForm((prev) => ({ ...prev, ...partial }));
-
-  const isLast = step === FORM_STEPS.length - 1;
-  const next = () => setStep((s) => Math.min(s + 1, FORM_STEPS.length - 1));
-  const back = () => setStep((s) => Math.max(s - 1, 0));
   const close = () => navigate(paths.overview);
 
   const save = () => {
@@ -114,28 +86,44 @@ export function RegistrationFormPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
-      {/* header */}
-      <div className="sticky top-0 z-20 flex items-center border-b border-line bg-[hsl(30_24%_97%/0.85)] px-6 py-3.5 backdrop-blur-[12px] dark:bg-[hsl(24_12%_8%/0.85)]">
-        <Button variant="quiet" onClick={close}>
-          <Icon name="arrowL" size={18} />
-          Dashboard
-        </Button>
-        <div className="flex-1" />
-        <Logo height={26} />
-      </div>
-
-      <div className="mx-auto max-w-[720px] px-5 pt-5 pb-8">
-        <div className="mb-4 flex flex-col gap-1 text-center">
-          <span className="kicker">MANUEL KAYIT</span>
-          <h1 className="m-0 text-[22px] font-bold tracking-[-0.02em]">Yeni Öğrenci Kaydı</h1>
+    <WelcomeShell
+      badge={
+        <>
+          <Icon name="shield" size={14} />
+          Yönetici
+        </>
+      }
+    >
+      <div className="mx-auto w-full max-w-[720px] flex-1 px-5 pt-5 pb-8">
+        <div className="anim-fade-up mb-6">
+          <Button variant="quiet" onClick={close}>
+            <Icon name="arrowL" size={18} />
+            Dashboard
+          </Button>
+          <div className="mt-2 text-center">
+            <span className="kicker mb-2 inline-flex items-center gap-1.5 text-accent">
+              <Icon name="sparkle" size={13} />
+              Manuel kayıt
+              <Icon name="sparkle" size={13} />
+            </span>
+            <h1 className="m-0 text-[clamp(26px,6vw,36px)] font-bold leading-[1.1] tracking-[-0.03em]">
+              Yeni{' '}
+              <span className="font-script text-[clamp(40px,9vw,56px)] font-semibold leading-[1.05] text-accent">
+                öğrenci
+              </span>{' '}
+              kaydı
+            </h1>
+            <p className="mx-auto mt-2 mb-0 max-w-[440px] text-[13.5px] text-ink-3">
+              Öğrenciyi adım adım kaydedin; eğitim ve ödeme planı bu ekrandan tanımlanır.
+            </p>
+          </div>
         </div>
 
         <div className="mb-5">
           <Steps steps={FORM_STEPS} current={step} />
         </div>
 
-        <div className="card p-6">
+        <div className="card-glow p-5 sm:p-6">
           {step === 0 && (
             <div className="anim-fade-in">
               <SectionHead
@@ -143,48 +131,7 @@ export function RegistrationFormPage() {
                 title="Kişisel Bilgiler"
                 desc="Öğrencinin kimlik ve temel bilgileri"
               />
-              <div className={GRID}>
-                <Field label="Ad Soyad" required full>
-                  <Input value={form.name} onChange={update('name')} placeholder="Örn. Ayşe Yılmaz" />
-                </Field>
-                <Field label="T.C. Kimlik No" required>
-                  <Input
-                    value={form.tckn}
-                    onChange={(event) =>
-                      patch({ tckn: event.target.value.replace(/\D/g, '').slice(0, 11) })
-                    }
-                    placeholder="Örn. 12345678901"
-                    className="font-mono"
-                    inputMode="numeric"
-                  />
-                </Field>
-                <Field label="Doğum Tarihi">
-                  <DatePicker
-                    value={form.birth}
-                    onChange={(iso) => patch({ birth: iso })}
-                    placeholder="gg.aa.yyyy"
-                    max={new Date().toISOString().slice(0, 10)}
-                  />
-                </Field>
-                <Field label="Cinsiyet">
-                  <Select value={form.gender} onChange={update('gender')}>
-                    <option value="">Seçiniz</option>
-                    <option>Kadın</option>
-                    <option>Erkek</option>
-                    <option>Belirtmek istemiyor</option>
-                  </Select>
-                </Field>
-                <Field label="Şehir">
-                  <Select value={form.city} onChange={update('city')}>
-                    {CITIES.map((city) => (
-                      <option key={city}>{city}</option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="Adres" full>
-                  <Textarea rows={2} value={form.addr} onChange={update('addr')} placeholder="Mahalle, cadde, kapı no, ilçe" />
-                </Field>
-              </div>
+              <PersonalFields form={form} update={update} patch={patch} />
             </div>
           )}
 
@@ -194,8 +141,9 @@ export function RegistrationFormPage() {
                 icon="graduation"
                 title="Eğitim Bilgileri"
                 desc="Hangi dil, hangi seviye ve hedef"
+                tone="accent-2"
               />
-              <div className={GRID}>
+              <div className={FORM_GRID}>
                 <Field label="Dil" icon="globe" required>
                   <Select value={form.lang} onChange={update('lang')}>
                     {LANGUAGES.map((item) => (
@@ -241,32 +189,9 @@ export function RegistrationFormPage() {
                 icon="phone"
                 title="İletişim & Acil Durum Kişisi"
                 desc="Öğrenci ve birincil iletişim kişisi"
+                tone="ok"
               />
-              <div className={GRID}>
-                <Field label="E-posta" icon="mail" required>
-                  <Input type="email" value={form.email} onChange={update('email')} placeholder="ornek@mail.com" />
-                </Field>
-                <Field label="Cep Telefonu" icon="phone" required>
-                  <Input value={form.phone} onChange={update('phone')} placeholder="0 (5__) ___ __ __" inputMode="tel" />
-                </Field>
-              </div>
-              <div className="divider my-4" />
-              <span className="kicker mb-3 block">BİRİNCİL İLETİŞİM KİŞİSİ</span>
-              <div className={GRID}>
-                <Field label="Ad Soyad">
-                  <Input value={form.cName} onChange={update('cName')} placeholder="Veli / yakını" />
-                </Field>
-                <Field label="Yakınlık">
-                  <Select value={form.cRelation} onChange={update('cRelation')}>
-                    {['Anne', 'Baba', 'Eş', 'Kardeş', 'Vasi', 'Kendisi', 'Diğer'].map((item) => (
-                      <option key={item}>{item}</option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="Telefon" icon="phone" full>
-                  <Input value={form.cPhone} onChange={update('cPhone')} placeholder="0 (5__) ___ __ __" inputMode="tel" />
-                </Field>
-              </div>
+              <ContactFields form={form} update={update} />
             </div>
           )}
 
@@ -295,29 +220,13 @@ export function RegistrationFormPage() {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function SectionHead({ icon, title, desc }: { icon: string; title: string; desc: string }) {
-  return (
-    <div className="anim-fade-in mb-4 flex items-center gap-3">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
-        <Icon name={icon} size={20} />
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <h3 className="m-0 text-lg font-bold tracking-[-0.01em]">{title}</h3>
-        <span className="text-[13px] text-ink-3">{desc}</span>
-      </div>
-    </div>
+    </WelcomeShell>
   );
 }
 
 interface FinanceSectionProps {
   form: FormState;
-  update: (
-    key: keyof FormState,
-  ) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  update: FieldUpdater<FormState>;
   patch: (partial: Partial<FormState>) => void;
 }
 
@@ -333,7 +242,7 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
         title="Finans & Ödeme Planı"
         desc="Kayıt ücreti, indirim, taksit ve ödeme yöntemi"
       />
-      <div className={GRID}>
+      <div className={FORM_GRID}>
         <Field label="Kayıt Ücreti (₺)" required>
           <Input
             value={form.fee}
