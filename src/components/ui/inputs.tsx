@@ -135,14 +135,20 @@ export function Select({
         commitTyped();
       }
     };
-    const onReflow = () => setOpen(false);
+    // Close when the page reflows under the panel — but scrolling the option
+    // list itself must not dismiss it.
+    const onScroll = (e: Event) => {
+      if (panelRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    const onResize = () => setOpen(false);
     document.addEventListener('mousedown', onDown);
-    window.addEventListener('scroll', onReflow, true);
-    window.addEventListener('resize', onReflow);
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onResize);
     return () => {
       document.removeEventListener('mousedown', onDown);
-      window.removeEventListener('scroll', onReflow, true);
-      window.removeEventListener('resize', onReflow);
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, query]);
