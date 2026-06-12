@@ -205,11 +205,31 @@ export function WelcomeFormPage() {
     );
   }
 
+  const firstName = form.name.trim().split(' ')[0];
+
   return (
     <div className="welcome-bg min-h-screen">
       <WelcomeHeader isPreview={isPreview} />
 
-      <div className="mx-auto max-w-[720px] px-5 pt-6 pb-8">
+      <div className="mx-auto max-w-[720px] px-5 pt-8 pb-8">
+        <div className="anim-fade-up mb-7 text-center">
+          <h1 className="m-0 text-[clamp(26px,5vw,38px)] font-bold leading-[1.15] tracking-[-0.03em]">
+            Power'ın{' '}
+            <span className="font-script text-gradient-brand text-[clamp(36px,6.5vw,52px)] font-semibold leading-none">
+              ayrıcalıklı
+            </span>{' '}
+            dünyasına hoş geldin{firstName ? `, ${firstName}` : ''}!
+          </h1>
+          <p className="mx-auto mt-3 mb-0 max-w-[460px] text-[15px] text-ink-2">
+            Üç kısa adımda kaydını tamamla, gerisini Power ekibi halletsin.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <HeroChip icon="sparkle" tone="accent" text="3 kolay adım" />
+            <HeroChip icon="clock" tone="accent-2" text="2 dakikada biter" />
+            <HeroChip icon="shield" tone="ok" text="Bilgilerin güvende" />
+          </div>
+        </div>
+
         <div className="mb-5">
           <Steps steps={FORM_STEPS} current={step} progress={stepProgress} />
         </div>
@@ -350,11 +370,6 @@ function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   return (
     <div className="sticky top-0 z-20 flex items-center border-b border-line bg-[hsl(30_24%_97%/0.85)] px-6 py-3 backdrop-blur-[12px] dark:bg-[hsl(24_12%_8%/0.85)]">
       <Logo height={26} />
-      <span className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[15.5px] font-semibold tracking-[-0.01em] text-ink sm:block">
-        Power'ın{' '}
-        <span className="font-script text-[26px] font-semibold leading-none text-accent">ayrıcalıklı</span>{' '}
-        dünyasına ilk adımı atıyorsun
-      </span>
       <div className="flex-1" />
       {isPreview && (
         <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-semibold text-accent">
@@ -363,6 +378,23 @@ function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
         </span>
       )}
     </div>
+  );
+}
+
+const CHIP_TONES = {
+  accent: 'border-accent-soft-border bg-accent-soft text-accent',
+  'accent-2': 'border-accent-2-soft-border bg-accent-2-soft text-accent-2',
+  ok: 'border-ok/25 bg-ok-soft text-ok',
+} as const;
+
+function HeroChip({ icon, tone, text }: { icon: string; tone: keyof typeof CHIP_TONES; text: string }) {
+  return (
+    <span
+      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold ${CHIP_TONES[tone]}`}
+    >
+      <Icon name={icon} size={14} />
+      {text}
+    </span>
   );
 }
 

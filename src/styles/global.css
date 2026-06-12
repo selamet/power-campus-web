@@ -217,6 +217,19 @@
     padding-right: 38px;
   }
 
+  /* Brand gradient text — red through pink into indigo. */
+  .text-gradient-brand {
+    background: linear-gradient(
+      100deg,
+      var(--accent) 10%,
+      hsl(330 80% 55%) 50%,
+      var(--accent-2) 90%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   .field-focus:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 4px hsl(var(--accent-h) var(--accent-s) 50% / 0.14);
