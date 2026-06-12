@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, DatePicker, Field, Icon, Input, Select, Steps, Textarea } from '@/components/ui';
 import {
@@ -27,7 +28,8 @@ import {
 import { useStudentActions } from '@/features/students/useStudentActions';
 import { paths } from '@/routes/paths';
 import type { NewStudentInput } from '@/types/domain';
-import { formatMoney } from '@/utils/format';
+import { formatDate, formatMoney } from '@/utils/format';
+import { isValidTckn } from '@/utils/tckn';
 
 const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim', 'Finans'] as const;
 
@@ -87,6 +89,30 @@ function financeSummary(form: FormState) {
   return { terms, termFee, fee, discountValue, net, paidNow, remaining: net - paidNow };
 }
 
+/** ISO date `months` months after `iso`, day clamped like the backend does. */
+function addMonthsIso(iso: string, months: number): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const index = month - 1 + months;
+  const targetYear = year + Math.floor(index / 12);
+  const targetMonth = (index % 12) + 1;
+  const clampedDay = Math.min(day, new Date(targetYear, targetMonth, 0).getDate());
+  return `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`;
+}
+
+/**
+ * Equal installments over the remaining balance, mirroring the backend's
+ * schedule builder (rounding remainder goes to the first installment).
+ */
+function previewInstallments(amount: number, count: number, startIso: string) {
+  const base = Math.floor(amount / count);
+  const remainder = amount - base * count;
+  return Array.from({ length: count }, (_, index) => ({
+    sequence: index + 1,
+    amount: base + (index === 0 ? remainder : 0),
+    due: startIso ? addMonthsIso(startIso, index) : null,
+  }));
+}
+
 /**
  * Staff-only manual registration (`/kayit/yeni`). Shares the welcome theme
  * with the public invite form but adds the admin-only education and finance
@@ -102,36 +128,47 @@ export function RegistrationFormPage() {
 
   const close = () => navigate(paths.overview);
 
+  const tcknError =
+    form.tckn.length === 11 && !isValidTckn(form.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
+
+  const stepValid = useMemo(() => {
+    if (step === 0) return form.name.trim().length > 1 && isValidTckn(form.tckn);
+    if (step === 1) return Boolean(form.start);
+    if (step === 2)
+      return /.+@.+\..+/.test(form.email) && form.phone.replace(/\D/g, '').length >= 10;
+    return Number(form.termFee) > 0;
+  }, [step, form]);
+
   const save = () => {
     const { terms, net, paidNow } = financeSummary(form);
-    const fee = form.termFee ? net : 18500;
     // "Kur Başına" resolves to one installment per term so the backend can
     // build the schedule from the plan label.
     const plan = form.plan === PER_TERM_PLAN ? `${terms} Taksit` : form.plan;
     // Peşin with no explicit opening payment means paid in full; a custom
     // plan has no fixed next date unless one was picked.
-    const paid = form.plan === 'Peşin' && !paidNow ? fee : paidNow;
+    const paid = form.plan === 'Peşin' && !paidNow ? net : paidNow;
     const next =
-      form.plan === 'Peşin' || paid >= fee
+      form.plan === 'Peşin' || paid >= net
         ? null
-        : form.firstDate || (form.plan === CUSTOM_PLAN ? null : '2026-07-01');
+        : form.firstDate || (form.plan === CUSTOM_PLAN ? null : form.start);
     const newStudent: NewStudentInput = {
-      name: form.name || 'Yeni Öğrenci',
+      name: form.name.trim(),
       lang: form.lang,
       level: form.level,
       course: form.course,
       status: 'active',
-      phone: form.phone || '0500 000 00 00',
-      start: form.start || '2026-06-15',
-      fee,
+      phone: form.phone,
+      start: form.start,
+      fee: net,
       paid,
       plan,
       next,
-      joined: '2026-05-30',
-      email: form.email || 'ogrenci@gmail.com',
+      joined: new Date().toISOString().slice(0, 10),
+      email: form.email,
       source: 'manuel',
-      terms: Number(form.terms) || 1,
+      terms,
       note: form.note.trim() || null,
+      payMethod: form.payMethod,
     };
     create(newStudent);
     close();
@@ -183,7 +220,7 @@ export function RegistrationFormPage() {
                 title="Kişisel Bilgiler"
                 desc="Öğrencinin kimlik ve temel bilgileri"
               />
-              <PersonalFields form={form} update={update} patch={patch} />
+              <PersonalFields form={form} update={update} patch={patch} tcknError={tcknError} />
             </div>
           )}
 
@@ -233,7 +270,7 @@ export function RegistrationFormPage() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="Başlangıç Tarihi" icon="calendar">
+                <Field label="Başlangıç Tarihi" icon="calendar" required>
                   <DatePicker
                     value={form.start}
                     onChange={(iso) => patch({ start: iso })}
@@ -269,12 +306,12 @@ export function RegistrationFormPage() {
             {step + 1} / {FORM_STEPS.length}
           </span>
           {!isLast ? (
-            <Button variant="primary" onClick={next}>
+            <Button variant="primary" disabled={!stepValid} onClick={next}>
               Devam et
               <Icon name="arrowR" size={17} />
             </Button>
           ) : (
-            <Button variant="primary" onClick={save}>
+            <Button variant="primary" disabled={!stepValid} onClick={save}>
               <Icon name="check" size={18} />
               Kaydı Tamamla
             </Button>
@@ -296,6 +333,12 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
   const isCustom = form.plan === CUSTOM_PLAN;
   const isPerTerm = form.plan === PER_TERM_PLAN;
   const installmentCount = isPerTerm ? terms : parseInt(form.plan, 10);
+  // Installments split what is left after the discount and opening payment.
+  const showSchedule =
+    !isCustom && form.plan !== 'Peşin' && installmentCount > 0 && remaining > 0;
+  const schedule = showSchedule
+    ? previewInstallments(remaining, installmentCount, form.firstDate || form.start)
+    : [];
 
   const digits = (value: string) => value.replace(/\D/g, '');
 
@@ -437,22 +480,41 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
             {formatMoney(paidNow > 0 ? remaining : net)}
           </span>
         </div>
-        {net > 0 && (isCustom ? (
+        {isCustom && net > 0 && (
           <p className="mt-2 mb-0 text-right font-mono text-[11.5px] text-ink-3">
             Özel plan · ödeme tarihleri esnek
           </p>
-        ) : isPerTerm ? (
+        )}
+        {showSchedule && (
           <p className="mt-2 mb-0 text-right font-mono text-[11.5px] text-ink-3">
-            Kur Başına · {terms} × {formatMoney(Math.round(net / terms))}
+            {isPerTerm ? 'Kur Başına' : form.plan} · {installmentCount} ×{' '}
+            {formatMoney(Math.round(remaining / installmentCount))}
           </p>
-        ) : (
-          !Number.isNaN(installmentCount) && (
-            <p className="mt-2 mb-0 text-right font-mono text-[11.5px] text-ink-3">
-              {form.plan} · ayda {formatMoney(Math.round(net / installmentCount))}
-            </p>
-          )
-        ))}
+        )}
       </div>
+
+      {/* installment preview — mirrors the schedule the backend will create */}
+      {showSchedule && (
+        <div className="card mt-3 p-4">
+          <span className="kicker mb-2.5 block">TAKSİT ÖNİZLEME</span>
+          <div className="flex flex-col">
+            {schedule.map((item) => (
+              <div
+                key={item.sequence}
+                className="flex items-center justify-between border-b border-line py-2 text-[13.5px] last:border-b-0 last:pb-0 first:pt-0"
+              >
+                <span className="text-ink-2">
+                  {item.sequence}. {isPerTerm ? 'Kur' : 'Taksit'}
+                </span>
+                <span className="font-mono text-[12px] text-ink-3">
+                  {item.due ? formatDate(item.due) : '—'}
+                </span>
+                <span className="font-mono tabular-nums">{formatMoney(item.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

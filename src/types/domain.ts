@@ -31,7 +31,11 @@ export interface Student {
 }
 
 /** Payload used when creating a student through the manual registration form. */
-export type NewStudentInput = Omit<Student, 'id'> & { id?: string };
+export type NewStudentInput = Omit<Student, 'id'> & {
+  id?: string;
+  /** Method of the opening payment, when one was collected at registration. */
+  payMethod?: string;
+};
 
 export interface Staff {
   name: string;

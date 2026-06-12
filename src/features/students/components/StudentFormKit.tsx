@@ -16,16 +16,24 @@ interface PersonalFieldsProps {
   patch: (partial: Partial<PersonCoreForm>) => void;
   tcknReadOnly?: boolean;
   tcknHint?: string;
+  tcknError?: string;
 }
 
 /** Identity basics: name, TCKN, birth date, gender, city, address. */
-export function PersonalFields({ form, update, patch, tcknReadOnly, tcknHint }: PersonalFieldsProps) {
+export function PersonalFields({
+  form,
+  update,
+  patch,
+  tcknReadOnly,
+  tcknHint,
+  tcknError,
+}: PersonalFieldsProps) {
   return (
     <div className={FORM_GRID}>
       <Field label="Ad Soyad" required full>
         <Input value={form.name} onChange={update('name')} placeholder="Örn. Ayşe Yılmaz" />
       </Field>
-      <Field label="T.C. Kimlik No" required hint={tcknHint}>
+      <Field label="T.C. Kimlik No" required hint={tcknHint} error={tcknError}>
         <Input
           value={form.tckn}
           onChange={(event) => patch({ tckn: event.target.value.replace(/\D/g, '').slice(0, 11) })}

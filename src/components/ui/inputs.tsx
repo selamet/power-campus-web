@@ -23,13 +23,15 @@ interface FieldProps {
   label?: string;
   required?: boolean;
   hint?: string;
+  /** Validation message shown in place of the hint. */
+  error?: string;
   icon?: string;
   full?: boolean;
   children: ReactNode;
 }
 
 /** Labeled form field wrapper with optional icon, required marker and hint. */
-export function Field({ label, required, hint, icon, full, children }: FieldProps) {
+export function Field({ label, required, hint, error, icon, full, children }: FieldProps) {
   return (
     <div className={cn('flex flex-col gap-[7px]', full && 'col-span-full')}>
       {label && (
@@ -40,7 +42,11 @@ export function Field({ label, required, hint, icon, full, children }: FieldProp
         </label>
       )}
       {children}
-      {hint && <span className="text-[11.5px] text-ink-3">{hint}</span>}
+      {error ? (
+        <span className="text-[11.5px] font-medium text-accent">{error}</span>
+      ) : (
+        hint && <span className="text-[11.5px] text-ink-3">{hint}</span>
+      )}
     </div>
   );
 }
