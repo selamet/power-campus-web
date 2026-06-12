@@ -132,6 +132,16 @@ export const RELATIONS = ['Anne', 'Baba', 'Eş', 'Kardeş', 'Vasi', 'Kendisi', '
 
 export const GENDERS = ['Kadın', 'Erkek', 'Belirtmek istemiyor'] as const;
 
+export const EDU_LEVELS = [
+  'Lise',
+  'Ön Lisans',
+  'Lisans',
+  'Yüksek Lisans',
+  'Doktora',
+  'Mezun',
+  'Diğer',
+] as const;
+
 /** Free-schedule plan — the student pays whenever they want. */
 export const CUSTOM_PLAN = 'Özel';
 

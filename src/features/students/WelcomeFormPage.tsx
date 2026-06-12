@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { ApiError } from '@/api/axiosClient';
-import { Button, Field, Icon, Input, Select, Steps, useToast } from '@/components/ui';
+import { Button, Icon, Steps, useToast } from '@/components/ui';
 import {
   ContactFields,
+  EducationFields,
   PersonalFields,
   SectionHead,
   WelcomeShell,
 } from '@/features/students/components/StudentFormKit';
 import {
-  FORM_GRID,
+  EDUCATION_FORM_DEFAULTS,
   PERSON_FORM_DEFAULTS,
   useStepForm,
+  type EducationCoreForm,
   type PersonCoreForm,
 } from '@/features/students/components/useStepForm';
 import { invitesApi } from './invitesApi';
@@ -21,22 +23,7 @@ const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim'] as const;
 /** Adjectives the hero headline cycles through — all fit "Power'ın ___ dünyası". */
 const HERO_WORDS = ['ayrıcalıklı', 'başarı dolu', 'ilham veren', 'enerji dolu'] as const;
 
-const EDU_LEVELS = [
-  'Lise',
-  'Ön Lisans',
-  'Lisans',
-  'Yüksek Lisans',
-  'Doktora',
-  'Mezun',
-  'Diğer',
-] as const;
-
-interface FormState extends PersonCoreForm {
-  eduLevel: string;
-  school: string;
-  department: string;
-  grade: string;
-}
+interface FormState extends PersonCoreForm, EducationCoreForm {}
 
 /**
  * Public, self-service form reached through the invite link shared with the
@@ -51,13 +38,10 @@ export function WelcomeFormPage() {
   const { step, form, setForm, update, patch, next, back, isLast } = useStepForm<FormState>(
     {
       ...PERSON_FORM_DEFAULTS,
+      ...EDUCATION_FORM_DEFAULTS,
       // The invite link carries the student's TCKN — pre-fill it so they don't
       // re-type it (and it stays read-only on the form).
       tckn: isPreview ? '' : (tckn ?? '').replace(/\D/g, '').slice(0, 11),
-      eduLevel: EDU_LEVELS[0],
-      school: '',
-      department: '',
-      grade: '',
     },
     FORM_STEPS.length,
   );
@@ -246,24 +230,7 @@ export function WelcomeFormPage() {
           {step === 1 && (
             <div className="anim-fade-in">
               <SectionHead icon="graduation" title="Eğitim Bilgilerin" desc="Hangi okulda okuyorsun, hangi bölüm" tone="accent-2" />
-              <div className={FORM_GRID}>
-                <Field label="Öğrenim Durumu" icon="trend" required>
-                  <Select value={form.eduLevel} onChange={update('eduLevel')}>
-                    {EDU_LEVELS.map((item) => (
-                      <option key={item}>{item}</option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="Sınıf / Yıl" icon="calendar" hint="Opsiyonel">
-                  <Input value={form.grade} onChange={update('grade')} placeholder="Örn. 3. sınıf" />
-                </Field>
-                <Field label="Okul / Üniversite" icon="book" required full>
-                  <Input value={form.school} onChange={update('school')} placeholder="Örn. İstanbul Üniversitesi" />
-                </Field>
-                <Field label="Bölüm" icon="graduation" full>
-                  <Input value={form.department} onChange={update('department')} placeholder="Örn. İşletme" />
-                </Field>
-              </div>
+              <EducationFields form={form} update={update} />
             </div>
           )}
 

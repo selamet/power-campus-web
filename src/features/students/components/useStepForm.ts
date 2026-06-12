@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
-import { RELATIONS } from '@/constants/options';
+import { EDU_LEVELS, RELATIONS } from '@/constants/options';
 
 export const FORM_GRID = 'stagger form-grid grid grid-cols-1 gap-3.5 sm:grid-cols-2';
 
@@ -21,6 +21,21 @@ export interface PersonCoreForm {
   cRelation: string;
   cPhone: string;
 }
+
+/** Education fields collected by the welcome form and editable at approval. */
+export interface EducationCoreForm {
+  eduLevel: string;
+  school: string;
+  department: string;
+  grade: string;
+}
+
+export const EDUCATION_FORM_DEFAULTS: EducationCoreForm = {
+  eduLevel: EDU_LEVELS[0],
+  school: '',
+  department: '',
+  grade: '',
+};
 
 export const PERSON_FORM_DEFAULTS: PersonCoreForm = {
   name: '',

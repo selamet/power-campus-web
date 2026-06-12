@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
 import { DatePicker, Field, Icon, Input, Logo, Select, Textarea } from '@/components/ui';
-import { CITIES, GENDERS, RELATIONS } from '@/constants/options';
-import { FORM_GRID, type FieldUpdater, type PersonCoreForm } from './useStepForm';
+import { CITIES, EDU_LEVELS, GENDERS, RELATIONS } from '@/constants/options';
+import {
+  FORM_GRID,
+  type EducationCoreForm,
+  type FieldUpdater,
+  type PersonCoreForm,
+} from './useStepForm';
 
 /**
  * Shared building blocks for the student registration forms: the public
@@ -68,6 +73,35 @@ export function PersonalFields({
       </Field>
       <Field label="Adres" full>
         <Textarea rows={2} value={form.addr} onChange={update('addr')} placeholder="Mahalle, cadde, kapı no, ilçe" />
+      </Field>
+    </div>
+  );
+}
+
+interface EducationFieldsProps {
+  form: EducationCoreForm;
+  update: FieldUpdater<EducationCoreForm>;
+}
+
+/** School background: education level, grade, school and department. */
+export function EducationFields({ form, update }: EducationFieldsProps) {
+  return (
+    <div className={FORM_GRID}>
+      <Field label="Öğrenim Durumu" icon="trend" required>
+        <Select value={form.eduLevel} onChange={update('eduLevel')}>
+          {EDU_LEVELS.map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Sınıf / Yıl" icon="calendar" hint="Opsiyonel">
+        <Input value={form.grade} onChange={update('grade')} placeholder="Örn. 3. sınıf" />
+      </Field>
+      <Field label="Okul / Üniversite" icon="book" required full>
+        <Input value={form.school} onChange={update('school')} placeholder="Örn. İstanbul Üniversitesi" />
+      </Field>
+      <Field label="Bölüm" icon="graduation" full>
+        <Input value={form.department} onChange={update('department')} placeholder="Örn. İşletme" />
       </Field>
     </div>
   );

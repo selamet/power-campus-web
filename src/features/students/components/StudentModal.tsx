@@ -3,17 +3,26 @@ import { Avatar, Badge, type BadgeKind, Button, Icon, Input, Modal, Select } fro
 import {
   COURSES,
   CUSTOM_PLAN,
+  EDU_LEVELS,
   LANGUAGES,
   LEVELS,
   PAYMENT_PLANS,
   PAY_METHODS,
   PER_TERM_PLAN,
+  RELATIONS,
   TERM_COUNTS,
 } from '@/constants/options';
 import { STATUS } from '@/constants/status';
 import type { Student } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { formatDate, formatMoney, paidPercent } from '@/utils/format';
+import { isValidTckn } from '@/utils/tckn';
+import {
+  ContactFields,
+  EducationFields,
+  PersonalFields,
+} from './StudentFormKit';
+import type { EducationCoreForm, FieldUpdater, PersonCoreForm } from './useStepForm';
 import {
   computeFinance,
   planInstallmentCount,
@@ -73,6 +82,27 @@ const INSTALLMENT_BADGE: Record<InstallmentStatus, { kind: BadgeKind; label: str
   pending: { kind: 'neutral', label: 'Bekliyor' },
 };
 
+/** Personal + education details editable while reviewing a pending student. */
+type InfoDraft = PersonCoreForm & EducationCoreForm;
+
+const toInfoDraft = (s: Student): InfoDraft => ({
+  name: s.name,
+  tckn: s.tckn ?? '',
+  birth: s.birthDate ?? '',
+  gender: s.gender ?? '',
+  city: s.city || 'İstanbul',
+  addr: s.address ?? '',
+  email: s.email,
+  phone: s.phone,
+  cName: s.contactName ?? '',
+  cRelation: s.contactRelation || RELATIONS[0],
+  cPhone: s.contactPhone ?? '',
+  eduLevel: s.educationLevel || EDU_LEVELS[0],
+  school: s.school ?? '',
+  department: s.department ?? '',
+  grade: s.grade ?? '',
+});
+
 const toApprovalDraft = (s: Student): ApprovalDraft => {
   const terms = s.terms && s.terms > 0 ? s.terms : 1;
   return {
@@ -129,6 +159,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [approval, setApproval] = useState<ApprovalDraft>(() => toApprovalDraft(student));
+  const [info, setInfo] = useState<InfoDraft>(() => toInfoDraft(student));
   const [draft, setDraft] = useState<EditDraft>(() => toEditDraft(student));
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -165,9 +196,14 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
     setApproval((prev) => ({ ...prev, ...partial }));
   const setEditField = (key: keyof EditDraft, value: string) =>
     setDraft((prev) => ({ ...prev, [key]: value }));
+  const updateInfo: FieldUpdater<InfoDraft> = (key) => (event) =>
+    setInfo((prev) => ({ ...prev, [key]: event.target.value }));
+  const patchInfo = (partial: Partial<InfoDraft>) => setInfo((prev) => ({ ...prev, ...partial }));
 
   const fin = approvalFinance(approval);
-  const canApprove = fin.termFee > 0;
+  const tcknError =
+    info.tckn && !isValidTckn(info.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
+  const canApprove = fin.termFee > 0 && !tcknError;
 
   const approve = async () => {
     const plan = resolvePlan(approval.plan, fin.terms);
@@ -179,7 +215,23 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
         ? null
         : approval.firstDate || (approval.plan === CUSTOM_PLAN ? null : current.start);
     setSaving(true);
+    // Approval persists the reviewer's edits on both tabs in a single update.
     const ok = await onUpdate(current.id, {
+      name: info.name.trim() || current.name,
+      email: info.email,
+      phone: info.phone,
+      tckn: info.tckn || null,
+      birthDate: info.birth || null,
+      gender: info.gender || null,
+      city: info.city || null,
+      address: info.addr || null,
+      educationLevel: info.eduLevel || null,
+      school: info.school || null,
+      department: info.department || null,
+      grade: info.grade || null,
+      contactName: info.cName || null,
+      contactRelation: info.cName ? info.cRelation : null,
+      contactPhone: info.cPhone || null,
       lang: approval.lang,
       level: approval.level,
       course: approval.course,
@@ -350,7 +402,30 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
             fin={fin}
           />
         ) : isPending && tab === 'bilgiler' ? (
-          <StudentInfo student={current} />
+          <>
+            <p className="m-0 flex items-start gap-2.5 rounded-xl bg-accent-soft px-3.5 py-3 text-[13px] leading-[1.5] text-ink-2">
+              <Icon name="edit" size={18} className="mt-px shrink-0 text-accent" />
+              <span>
+                Gerekirse öğrencinin bilgilerini düzelt — <strong>onayladığında</strong> buradaki
+                değişiklikler de kaydedilir.
+              </span>
+            </p>
+            <Section icon="user" title="Kişisel Bilgiler">
+              <div className="pt-1">
+                <PersonalFields form={info} update={updateInfo} patch={patchInfo} tcknError={tcknError} />
+              </div>
+            </Section>
+            <Section icon="graduation" title="Eğitim Bilgileri">
+              <div className="pt-1">
+                <EducationFields form={info} update={updateInfo} />
+              </div>
+            </Section>
+            <Section icon="phone" title="İletişim">
+              <div className="pt-1">
+                <ContactFields form={info} update={updateInfo} />
+              </div>
+            </Section>
+          </>
         ) : tab === 'ozet' ? (
           <>
             <Section icon="phone" title="İletişim">
@@ -386,10 +461,12 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
         {isPending ? (
           !rejecting ? (
             <div className="flex flex-col gap-2">
-              {!canApprove && tab === 'onay' && (
+              {!canApprove && (
                 <span className="flex items-center gap-1.5 text-[12px] font-medium text-warn-ink">
                   <Icon name="info" size={14} />
-                  Onay için kur ücreti girilmeli.
+                  {fin.termFee <= 0
+                    ? 'Onay için kur ücreti girilmeli.'
+                    : 'T.C. Kimlik No geçersiz — Öğrenci Bilgileri sekmesinden düzeltin.'}
                 </span>
               )}
               <div className="flex items-center gap-3">
@@ -702,21 +779,6 @@ function ApprovalFinance({ student, draft, patch, fin }: ApprovalFinanceProps) {
           </div>
         )}
       </Section>
-    </>
-  );
-}
-
-/** Contact + profile details for the pending student's info tab. */
-function StudentInfo({ student }: { student: Student }) {
-  return (
-    <>
-      <Section icon="phone" title="İletişim">
-        <InfoRow label="E-posta" value={student.email} />
-        <InfoRow label="Telefon" value={student.phone} mono />
-        <ContactRows student={student} />
-        <InfoRow label="Form Tarihi" value={formatDate(student.joined)} />
-      </Section>
-      <ProfileSection student={student} />
     </>
   );
 }
