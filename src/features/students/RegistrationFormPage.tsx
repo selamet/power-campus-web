@@ -406,9 +406,7 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
         >
           <Select value={form.plan} onChange={update('plan')}>
             <option>Peşin</option>
-            <option value={PER_TERM_PLAN}>
-              Kur Başına ({terms} ödeme)
-            </option>
+            <option value={PER_TERM_PLAN}>{`Kur Başına (${terms} ödeme)`}</option>
             {PAYMENT_PLANS.filter((item) => item !== 'Peşin').map((item) => (
               <option key={item}>{item}</option>
             ))}
