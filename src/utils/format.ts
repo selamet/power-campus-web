@@ -18,6 +18,12 @@ const MONTHS_SHORT = [
 /** Formats a number as Turkish Lira, e.g. 18500 -> "₺18.500". */
 export const formatMoney = (amount: number): string => `₺${amount.toLocaleString('tr-TR')}`;
 
+/** Strips everything but digits — for numeric-only inputs (amounts, TCKN, phone). */
+export const digitsOnly = (value: string): string => value.replace(/\D/g, '');
+
+/** Today's date as an ISO string (YYYY-MM-DD). */
+export const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
 /** Formats an ISO date (YYYY-MM-DD) as "3 Şub 2026". Returns an em dash for empty input. */
 export const formatDate = (iso: string | null | undefined): string => {
   if (!iso) return '—';

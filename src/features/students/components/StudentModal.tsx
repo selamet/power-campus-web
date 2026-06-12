@@ -14,15 +14,21 @@ import {
 import { STATUS } from '@/constants/status';
 import type { Student } from '@/types/domain';
 import { cn } from '@/utils/cn';
-import { formatDate, formatMoney, paidPercent } from '@/utils/format';
-import { isValidTckn } from '@/utils/tckn';
+import { digitsOnly, formatDate, formatMoney, paidPercent, todayIso } from '@/utils/format';
+import { isValidTckn } from '@/utils/validation';
 import { FinanceFields } from './FinanceFields';
 import {
   ContactFields,
   EducationFields,
   PersonalFields,
 } from './StudentFormKit';
-import { FORM_GRID, type EducationCoreForm, type FieldUpdater, type PersonCoreForm } from './useStepForm';
+import {
+  FORM_GRID,
+  useFormDraft,
+  type EducationCoreForm,
+  type FieldUpdater,
+  type PersonCoreForm,
+} from './useStepForm';
 import {
   FINANCE_FORM_DEFAULTS,
   financeFromForm,
@@ -120,8 +126,6 @@ const toEditDraft = (s: Student): EditDraft => ({
   fee: String(s.fee),
 });
 
-const today = () => new Date().toISOString().slice(0, 10);
-const digits = (value: string) => value.replace(/\D/g, '');
 
 /** Centered modal with tabbed student details, approval flow, editing and payments. */
 export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, onPay }: StudentModalProps) {
@@ -131,14 +135,23 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
   const [rejecting, setRejecting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [approval, setApproval] = useState<ApprovalDraft>(() => toApprovalDraft(student));
-  const [info, setInfo] = useState<InfoDraft>(() => toInfoDraft(student));
-  const [draft, setDraft] = useState<EditDraft>(() => toEditDraft(student));
+  const { form: approval, update: updateApproval, patch: setApprovalField } =
+    useFormDraft<ApprovalDraft>(toApprovalDraft(student));
+  const { form: info, update: updateInfo, patch: patchInfo } = useFormDraft<InfoDraft>(
+    toInfoDraft(student),
+  );
+  const { form: draft, setForm: setDraft, update: updateEdit, patch: patchEdit } =
+    useFormDraft<EditDraft>(toEditDraft(student));
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [paying, setPaying] = useState(false);
   const [savingPay, setSavingPay] = useState(false);
-  const [payForm, setPayForm] = useState({ amount: '', method: PAY_METHODS[0] as string, paidAt: today(), note: '' });
+  const { form: payForm, update: updatePay, patch: patchPay } = useFormDraft({
+    amount: '',
+    method: PAY_METHODS[0] as string,
+    paidAt: todayIso(),
+    note: '',
+  });
 
   const reloadSchedule = async () => {
     const [ins, pays] = await Promise.all([
@@ -164,16 +177,6 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
       active = false;
     };
   }, [student.id, student.status]);
-
-  const setApprovalField = (partial: Partial<ApprovalDraft>) =>
-    setApproval((prev) => ({ ...prev, ...partial }));
-  const updateApproval: FieldUpdater<ApprovalDraft> = (key) => (event) =>
-    setApproval((prev) => ({ ...prev, [key]: event.target.value }));
-  const setEditField = (key: keyof EditDraft, value: string) =>
-    setDraft((prev) => ({ ...prev, [key]: value }));
-  const updateInfo: FieldUpdater<InfoDraft> = (key) => (event) =>
-    setInfo((prev) => ({ ...prev, [key]: event.target.value }));
-  const patchInfo = (partial: Partial<InfoDraft>) => setInfo((prev) => ({ ...prev, ...partial }));
 
   const fin = financeFromForm(approval);
   const tcknError =
@@ -258,7 +261,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
     if (updated) {
       setCurrent(updated);
       setPaying(false);
-      setPayForm((prev) => ({ ...prev, amount: '', note: '' }));
+      patchPay({ amount: '', note: '' });
       await reloadSchedule();
     }
   };
@@ -334,34 +337,34 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
             <Section icon="user" title="Kişisel & İletişim">
               <div className="flex flex-col gap-3 pt-1">
                 <Field label="Ad Soyad">
-                  <Input value={draft.name} onChange={(e) => setEditField('name', e.target.value)} />
+                  <Input value={draft.name} onChange={updateEdit('name')} />
                 </Field>
                 <Field label="E-posta">
-                  <Input type="email" value={draft.email} onChange={(e) => setEditField('email', e.target.value)} />
+                  <Input type="email" value={draft.email} onChange={updateEdit('email')} />
                 </Field>
                 <Field label="Telefon">
-                  <Input value={draft.phone} onChange={(e) => setEditField('phone', e.target.value)} inputMode="tel" />
+                  <Input value={draft.phone} onChange={updateEdit('phone')} inputMode="tel" />
                 </Field>
               </div>
             </Section>
             <Section icon="graduation" title="Eğitim & Finans">
               <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
                 <Field label="Dil">
-                  <OptionSelect value={draft.lang} onChange={(v) => setEditField('lang', v)} options={LANGUAGES} />
+                  <OptionSelect value={draft.lang} onChange={(v) => patchEdit({ lang: v })} options={LANGUAGES} />
                 </Field>
                 <Field label="Seviye">
-                  <OptionSelect value={draft.level} onChange={(v) => setEditField('level', v)} options={LEVELS} />
+                  <OptionSelect value={draft.level} onChange={(v) => patchEdit({ level: v })} options={LEVELS} />
                 </Field>
                 <Field label="Kur / Program">
-                  <OptionSelect value={draft.course} onChange={(v) => setEditField('course', v)} options={COURSES} />
+                  <OptionSelect value={draft.course} onChange={(v) => patchEdit({ course: v })} options={COURSES} />
                 </Field>
                 <Field label="Ödeme Planı">
-                  <OptionSelect value={draft.plan} onChange={(v) => setEditField('plan', v)} options={PAYMENT_PLANS} />
+                  <OptionSelect value={draft.plan} onChange={(v) => patchEdit({ plan: v })} options={PAYMENT_PLANS} />
                 </Field>
                 <Field label="Kayıt Ücreti (₺)">
                   <Input
                     value={draft.fee}
-                    onChange={(e) => setEditField('fee', digits(e.target.value))}
+                    onChange={(e) => patchEdit({ fee: digitsOnly(e.target.value) })}
                     inputMode="numeric"
                     className="font-mono"
                   />
@@ -501,7 +504,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
               <Field label="Tutar (₺)">
                 <Input
                   value={payForm.amount}
-                  onChange={(e) => setPayForm((p) => ({ ...p, amount: digits(e.target.value) }))}
+                  onChange={(e) => patchPay({ amount: digitsOnly(e.target.value) })}
                   inputMode="numeric"
                   className="font-mono"
                   placeholder="0"
@@ -510,13 +513,13 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
               <Field label="Tarih">
                 <DatePicker
                   value={payForm.paidAt}
-                  onChange={(iso) => setPayForm((p) => ({ ...p, paidAt: iso }))}
+                  onChange={(iso) => patchPay({ paidAt: iso })}
                   placeholder="gg.aa.yyyy"
                 />
               </Field>
             </div>
             <Field label="Yöntem">
-              <Select value={payForm.method} onChange={(e) => setPayForm((p) => ({ ...p, method: e.target.value }))}>
+              <Select value={payForm.method} onChange={updatePay('method')}>
                 {PAY_METHODS.map((method) => (
                   <option key={method}>{method}</option>
                 ))}
@@ -525,7 +528,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
             <Field label="Not (opsiyonel)">
               <Input
                 value={payForm.note}
-                onChange={(e) => setPayForm((p) => ({ ...p, note: e.target.value }))}
+                onChange={updatePay('note')}
                 placeholder="Açıklama"
               />
             </Field>

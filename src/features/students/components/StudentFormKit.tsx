@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { DatePicker, Field, Icon, Input, Logo, Select, Textarea } from '@/components/ui';
 import { CITIES, EDU_LEVELS, GENDERS, RELATIONS } from '@/constants/options';
+import { digitsOnly } from '@/utils/format';
 import {
   FORM_GRID,
   type EducationCoreForm,
@@ -41,7 +42,7 @@ export function PersonalFields({
       <Field label="T.C. Kimlik No" required hint={tcknHint} error={tcknError}>
         <Input
           value={form.tckn}
-          onChange={(event) => patch({ tckn: event.target.value.replace(/\D/g, '').slice(0, 11) })}
+          onChange={(event) => patch({ tckn: digitsOnly(event.target.value).slice(0, 11) })}
           placeholder="Örn. 12345678901"
           className="font-mono"
           inputMode="numeric"

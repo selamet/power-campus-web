@@ -16,6 +16,8 @@ import {
   type EducationCoreForm,
   type PersonCoreForm,
 } from '@/features/students/components/useStepForm';
+import { digitsOnly } from '@/utils/format';
+import { isValidEmail, isValidPhone } from '@/utils/validation';
 import { invitesApi } from './invitesApi';
 
 const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim'] as const;
@@ -41,7 +43,7 @@ export function WelcomeFormPage() {
       ...EDUCATION_FORM_DEFAULTS,
       // The invite link carries the student's TCKN — pre-fill it so they don't
       // re-type it (and it stays read-only on the form).
-      tckn: isPreview ? '' : (tckn ?? '').replace(/\D/g, '').slice(0, 11),
+      tckn: isPreview ? '' : digitsOnly(tckn ?? '').slice(0, 11),
     },
     FORM_STEPS.length,
   );
@@ -86,7 +88,7 @@ export function WelcomeFormPage() {
   const stepValid = useMemo(() => {
     if (step === 0) return form.name.trim().length > 1 && form.tckn.length === 11;
     if (step === 1) return Boolean(form.eduLevel && form.school.trim());
-    return /.+@.+\..+/.test(form.email) && form.phone.replace(/\D/g, '').length >= 10;
+    return isValidEmail(form.email) && isValidPhone(form.phone);
   }, [step, form]);
 
   // Fraction (0–1) of the current step's fields filled — drives the connector
@@ -97,7 +99,7 @@ export function WelcomeFormPage() {
         ? [form.name.trim().length > 1, form.tckn.length === 11, Boolean(form.birth), Boolean(form.gender), Boolean(form.addr.trim())]
         : step === 1
           ? [Boolean(form.school.trim()), Boolean(form.department.trim()), Boolean(form.grade.trim())]
-          : [/.+@.+\..+/.test(form.email), form.phone.replace(/\D/g, '').length >= 10, Boolean(form.cName.trim()), Boolean(form.cPhone.trim())];
+          : [isValidEmail(form.email), isValidPhone(form.phone), Boolean(form.cName.trim()), Boolean(form.cPhone.trim())];
     return checks.filter(Boolean).length / checks.length;
   }, [step, form]);
 

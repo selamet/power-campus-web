@@ -1,6 +1,6 @@
 import { DatePicker, Field, Input, Select, Textarea } from '@/components/ui';
 import { CUSTOM_PLAN, PAYMENT_PLANS, PAY_METHODS, PER_TERM_PLAN } from '@/constants/options';
-import { formatDate, formatMoney } from '@/utils/format';
+import { digitsOnly, formatDate, formatMoney } from '@/utils/format';
 import {
   financeFromForm,
   planInstallmentCount,
@@ -18,8 +18,6 @@ interface FinanceFieldsProps {
   /** The manual form collects the opening payment's method; approval doesn't. */
   showPayMethod?: boolean;
 }
-
-const digits = (value: string) => value.replace(/\D/g, '');
 
 /**
  * Shared finance editor: per-term pricing, %/₺ discount, plan choice, opening
@@ -51,7 +49,7 @@ export function FinanceFields({ form, update, patch, startDate = '', showPayMeth
         >
           <Input
             value={form.termFee}
-            onChange={(event) => patch({ termFee: digits(event.target.value) })}
+            onChange={(event) => patch({ termFee: digitsOnly(event.target.value) })}
             placeholder="Örn. 2000"
             className="font-mono"
             inputMode="numeric"
@@ -61,7 +59,7 @@ export function FinanceFields({ form, update, patch, startDate = '', showPayMeth
           <div className="flex gap-1.5">
             <Input
               value={form.discount}
-              onChange={(event) => patch({ discount: digits(event.target.value) })}
+              onChange={(event) => patch({ discount: digitsOnly(event.target.value) })}
               className="flex-1 font-mono"
               inputMode="numeric"
             />
@@ -118,7 +116,7 @@ export function FinanceFields({ form, update, patch, startDate = '', showPayMeth
         <Field label="Ödenen Tutar (₺)" hint="Kayıt sırasında alınan ödeme">
           <Input
             value={form.paidNow}
-            onChange={(event) => patch({ paidNow: digits(event.target.value) })}
+            onChange={(event) => patch({ paidNow: digitsOnly(event.target.value) })}
             placeholder="0"
             className="font-mono"
             inputMode="numeric"

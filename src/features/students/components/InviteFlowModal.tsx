@@ -3,6 +3,8 @@ import type { ApiError } from '@/api/axiosClient';
 import { Button, Field, Icon, Input, Modal, Select, useToast } from '@/components/ui';
 import { COURSES, LANGUAGES } from '@/constants/options';
 import { welcomeLink } from '@/routes/paths';
+import { digitsOnly } from '@/utils/format';
+import { isValidPhone, isValidTckn } from '@/utils/validation';
 import { invitesApi } from '../invitesApi';
 
 interface InviteFlowModalProps {
@@ -24,7 +26,7 @@ export function InviteFlowModal({ open, onClose, onPreview }: InviteFlowModalPro
   const [creating, setCreating] = useState(false);
 
   const link = `app.powerakademi.com${welcomeLink(tckn || '54091123456')}`;
-  const valid = tckn.length === 11 && phone.replace(/\D/g, '').length >= 10;
+  const valid = isValidTckn(tckn) && isValidPhone(phone);
 
   const reset = () => {
     setStep(0);
@@ -84,7 +86,7 @@ export function InviteFlowModal({ open, onClose, onPreview }: InviteFlowModalPro
               <Field label="T.C. Kimlik No" icon="id" required>
                 <Input
                   value={tckn}
-                  onChange={(event) => setTckn(event.target.value.replace(/\D/g, '').slice(0, 11))}
+                  onChange={(event) => setTckn(digitsOnly(event.target.value).slice(0, 11))}
                   placeholder="11 haneli"
                   inputMode="numeric"
                   className="font-mono"

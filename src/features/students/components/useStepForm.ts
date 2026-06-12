@@ -51,19 +51,25 @@ export const PERSON_FORM_DEFAULTS: PersonCoreForm = {
   cPhone: '',
 };
 
+/** Object form state with the `update`/`patch` helpers every form here uses. */
+export function useFormDraft<T>(initial: T) {
+  const [form, setForm] = useState<T>(initial);
+  const update: FieldUpdater<T> = (key) => (event) =>
+    setForm((prev) => ({ ...prev, [key]: event.target.value }));
+  const patch = (partial: Partial<T>) => setForm((prev) => ({ ...prev, ...partial }));
+  return { form, setForm, update, patch };
+}
+
 /** Step navigation + form state shared by every multi-step student form. */
 export function useStepForm<T>(initial: T, stepCount: number) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<T>(initial);
+  const { form, setForm, update, patch } = useFormDraft(initial);
 
   // Each step starts at the top instead of inheriting the previous scroll.
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
-  const update: FieldUpdater<T> = (key) => (event) =>
-    setForm((prev) => ({ ...prev, [key]: event.target.value }));
-  const patch = (partial: Partial<T>) => setForm((prev) => ({ ...prev, ...partial }));
   const next = () => setStep((s) => Math.min(s + 1, stepCount - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
 

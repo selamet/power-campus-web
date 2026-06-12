@@ -24,7 +24,8 @@ import {
 import { useStudentActions } from '@/features/students/useStudentActions';
 import { paths } from '@/routes/paths';
 import type { NewStudentInput } from '@/types/domain';
-import { isValidTckn } from '@/utils/tckn';
+import { todayIso } from '@/utils/format';
+import { isValidEmail, isValidPhone, isValidTckn } from '@/utils/validation';
 
 const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim', 'Finans'] as const;
 
@@ -70,7 +71,7 @@ export function RegistrationFormPage() {
     if (step === 0) return form.name.trim().length > 1 && isValidTckn(form.tckn);
     if (step === 1) return Boolean(form.start);
     if (step === 2)
-      return /.+@.+\..+/.test(form.email) && form.phone.replace(/\D/g, '').length >= 10;
+      return isValidEmail(form.email) && isValidPhone(form.phone);
     return Number(form.termFee) > 0;
   }, [step, form]);
 
@@ -96,7 +97,7 @@ export function RegistrationFormPage() {
       paid,
       plan,
       next,
-      joined: new Date().toISOString().slice(0, 10),
+      joined: todayIso(),
       email: form.email,
       source: 'manuel',
       terms,

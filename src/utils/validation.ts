@@ -1,3 +1,13 @@
+/** Input validation shared by the registration forms, approval and invite flows. */
+
+import { digitsOnly } from './format';
+
+/** Loose e-mail shape check — enough for form gating. */
+export const isValidEmail = (value: string): boolean => /.+@.+\..+/.test(value);
+
+/** A usable phone number needs at least 10 digits. */
+export const isValidPhone = (value: string): boolean => digitsOnly(value).length >= 10;
+
 /** Validates a Turkish national ID number using the official checksum. */
 export function isValidTckn(value: string): boolean {
   if (!/^[1-9]\d{10}$/.test(value)) return false;
