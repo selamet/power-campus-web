@@ -241,7 +241,7 @@ export function WelcomeFormPage() {
             Power'ın{' '}
             <span
               key={HERO_WORDS[heroWord]}
-              className="font-script text-gradient-brand word-swap block py-1 text-[clamp(48px,13vw,76px)] font-semibold leading-[1.05]"
+              className="font-script word-swap block py-1 text-[clamp(48px,13vw,76px)] font-semibold leading-[1.05] text-accent"
             >
               {HERO_WORDS[heroWord]}
             </span>{' '}
