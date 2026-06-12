@@ -217,8 +217,8 @@
     padding-right: 38px;
   }
 
-  /* Card wrapped in a soft multi-hue gradient border — welcome form. */
-  .card-rainbow {
+  /* Card wrapped in a soft red gradient border — welcome form. */
+  .card-glow {
     position: relative;
     border: 1.5px solid transparent;
     border-radius: var(--radius-lg);
@@ -226,10 +226,10 @@
       linear-gradient(var(--surface), var(--surface)) padding-box,
       linear-gradient(
         135deg,
-        hsl(var(--accent-h) var(--accent-s) 51% / 0.55),
-        hsl(38 92% 52% / 0.4) 35%,
-        hsl(330 78% 56% / 0.4) 65%,
-        hsl(var(--accent-2-h) var(--accent-2-s) 58% / 0.55)
+        hsl(var(--accent-h) var(--accent-s) 51% / 0.6),
+        hsl(8 80% 55% / 0.35) 40%,
+        hsl(0 60% 38% / 0.45) 70%,
+        hsl(var(--accent-h) var(--accent-s) 51% / 0.55)
       )
       border-box;
     box-shadow: var(--shadow-md);
@@ -255,23 +255,23 @@
     animation: confettiFall 2.8s ease-in both;
   }
   .confetti i:nth-child(1) { left: 6%; background: var(--accent); animation-delay: 0.15s; }
-  .confetti i:nth-child(2) { left: 16%; background: hsl(38 92% 52%); animation-delay: 0.5s; height: 10px; }
-  .confetti i:nth-child(3) { left: 27%; background: var(--accent-2); animation-delay: 0.05s; }
-  .confetti i:nth-child(4) { left: 38%; background: hsl(330 78% 56%); animation-delay: 0.65s; height: 11px; }
-  .confetti i:nth-child(5) { left: 49%; background: var(--ok); animation-delay: 0.3s; }
+  .confetti i:nth-child(2) { left: 16%; background: hsl(8 80% 55%); animation-delay: 0.5s; height: 10px; }
+  .confetti i:nth-child(3) { left: 27%; background: hsl(0 60% 38%); animation-delay: 0.05s; }
+  .confetti i:nth-child(4) { left: 38%; background: hsl(0 80% 70%); animation-delay: 0.65s; height: 11px; }
+  .confetti i:nth-child(5) { left: 49%; background: hsl(350 75% 55%); animation-delay: 0.3s; }
   .confetti i:nth-child(6) { left: 60%; background: var(--accent); animation-delay: 0.75s; height: 10px; }
-  .confetti i:nth-child(7) { left: 70%; background: var(--accent-2); animation-delay: 0.2s; }
-  .confetti i:nth-child(8) { left: 80%; background: hsl(38 92% 52%); animation-delay: 0.55s; }
-  .confetti i:nth-child(9) { left: 89%; background: hsl(330 78% 56%); animation-delay: 0.1s; height: 11px; }
-  .confetti i:nth-child(10) { left: 95%; background: var(--ok); animation-delay: 0.4s; }
+  .confetti i:nth-child(7) { left: 70%; background: hsl(0 60% 38%); animation-delay: 0.2s; }
+  .confetti i:nth-child(8) { left: 80%; background: hsl(8 80% 55%); animation-delay: 0.55s; }
+  .confetti i:nth-child(9) { left: 89%; background: hsl(0 80% 70%); animation-delay: 0.1s; height: 11px; }
+  .confetti i:nth-child(10) { left: 95%; background: hsl(350 75% 55%); animation-delay: 0.4s; }
 
-  /* Brand gradient text — red through pink into indigo. */
+  /* Brand gradient text — bright red into deep brand red. */
   .text-gradient-brand {
     background: linear-gradient(
       100deg,
-      var(--accent) 10%,
-      hsl(330 80% 55%) 50%,
-      var(--accent-2) 90%
+      hsl(8 82% 55%) 5%,
+      var(--accent) 45%,
+      hsl(0 62% 34%) 95%
     );
     -webkit-background-clip: text;
     background-clip: text;

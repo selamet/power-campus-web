@@ -187,7 +187,7 @@ export function WelcomeFormPage() {
       <div className="welcome-bg flex min-h-screen flex-col">
         <WelcomeHeader isPreview={isPreview} />
         <div className="flex flex-1 items-center justify-center px-5 py-10">
-          <div className="card-rainbow anim-scale-in relative max-w-[480px] p-9 text-center">
+          <div className="card-glow anim-scale-in relative max-w-[480px] p-9 text-center">
             <div className="confetti" aria-hidden>
               {Array.from({ length: 10 }, (_, i) => (
                 <i key={i} />
@@ -230,10 +230,10 @@ export function WelcomeFormPage() {
         </div>
 
         <div className="mb-5">
-          <Steps steps={FORM_STEPS} current={step} progress={stepProgress} colorful />
+          <Steps steps={FORM_STEPS} current={step} progress={stepProgress} />
         </div>
 
-        <div className="card-rainbow p-6">
+        <div className="card-glow p-6">
           {step === 0 && (
             <div className="anim-fade-in">
               <SectionHead icon="user" title="Senin Bilgilerin" desc="Kimlik ve temel bilgiler" tone="accent" />
@@ -397,9 +397,9 @@ function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
 }
 
 const SECTION_TONES = {
-  accent: 'bg-gradient-to-br from-accent to-[hsl(330_78%_50%)] text-white shadow-accent',
-  'accent-2': 'bg-gradient-to-br from-accent-2 to-[hsl(262_70%_55%)] text-white shadow-pop',
-  ok: 'bg-gradient-to-br from-ok to-[hsl(170_60%_38%)] text-white shadow-pop',
+  accent: 'bg-gradient-to-br from-accent to-[hsl(0_60%_38%)] text-white shadow-accent',
+  'accent-2': 'bg-gradient-to-br from-[hsl(8_80%_55%)] to-accent text-white shadow-accent',
+  ok: 'bg-gradient-to-br from-accent-strong to-[hsl(0_60%_35%)] text-white shadow-accent',
 } as const;
 
 function SectionHead({
