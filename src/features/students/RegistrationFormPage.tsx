@@ -25,6 +25,12 @@ import {
   type FieldUpdater,
   type PersonCoreForm,
 } from '@/features/students/components/useStepForm';
+import {
+  computeFinance,
+  previewInstallments,
+  resolvePlan,
+  type DiscountType,
+} from '@/features/students/financePlan';
 import { useStudentActions } from '@/features/students/useStudentActions';
 import { paths } from '@/routes/paths';
 import type { NewStudentInput } from '@/types/domain';
@@ -32,8 +38,6 @@ import { formatDate, formatMoney } from '@/utils/format';
 import { isValidTckn } from '@/utils/tckn';
 
 const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim', 'Finans'] as const;
-
-type DiscountType = 'percent' | 'amount';
 
 interface FormState extends PersonCoreForm {
   lang: string;
@@ -70,47 +74,21 @@ const initialForm: FormState = {
   note: '',
 };
 
-/**
- * Totals derived from the finance step. The registration fee is dynamic:
- * number of terms ("kur") × price per term, then discount and the opening
- * payment are applied on top.
- */
+/** String form state mapped onto the shared finance math. */
 function financeSummary(form: FormState) {
   const terms = Number(form.terms) || 1;
   const termFee = Number(form.termFee) || 0;
-  const fee = terms * termFee;
-  const rawDiscount = Number(form.discount) || 0;
-  const discountValue =
-    form.discountType === 'percent'
-      ? Math.round((fee * Math.min(rawDiscount, 100)) / 100)
-      : Math.min(rawDiscount, fee);
-  const net = Math.max(0, fee - discountValue);
-  const paidNow = Math.min(Number(form.paidNow) || 0, net);
-  return { terms, termFee, fee, discountValue, net, paidNow, remaining: net - paidNow };
-}
-
-/** ISO date `months` months after `iso`, day clamped like the backend does. */
-function addMonthsIso(iso: string, months: number): string {
-  const [year, month, day] = iso.split('-').map(Number);
-  const index = month - 1 + months;
-  const targetYear = year + Math.floor(index / 12);
-  const targetMonth = (index % 12) + 1;
-  const clampedDay = Math.min(day, new Date(targetYear, targetMonth, 0).getDate());
-  return `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`;
-}
-
-/**
- * Equal installments over the remaining balance, mirroring the backend's
- * schedule builder (rounding remainder goes to the first installment).
- */
-function previewInstallments(amount: number, count: number, startIso: string) {
-  const base = Math.floor(amount / count);
-  const remainder = amount - base * count;
-  return Array.from({ length: count }, (_, index) => ({
-    sequence: index + 1,
-    amount: base + (index === 0 ? remainder : 0),
-    due: startIso ? addMonthsIso(startIso, index) : null,
-  }));
+  return {
+    terms,
+    termFee,
+    ...computeFinance({
+      terms,
+      termFee,
+      discount: Number(form.discount) || 0,
+      discountType: form.discountType,
+      paidNow: Number(form.paidNow) || 0,
+    }),
+  };
 }
 
 /**
@@ -141,9 +119,7 @@ export function RegistrationFormPage() {
 
   const save = () => {
     const { terms, net, paidNow } = financeSummary(form);
-    // "Kur Başına" resolves to one installment per term so the backend can
-    // build the schedule from the plan label.
-    const plan = form.plan === PER_TERM_PLAN ? `${terms} Taksit` : form.plan;
+    const plan = resolvePlan(form.plan, terms);
     // Peşin with no explicit opening payment means paid in full; a custom
     // plan has no fixed next date unless one was picked.
     const paid = form.plan === 'Peşin' && !paidNow ? net : paidNow;
