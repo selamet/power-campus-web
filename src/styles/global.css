@@ -286,28 +286,58 @@
       linear-gradient(155deg, hsl(240 9% 12%), hsl(240 11% 7%) 70%);
   }
 
-  /* Subtle brand-red glow anchored to the viewport — for the public welcome
-     page background. Renders behind content; readability stays intact. */
+  /* Festive backdrop for the public welcome page — slowly drifting multi-hue
+     aurora blobs (brand red leading, indigo/amber/pink supporting) plus sparse
+     confetti dots masked away from the center so the form stays readable. */
   .welcome-bg {
     position: relative;
     isolation: isolate;
     background-color: var(--bg);
+    overflow-x: clip;
   }
   .welcome-bg::before {
+    content: '';
+    position: fixed;
+    inset: -22%;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 42% 38% at 86% 10%, hsl(var(--accent-h) var(--accent-s) 51% / 0.22), transparent 60%),
+      radial-gradient(ellipse 40% 36% at 10% 88%, hsl(var(--accent-2-h) var(--accent-2-s) 58% / 0.18), transparent 58%),
+      radial-gradient(ellipse 34% 30% at 8% 14%, hsl(38 92% 52% / 0.14), transparent 55%),
+      radial-gradient(ellipse 36% 32% at 90% 86%, hsl(330 78% 56% / 0.14), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 50% -12%, hsl(var(--accent-h) var(--accent-s) 51% / 0.08), transparent 55%);
+    animation: welcomeDrift 16s ease-in-out infinite alternate;
+  }
+  .welcome-bg::after {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background:
-      radial-gradient(ellipse 60% 55% at 100% 0%, hsl(var(--accent-h) var(--accent-s) 51% / 0.18), transparent 60%),
-      radial-gradient(ellipse 58% 55% at 0% 100%, hsl(var(--accent-h) var(--accent-s) 51% / 0.15), transparent 58%),
-      radial-gradient(ellipse 90% 60% at 50% -10%, hsl(var(--accent-h) var(--accent-s) 51% / 0.07), transparent 55%);
+    background-image:
+      radial-gradient(hsl(var(--accent-h) 72% 51% / 0.4) 1.5px, transparent 2.5px),
+      radial-gradient(hsl(var(--accent-2-h) 74% 58% / 0.35) 1.5px, transparent 2.5px),
+      radial-gradient(hsl(38 92% 50% / 0.35) 1.5px, transparent 2.5px);
+    background-size:
+      190px 190px,
+      230px 230px,
+      170px 170px;
+    background-position:
+      10px 20px,
+      95px 80px,
+      150px 140px;
+    mask-image: radial-gradient(ellipse 55% 60% at 50% 42%, transparent 38%, black 80%);
   }
   [data-theme='dark'] .welcome-bg::before {
     background:
-      radial-gradient(ellipse 52% 42% at 100% 0%, hsl(var(--accent-h) 72% 52% / 0.16), transparent 60%),
-      radial-gradient(ellipse 48% 40% at 0% 100%, hsl(var(--accent-h) 72% 52% / 0.12), transparent 60%);
+      radial-gradient(ellipse 42% 38% at 86% 10%, hsl(var(--accent-h) 72% 52% / 0.2), transparent 60%),
+      radial-gradient(ellipse 40% 36% at 10% 88%, hsl(var(--accent-2-h) 74% 60% / 0.18), transparent 58%),
+      radial-gradient(ellipse 34% 30% at 8% 14%, hsl(38 80% 50% / 0.1), transparent 55%),
+      radial-gradient(ellipse 36% 32% at 90% 86%, hsl(330 70% 52% / 0.12), transparent 55%);
+  }
+  [data-theme='dark'] .welcome-bg::after {
+    opacity: 0.55;
   }
 }
 
@@ -486,6 +516,14 @@
 @keyframes drawCheck {
   to {
     stroke-dashoffset: 0;
+  }
+}
+@keyframes welcomeDrift {
+  from {
+    transform: translate3d(-1.5%, -1%, 0) rotate(-1.5deg) scale(1);
+  }
+  to {
+    transform: translate3d(1.5%, 1.2%, 0) rotate(1.5deg) scale(1.06);
   }
 }
 
