@@ -17,8 +17,8 @@ import {
   type MonthlyPoint,
   type OverdueItem,
 } from './dashboardApi';
+import { CourseMix } from './components/CourseMix';
 import { FinancePulse } from './components/FinancePulse';
-import { LanguageMix } from './components/LanguageMix';
 import { MetricCard } from './components/MetricCard';
 import { MonthlyChart } from './components/MonthlyChart';
 import { OverdueCard } from './components/OverdueCard';
@@ -157,7 +157,7 @@ export function DashboardPage() {
         <div className="lg:col-span-2">
           <MonthlyChart data={monthly} />
         </div>
-        <LanguageMix students={students} />
+        <CourseMix students={students} />
       </div>
 
       {/* Work queues */}
