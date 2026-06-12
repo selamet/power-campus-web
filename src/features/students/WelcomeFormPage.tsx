@@ -365,10 +365,24 @@ export function WelcomeFormPage() {
   );
 }
 
+const BACKDROP_WORDS = ['başarı', 'gelecek', 'hedef', 'ayrıcalık', 'azim'] as const;
+
+/** Faint oversized words drifting behind the form — pure decoration. */
+function BackdropWords() {
+  return (
+    <div className="welcome-words" aria-hidden>
+      {BACKDROP_WORDS.map((word) => (
+        <span key={word}>{word}</span>
+      ))}
+    </div>
+  );
+}
+
 /** Centered brand mark at the top of the page — no navbar on the public form. */
 function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   return (
     <>
+      <BackdropWords />
       <div className="flex justify-center pt-10">
         <Logo height={34} />
       </div>
