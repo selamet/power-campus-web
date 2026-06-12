@@ -1,5 +1,6 @@
 import { Icon } from '@/components/ui';
 import { cn } from '@/utils/cn';
+import { useCountUp } from './useCountUp';
 
 interface MetricCardProps {
   icon: string;
@@ -19,6 +20,9 @@ export function MetricCard({
   deltaKind = 'ok',
   accent,
 }: MetricCardProps) {
+  // Numeric values count up from zero; strings (e.g. "—") render as-is.
+  const animated = useCountUp(typeof value === 'number' ? value : 0);
+  const display = typeof value === 'number' ? animated : value;
   return (
     <div className="card mesh-aurora relative flex flex-col gap-3.5 overflow-hidden p-5">
       <div className="flex items-center justify-between">
@@ -44,7 +48,7 @@ export function MetricCard({
       </div>
       <div className="flex flex-col gap-[3px]">
         <span className="font-mono text-[30px] font-bold tracking-[-0.02em] tabular-nums">
-          {value}
+          {display}
         </span>
         <span className="text-[13.5px] font-medium text-ink-2">{label}</span>
       </div>
