@@ -130,4 +130,6 @@ export const CITIES = [
 
 export const RELATIONS = ['Anne', 'Baba', 'Eş', 'Kardeş', 'Vasi', 'Kendisi', 'Diğer'] as const;
 
+export const GENDERS = ['Kadın', 'Erkek', 'Belirtmek istemiyor'] as const;
+
 export const PAYMENT_PLANS = ['Peşin', '2 Taksit', '3 Taksit', '4 Taksit', '6 Taksit'] as const;

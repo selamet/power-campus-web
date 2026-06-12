@@ -1,8 +1,19 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { ApiError } from '@/api/axiosClient';
-import { Button, DatePicker, Field, Icon, Input, Logo, Select, Steps, Textarea, useToast } from '@/components/ui';
-import { CITIES } from '@/constants/options';
+import { Button, Field, Icon, Input, Select, Steps, useToast } from '@/components/ui';
+import {
+  ContactFields,
+  PersonalFields,
+  SectionHead,
+  WelcomeShell,
+} from '@/features/students/components/StudentFormKit';
+import {
+  FORM_GRID,
+  PERSON_FORM_DEFAULTS,
+  useStepForm,
+  type PersonCoreForm,
+} from '@/features/students/components/useStepForm';
 import { invitesApi } from './invitesApi';
 
 const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim'] as const;
@@ -20,43 +31,12 @@ const EDU_LEVELS = [
   'Diğer',
 ] as const;
 
-interface FormState {
-  name: string;
-  tckn: string;
-  birth: string;
-  gender: string;
-  city: string;
-  addr: string;
-  email: string;
-  phone: string;
+interface FormState extends PersonCoreForm {
   eduLevel: string;
   school: string;
   department: string;
   grade: string;
-  cName: string;
-  cRelation: string;
-  cPhone: string;
 }
-
-const initialForm: FormState = {
-  name: '',
-  tckn: '',
-  birth: '',
-  gender: '',
-  city: 'İstanbul',
-  addr: '',
-  email: '',
-  phone: '',
-  eduLevel: EDU_LEVELS[0],
-  school: '',
-  department: '',
-  grade: '',
-  cName: '',
-  cRelation: 'Anne',
-  cPhone: '',
-};
-
-const GRID = 'stagger form-grid grid grid-cols-1 gap-3.5 sm:grid-cols-2';
 
 /**
  * Public, self-service form reached through the invite link shared with the
@@ -68,13 +48,19 @@ export function WelcomeFormPage() {
   const { tckn } = useParams<{ tckn: string }>();
   const isPreview = tckn === 'preview';
   const toast = useToast();
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(() => ({
-    ...initialForm,
-    // The invite link carries the student's TCKN — pre-fill it so they don't
-    // re-type it (and it stays read-only on the form).
-    tckn: isPreview ? '' : (tckn ?? '').replace(/\D/g, '').slice(0, 11),
-  }));
+  const { step, form, setForm, update, patch, next, back, isLast } = useStepForm<FormState>(
+    {
+      ...PERSON_FORM_DEFAULTS,
+      // The invite link carries the student's TCKN — pre-fill it so they don't
+      // re-type it (and it stays read-only on the form).
+      tckn: isPreview ? '' : (tckn ?? '').replace(/\D/g, '').slice(0, 11),
+      eduLevel: EDU_LEVELS[0],
+      school: '',
+      department: '',
+      grade: '',
+    },
+    FORM_STEPS.length,
+  );
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -86,10 +72,10 @@ export function WelcomeFormPage() {
     return () => clearInterval(id);
   }, []);
 
-  // Each step starts at the top instead of inheriting the previous scroll.
+  // The success screen replaces the form — make sure it opens at the top.
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [step, done]);
+    if (done) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [done]);
 
   // Load the invite to pre-fill the name and validate the link.
   useEffect(() => {
@@ -111,18 +97,7 @@ export function WelcomeFormPage() {
     return () => {
       active = false;
     };
-  }, [isPreview, tckn]);
-
-  const update =
-    (key: keyof FormState) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-      setForm((prev) => ({ ...prev, [key]: event.target.value }));
-
-  const patch = (partial: Partial<FormState>) => setForm((prev) => ({ ...prev, ...partial }));
-
-  const isLast = step === FORM_STEPS.length - 1;
-  const next = () => setStep((s) => Math.min(s + 1, FORM_STEPS.length - 1));
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  }, [isPreview, tckn, setForm]);
 
   const stepValid = useMemo(() => {
     if (step === 0) return form.name.trim().length > 1 && form.tckn.length === 11;
@@ -175,10 +150,16 @@ export function WelcomeFormPage() {
     }
   };
 
+  const previewBadge = isPreview ? (
+    <>
+      <Icon name="eye" size={14} />
+      Önizleme
+    </>
+  ) : undefined;
+
   if (linkError) {
     return (
-      <div className="welcome-bg flex min-h-screen flex-col">
-        <WelcomeDecor isPreview={isPreview} />
+      <WelcomeShell badge={previewBadge}>
         <div className="flex flex-1 items-center justify-center px-5 py-10">
           <div className="card anim-scale-in max-w-[460px] p-8 text-center">
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-[18px] bg-warn-soft text-warn">
@@ -188,15 +169,13 @@ export function WelcomeFormPage() {
             <p className="mt-2.5 mb-0 text-[14.5px] text-ink-2">{linkError}</p>
           </div>
         </div>
-        <WelcomeFooter />
-      </div>
+      </WelcomeShell>
     );
   }
 
   if (done) {
     return (
-      <div className="welcome-bg flex min-h-screen flex-col">
-        <WelcomeDecor isPreview={isPreview} />
+      <WelcomeShell badge={previewBadge}>
         <div className="flex flex-1 items-center justify-center px-5 py-10">
           <div className="card-glow anim-scale-in relative max-w-[480px] p-9 text-center">
             <div className="confetti" aria-hidden>
@@ -219,17 +198,14 @@ export function WelcomeFormPage() {
             </p>
           </div>
         </div>
-        <WelcomeFooter />
-      </div>
+      </WelcomeShell>
     );
   }
 
   const firstName = form.name.trim().split(' ')[0];
 
   return (
-    <div className="welcome-bg flex min-h-screen flex-col">
-      <WelcomeDecor isPreview={isPreview} />
-
+    <WelcomeShell badge={previewBadge}>
       <div className="mx-auto w-full max-w-[720px] flex-1 px-5 pt-9 pb-8">
         <div className="anim-fade-up mb-6 text-center">
           <span className="kicker mb-2 inline-flex items-center gap-1.5 text-accent">
@@ -257,54 +233,20 @@ export function WelcomeFormPage() {
           {step === 0 && (
             <div className="anim-fade-in">
               <SectionHead icon="user" title="Senin Bilgilerin" desc="Kimlik ve temel bilgiler" tone="accent" />
-              <div className={GRID}>
-                <Field label="Ad Soyad" required full>
-                  <Input value={form.name} onChange={update('name')} placeholder="Örn. Ayşe Yılmaz" />
-                </Field>
-                <Field label="T.C. Kimlik No" required hint={!isPreview ? 'Davet linkinden alındı' : undefined}>
-                  <Input
-                    value={form.tckn}
-                    onChange={(event) => patch({ tckn: event.target.value.replace(/\D/g, '').slice(0, 11) })}
-                    placeholder="Örn. 12345678901"
-                    className="font-mono"
-                    inputMode="numeric"
-                    readOnly={!isPreview}
-                  />
-                </Field>
-                <Field label="Doğum Tarihi">
-                  <DatePicker
-                    value={form.birth}
-                    onChange={(iso) => patch({ birth: iso })}
-                    placeholder="gg.aa.yyyy"
-                    max={new Date().toISOString().slice(0, 10)}
-                  />
-                </Field>
-                <Field label="Cinsiyet">
-                  <Select value={form.gender} onChange={update('gender')}>
-                    <option value="">Seçiniz</option>
-                    <option>Kadın</option>
-                    <option>Erkek</option>
-                    <option>Belirtmek istemiyor</option>
-                  </Select>
-                </Field>
-                <Field label="Şehir">
-                  <Select value={form.city} onChange={update('city')}>
-                    {CITIES.map((city) => (
-                      <option key={city}>{city}</option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="Adres" full>
-                  <Textarea rows={2} value={form.addr} onChange={update('addr')} placeholder="Mahalle, cadde, kapı no, ilçe" />
-                </Field>
-              </div>
+              <PersonalFields
+                form={form}
+                update={update}
+                patch={patch}
+                tcknReadOnly={!isPreview}
+                tcknHint={!isPreview ? 'Davet linkinden alındı' : undefined}
+              />
             </div>
           )}
 
           {step === 1 && (
             <div className="anim-fade-in">
               <SectionHead icon="graduation" title="Eğitim Bilgilerin" desc="Hangi okulda okuyorsun, hangi bölüm" tone="accent-2" />
-              <div className={GRID}>
+              <div className={FORM_GRID}>
                 <Field label="Öğrenim Durumu" icon="trend" required>
                   <Select value={form.eduLevel} onChange={update('eduLevel')}>
                     {EDU_LEVELS.map((item) => (
@@ -328,31 +270,7 @@ export function WelcomeFormPage() {
           {step === 2 && (
             <div className="anim-fade-in">
               <SectionHead icon="phone" title="İletişim Bilgilerin" desc="Sana ve birincil iletişim kişisine ulaşalım" tone="ok" />
-              <div className={GRID}>
-                <Field label="E-posta" icon="mail" required>
-                  <Input type="email" value={form.email} onChange={update('email')} placeholder="ornek@mail.com" />
-                </Field>
-                <Field label="Cep Telefonu" icon="phone" required>
-                  <Input value={form.phone} onChange={update('phone')} placeholder="0 (5__) ___ __ __" inputMode="tel" />
-                </Field>
-              </div>
-              <div className="divider my-4" />
-              <span className="kicker mb-3 block">BİRİNCİL İLETİŞİM KİŞİSİ</span>
-              <div className={GRID}>
-                <Field label="Ad Soyad">
-                  <Input value={form.cName} onChange={update('cName')} placeholder="Veli / yakını" />
-                </Field>
-                <Field label="Yakınlık">
-                  <Select value={form.cRelation} onChange={update('cRelation')}>
-                    {['Anne', 'Baba', 'Eş', 'Kardeş', 'Vasi', 'Kendisi', 'Diğer'].map((item) => (
-                      <option key={item}>{item}</option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="Telefon" icon="phone" full>
-                  <Input value={form.cPhone} onChange={update('cPhone')} placeholder="0 (5__) ___ __ __" inputMode="tel" />
-                </Field>
-              </div>
+              <ContactFields form={form} update={update} />
             </div>
           )}
         </div>
@@ -381,86 +299,6 @@ export function WelcomeFormPage() {
           )}
         </div>
       </div>
-
-      <WelcomeFooter />
-    </div>
-  );
-}
-
-const BACKDROP_WORDS = ['başarı', 'gelecek', 'hedef', 'ayrıcalık', 'azim'] as const;
-
-/** Faint oversized words drifting behind the form — pure decoration. */
-function BackdropWords() {
-  return (
-    <div className="welcome-words" aria-hidden>
-      {BACKDROP_WORDS.map((word) => (
-        <span key={word}>{word}</span>
-      ))}
-    </div>
-  );
-}
-
-/** Decorative backdrop + preview badge — the public form has no navbar. */
-function WelcomeDecor({ isPreview }: { isPreview: boolean }) {
-  return (
-    <>
-      <BackdropWords />
-      {isPreview && (
-        <span className="fixed right-5 top-5 z-20 flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-semibold text-accent shadow-card">
-          <Icon name="eye" size={14} />
-          Önizleme
-        </span>
-      )}
-    </>
-  );
-}
-
-/** Brand mark anchored at the bottom of every welcome screen. */
-function WelcomeFooter() {
-  return (
-    <div className="flex flex-col items-center gap-2 pb-7 pt-4">
-      <Logo height={38} />
-      <span className="font-mono text-[11px] tracking-[0.08em] text-ink-3">
-        Crafted by{' '}
-        <a
-          href="https://selamet.dev"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-inherit no-underline"
-        >
-          selamet.dev
-        </a>
-      </span>
-    </div>
-  );
-}
-
-const SECTION_TONES = {
-  accent: 'bg-gradient-to-br from-accent to-[hsl(0_60%_38%)] text-white shadow-accent',
-  'accent-2': 'bg-gradient-to-br from-[hsl(8_80%_55%)] to-accent text-white shadow-accent',
-  ok: 'bg-gradient-to-br from-accent-strong to-[hsl(0_60%_35%)] text-white shadow-accent',
-} as const;
-
-function SectionHead({
-  icon,
-  title,
-  desc,
-  tone = 'accent',
-}: {
-  icon: string;
-  title: string;
-  desc: string;
-  tone?: keyof typeof SECTION_TONES;
-}) {
-  return (
-    <div className="anim-fade-in mb-4 flex items-center gap-3">
-      <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${SECTION_TONES[tone]}`}>
-        <Icon name={icon} size={20} />
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <h3 className="m-0 text-lg font-bold tracking-[-0.01em]">{title}</h3>
-        <span className="text-[13px] text-ink-3">{desc}</span>
-      </div>
-    </div>
+    </WelcomeShell>
   );
 }
