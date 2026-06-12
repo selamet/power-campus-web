@@ -231,10 +231,10 @@ export function WelcomeFormPage() {
         </div>
 
         <div className="mb-5">
-          <Steps steps={FORM_STEPS} current={step} progress={stepProgress} />
+          <Steps steps={FORM_STEPS} current={step} progress={stepProgress} colorful />
         </div>
 
-        <div className="card p-6">
+        <div className="card-rainbow p-6">
           {step === 0 && (
             <div className="anim-fade-in">
               <SectionHead icon="user" title="Senin Bilgilerin" desc="Kimlik ve temel bilgiler" tone="accent" />
@@ -399,9 +399,9 @@ function HeroChip({ icon, tone, text }: { icon: string; tone: keyof typeof CHIP_
 }
 
 const SECTION_TONES = {
-  accent: 'bg-accent-soft text-accent',
-  'accent-2': 'bg-accent-2-soft text-accent-2',
-  ok: 'bg-ok-soft text-ok',
+  accent: 'bg-gradient-to-br from-accent to-[hsl(330_78%_50%)] text-white shadow-accent',
+  'accent-2': 'bg-gradient-to-br from-accent-2 to-[hsl(262_70%_55%)] text-white shadow-pop',
+  ok: 'bg-gradient-to-br from-ok to-[hsl(170_60%_38%)] text-white shadow-pop',
 } as const;
 
 function SectionHead({
