@@ -1,6 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { Button, DatePicker, Field, Icon, Input, Select, Steps } from '@/components/ui';
-import { COURSES, GOALS, LANGUAGES, LEVELS, PAYMENT_PLANS, PAY_METHODS } from '@/constants/options';
+import { Button, DatePicker, Field, Icon, Input, Select, Steps, Textarea } from '@/components/ui';
+import {
+  COURSES,
+  CUSTOM_PLAN,
+  GOALS,
+  LANGUAGES,
+  LEVELS,
+  PAYMENT_PLANS,
+  PAY_METHODS,
+  TERM_COUNTS,
+} from '@/constants/options';
 import {
   ContactFields,
   PersonalFields,
@@ -21,17 +30,23 @@ import { formatMoney } from '@/utils/format';
 
 const FORM_STEPS = ['Kişisel', 'Eğitim', 'İletişim', 'Finans'] as const;
 
+type DiscountType = 'percent' | 'amount';
+
 interface FormState extends PersonCoreForm {
   lang: string;
   level: string;
   goal: string;
   course: string;
+  terms: string;
   start: string;
   fee: string;
   plan: string;
   payMethod: string;
   firstDate: string;
   discount: string;
+  discountType: DiscountType;
+  paidNow: string;
+  note: string;
 }
 
 const initialForm: FormState = {
@@ -40,13 +55,30 @@ const initialForm: FormState = {
   level: LEVELS[0],
   goal: GOALS[0],
   course: COURSES[0],
+  terms: '1',
   start: '',
   fee: '',
   plan: 'Peşin',
   payMethod: PAY_METHODS[0],
   firstDate: '',
   discount: '0',
+  discountType: 'percent',
+  paidNow: '',
+  note: '',
 };
+
+/** Net amount, discount and opening payment derived from the finance step. */
+function financeSummary(form: FormState) {
+  const fee = Number(form.fee) || 0;
+  const rawDiscount = Number(form.discount) || 0;
+  const discountValue =
+    form.discountType === 'percent'
+      ? Math.round((fee * Math.min(rawDiscount, 100)) / 100)
+      : Math.min(rawDiscount, fee);
+  const net = Math.max(0, fee - discountValue);
+  const paidNow = Math.min(Number(form.paidNow) || 0, net);
+  return { fee, discountValue, net, paidNow, remaining: net - paidNow };
+}
 
 /**
  * Staff-only manual registration (`/kayit/yeni`). Shares the welcome theme
@@ -64,7 +96,15 @@ export function RegistrationFormPage() {
   const close = () => navigate(paths.overview);
 
   const save = () => {
-    const fee = Number(form.fee) || 18500;
+    const { net, paidNow } = financeSummary(form);
+    const fee = form.fee ? net : 18500;
+    // Peşin with no explicit opening payment means paid in full; a custom
+    // plan has no fixed next date unless one was picked.
+    const paid = form.plan === 'Peşin' && !paidNow ? fee : paidNow;
+    const next =
+      form.plan === 'Peşin' || paid >= fee
+        ? null
+        : form.firstDate || (form.plan === CUSTOM_PLAN ? null : '2026-07-01');
     const newStudent: NewStudentInput = {
       name: form.name || 'Yeni Öğrenci',
       lang: form.lang,
@@ -74,12 +114,14 @@ export function RegistrationFormPage() {
       phone: form.phone || '0500 000 00 00',
       start: form.start || '2026-06-15',
       fee,
-      paid: form.plan === 'Peşin' ? fee : 0,
+      paid,
       plan: form.plan,
-      next: form.plan === 'Peşin' ? null : form.firstDate || '2026-07-01',
+      next,
       joined: '2026-05-30',
       email: form.email || 'ogrenci@gmail.com',
       source: 'manuel',
+      terms: Number(form.terms) || 1,
+      note: form.note.trim() || null,
     };
     create(newStudent);
     close();
@@ -172,7 +214,16 @@ export function RegistrationFormPage() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="Başlangıç Tarihi" icon="calendar" full>
+                <Field label="Kur Sayısı" icon="layers" hint="Kayıt kapsamındaki kur adedi">
+                  <Select value={form.terms} onChange={update('terms')}>
+                    {TERM_COUNTS.map((count) => (
+                      <option key={count} value={count}>
+                        {count} Kur
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Başlangıç Tarihi" icon="calendar">
                   <DatePicker
                     value={form.start}
                     onChange={(iso) => patch({ start: iso })}
@@ -231,9 +282,11 @@ interface FinanceSectionProps {
 }
 
 function FinanceSection({ form, update, patch }: FinanceSectionProps) {
-  const fee = Number(form.fee) || 0;
-  const discount = Number(form.discount) || 0;
-  const net = Math.max(0, fee - (fee * discount) / 100);
+  const { fee, discountValue, net, paidNow, remaining } = financeSummary(form);
+  const isCustom = form.plan === CUSTOM_PLAN;
+  const installmentCount = parseInt(form.plan, 10);
+
+  const digits = (value: string) => value.replace(/\D/g, '');
 
   return (
     <div className="anim-fade-in">
@@ -246,23 +299,47 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
         <Field label="Kayıt Ücreti (₺)" required>
           <Input
             value={form.fee}
-            onChange={(event) => patch({ fee: event.target.value.replace(/\D/g, '') })}
+            onChange={(event) => patch({ fee: digits(event.target.value) })}
             placeholder="Örn. 18500"
             className="font-mono"
             inputMode="numeric"
           />
         </Field>
-        <Field label="İndirim (%)" hint="Erken kayıt, kardeş vb.">
-          <Input
-            value={form.discount}
-            onChange={(event) =>
-              patch({ discount: event.target.value.replace(/\D/g, '').slice(0, 3) })
-            }
-            className="font-mono"
-            inputMode="numeric"
-          />
+        <Field label="İndirim" hint="Erken kayıt, kardeş vb.">
+          <div className="flex gap-1.5">
+            <Input
+              value={form.discount}
+              onChange={(event) => patch({ discount: digits(event.target.value) })}
+              className="flex-1 font-mono"
+              inputMode="numeric"
+            />
+            <div className="flex shrink-0 overflow-hidden rounded-[10px] border border-line">
+              {(
+                [
+                  ['percent', '%'],
+                  ['amount', '₺'],
+                ] as const
+              ).map(([type, symbol]) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => patch({ discountType: type })}
+                  className={`px-3 text-sm font-semibold transition-colors ${
+                    form.discountType === type
+                      ? 'bg-accent text-white'
+                      : 'bg-transparent text-ink-3 hover:text-ink'
+                  }`}
+                >
+                  {symbol}
+                </button>
+              ))}
+            </div>
+          </div>
         </Field>
-        <Field label="Ödeme Planı">
+        <Field
+          label="Ödeme Planı"
+          hint={isCustom ? 'Serbest plan — öğrenci istediği zaman öder' : undefined}
+        >
           <Select value={form.plan} onChange={update('plan')}>
             {PAYMENT_PLANS.map((item) => (
               <option key={item}>{item}</option>
@@ -276,11 +353,28 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
             ))}
           </Select>
         </Field>
-        <Field label="İlk Ödeme Tarihi" icon="calendar" full>
+        <Field label="Ödenen Tutar (₺)" hint="Kayıt sırasında alınan ödeme">
+          <Input
+            value={form.paidNow}
+            onChange={(event) => patch({ paidNow: digits(event.target.value) })}
+            placeholder="0"
+            className="font-mono"
+            inputMode="numeric"
+          />
+        </Field>
+        <Field label="İlk Ödeme Tarihi" icon="calendar" hint={isCustom ? 'Opsiyonel' : undefined}>
           <DatePicker
             value={form.firstDate}
             onChange={(iso) => patch({ firstDate: iso })}
             placeholder="gg.aa.yyyy"
+          />
+        </Field>
+        <Field label="Finans Notu" full>
+          <Textarea
+            rows={2}
+            value={form.note}
+            onChange={update('note')}
+            placeholder="Örn. ikinci taksiti velisi ödeyecek"
           />
         </Field>
       </div>
@@ -291,26 +385,42 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
           <span className="text-[13.5px] text-ink-2">Kayıt Ücreti</span>
           <span className="font-mono text-sm tabular-nums">{formatMoney(fee)}</span>
         </div>
-        {discount > 0 && (
+        {discountValue > 0 && (
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[13.5px] text-ink-2">İndirim (%{discount})</span>
-            <span className="font-mono text-sm text-ok tabular-nums">
-              −{formatMoney(Math.round((fee * discount) / 100))}
+            <span className="text-[13.5px] text-ink-2">
+              İndirim{form.discountType === 'percent' ? ` (%${Number(form.discount)})` : ''}
             </span>
+            <span className="font-mono text-sm text-ok tabular-nums">
+              −{formatMoney(discountValue)}
+            </span>
+          </div>
+        )}
+        {paidNow > 0 && (
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[13.5px] text-ink-2">Ödenen</span>
+            <span className="font-mono text-sm text-ok tabular-nums">−{formatMoney(paidNow)}</span>
           </div>
         )}
         <div className="divider my-2.5" style={{ background: 'var(--accent-soft-border)' }} />
         <div className="flex items-center justify-between">
-          <span className="text-[15px] font-bold text-accent-strong">Net Tutar</span>
+          <span className="text-[15px] font-bold text-accent-strong">
+            {paidNow > 0 ? 'Kalan Tutar' : 'Net Tutar'}
+          </span>
           <span className="font-mono text-[20px] font-bold text-accent-strong tabular-nums">
-            {formatMoney(Math.round(net))}
+            {formatMoney(paidNow > 0 ? remaining : net)}
           </span>
         </div>
-        {form.plan !== 'Peşin' && net > 0 && (
+        {net > 0 && (isCustom ? (
           <p className="mt-2 mb-0 text-right font-mono text-[11.5px] text-ink-3">
-            {form.plan} · ayda {formatMoney(Math.round(net / parseInt(form.plan, 10)))}
+            Özel plan · ödeme tarihleri esnek
           </p>
-        )}
+        ) : (
+          !Number.isNaN(installmentCount) && (
+            <p className="mt-2 mb-0 text-right font-mono text-[11.5px] text-ink-3">
+              {form.plan} · ayda {formatMoney(Math.round(net / installmentCount))}
+            </p>
+          )
+        ))}
       </div>
     </div>
   );

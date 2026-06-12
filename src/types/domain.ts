@@ -24,6 +24,10 @@ export interface Student {
   joined: string;
   email: string;
   source?: StudentSource;
+  /** Number of course terms ("kur") covered by this registration. */
+  terms?: number;
+  /** Free-form finance note entered during registration. */
+  note?: string | null;
 }
 
 /** Payload used when creating a student through the manual registration form. */

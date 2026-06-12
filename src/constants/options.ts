@@ -132,4 +132,14 @@ export const RELATIONS = ['Anne', 'Baba', 'Eş', 'Kardeş', 'Vasi', 'Kendisi', '
 
 export const GENDERS = ['Kadın', 'Erkek', 'Belirtmek istemiyor'] as const;
 
-export const PAYMENT_PLANS = ['Peşin', '2 Taksit', '3 Taksit', '4 Taksit', '6 Taksit'] as const;
+/** Free-schedule plan — the student pays whenever they want. */
+export const CUSTOM_PLAN = 'Özel';
+
+export const PAYMENT_PLANS = [
+  'Peşin',
+  ...Array.from({ length: 11 }, (_, i) => `${i + 2} Taksit`),
+  CUSTOM_PLAN,
+];
+
+/** How many course terms ("kur") a registration can cover. */
+export const TERM_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
