@@ -144,12 +144,15 @@ export function StudentsPage() {
                       variant="soft"
                       onClick={(event) => {
                         event.stopPropagation();
-                        approve(student.id);
+                        // Without a fee there is no payment plan yet — open the
+                        // modal so staff can set it before approving.
+                        if (student.fee > 0) approve(student.id);
+                        else setSelected(student);
                       }}
                       className="px-3 py-2 text-[12.5px]"
                     >
                       <Icon name="check" size={15} />
-                      Onayla
+                      {student.fee > 0 ? 'Onayla' : 'Planı Belirle'}
                     </Button>
                   ) : (
                     <Button

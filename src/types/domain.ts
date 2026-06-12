@@ -28,6 +28,22 @@ export interface Student {
   terms?: number;
   /** Free-form finance note entered during registration. */
   note?: string | null;
+  // Extended profile, filled by the welcome or manual registration form.
+  tckn?: string | null;
+  birthDate?: string | null;
+  gender?: string | null;
+  city?: string | null;
+  address?: string | null;
+  educationLevel?: string | null;
+  school?: string | null;
+  department?: string | null;
+  grade?: string | null;
+  contactName?: string | null;
+  contactRelation?: string | null;
+  contactPhone?: string | null;
+  /** Approval audit (null while the enrollment is pending). */
+  approvedByName?: string | null;
+  approvedAt?: string | null;
 }
 
 /** Payload used when creating a student through the manual registration form. */

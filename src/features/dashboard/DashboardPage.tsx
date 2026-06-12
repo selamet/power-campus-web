@@ -214,11 +214,11 @@ export function DashboardPage() {
                     </Button>
                     <Button
                       variant="primary"
-                      onClick={() => approve(student.id)}
+                      onClick={() => (student.fee > 0 ? approve(student.id) : setSelected(student))}
                       className="px-3.5 py-[9px] text-[13px]"
                     >
                       <Icon name="check" size={16} />
-                      Onayla
+                      {student.fee > 0 ? 'Onayla' : 'Planı Belirle'}
                     </Button>
                   </div>
                 </div>

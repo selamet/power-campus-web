@@ -197,8 +197,11 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
             <p className="m-0 flex items-start gap-2.5 rounded-xl bg-accent-soft px-3.5 py-3 text-[13px] leading-[1.5] text-ink-2">
               <Icon name="info" size={18} className="mt-px shrink-0 text-accent" />
               <span>
-                Öğrenci hoşgeldin formunu doldurdu. <strong>Seviye ve ücreti belirleyip</strong>{' '}
-                onayladığında taksit planı otomatik oluşturulur.
+                {current.source === 'davet'
+                  ? 'Öğrenci hoşgeldin formunu doldurdu. '
+                  : 'Kayıt onay bekliyor. '}
+                <strong>Seviye ve ücreti belirleyip</strong> onayladığında taksit planı otomatik
+                oluşturulur.
               </span>
             </p>
 
@@ -226,17 +229,27 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
                   />
                 </EditField>
               </div>
-              <div className="mt-3 flex items-center justify-between rounded-lg border border-accent-soft-border bg-accent-soft px-3.5 py-2.5">
-                <span className="text-[13px] text-ink-2">Taksit önizleme</span>
-                <span className="font-mono text-[13px] font-bold text-accent-strong">
-                  {count <= 1 ? `Peşin · ${formatMoney(feeNum)}` : `${count} × ${formatMoney(perInstallment)}`}
-                </span>
-              </div>
+              {feeNum > 0 ? (
+                <div className="mt-3 flex items-center justify-between rounded-lg border border-accent-soft-border bg-accent-soft px-3.5 py-2.5">
+                  <span className="text-[13px] text-ink-2">Taksit önizleme</span>
+                  <span className="font-mono text-[13px] font-bold text-accent-strong">
+                    {count <= 1 ? `Peşin · ${formatMoney(feeNum)}` : `${count} × ${formatMoney(perInstallment)}`}
+                  </span>
+                </div>
+              ) : (
+                <p className="m-0 mt-3 flex items-center gap-2 rounded-lg bg-warn-soft px-3.5 py-2.5 text-[12.5px] font-medium text-warn-ink">
+                  <Icon name="info" size={15} className="shrink-0" />
+                  Kayıt ücreti girilmeden onay yapılamaz.
+                </p>
+              )}
             </Section>
 
-            <Section icon="user" title="İletişim">
+            <ProfileSection student={current} />
+
+            <Section icon="phone" title="İletişim">
               <InfoRow label="E-posta" value={current.email} />
               <InfoRow label="Telefon" value={current.phone} mono />
+              <ContactRows student={current} />
               <InfoRow label="Form Tarihi" value={formatDate(current.joined)} />
             </Section>
           </>
@@ -285,13 +298,27 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
             <Section icon="user" title="Kişisel & İletişim">
               <InfoRow label="E-posta" value={current.email} />
               <InfoRow label="Telefon" value={current.phone} mono />
+              <ContactRows student={current} />
               <InfoRow label="Kayıt Tarihi" value={formatDate(current.joined)} />
+              {current.approvedByName && (
+                <InfoRow
+                  label="Onaylayan"
+                  value={`${current.approvedByName}${
+                    current.approvedAt ? ` · ${formatDate(current.approvedAt)}` : ''
+                  }`}
+                />
+              )}
             </Section>
+
+            <ProfileSection student={current} />
 
             <Section icon="graduation" title="Eğitim">
               <InfoRow label="Dil" value={current.lang} />
               <InfoRow label="Seviye" value={current.level} />
               <InfoRow label="Kur / Program" value={current.course} />
+              {(current.terms ?? 1) > 1 && (
+                <InfoRow label="Kur Sayısı" value={`${current.terms} Kur`} />
+              )}
               <InfoRow label="Başlangıç" value={formatDate(current.start)} />
             </Section>
 
@@ -312,6 +339,13 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
                   style={{ width: `${pct}%` }}
                 />
               </div>
+
+              {current.note && (
+                <p className="m-0 mt-3 flex items-start gap-2 rounded-lg bg-bg-2 px-3 py-2 text-[12.5px] leading-[1.5] text-ink-2">
+                  <Icon name="edit" size={14} className="mt-px shrink-0 text-ink-3" />
+                  {current.note}
+                </p>
+              )}
 
               {installments.length > 0 && (
                 <div className="mt-4 flex flex-col gap-1">
@@ -367,7 +401,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
                 <Icon name="x" size={17} />
                 Reddet
               </Button>
-              <Button variant="primary" block onClick={approve} disabled={saving}>
+              <Button variant="primary" block onClick={approve} disabled={saving || feeNum <= 0}>
                 <Icon name="check" size={18} />
                 {saving ? 'Onaylanıyor…' : 'Onayla & Planı Oluştur'}
               </Button>
@@ -470,6 +504,53 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
         )}
       </div>
     </Modal>
+  );
+}
+
+/** Profile details submitted through the welcome or manual form; only filled rows. */
+function ProfileSection({ student }: { student: Student }) {
+  const rows: { label: string; value?: string; mono?: boolean }[] = [
+    { label: 'T.C. Kimlik No', value: student.tckn ?? undefined, mono: true },
+    {
+      label: 'Doğum Tarihi',
+      value: student.birthDate ? formatDate(student.birthDate) : undefined,
+    },
+    { label: 'Cinsiyet', value: student.gender ?? undefined },
+    { label: 'Şehir', value: student.city ?? undefined },
+    { label: 'Adres', value: student.address ?? undefined },
+    { label: 'Öğrenim Durumu', value: student.educationLevel ?? undefined },
+    { label: 'Okul', value: student.school ?? undefined },
+    { label: 'Bölüm', value: student.department ?? undefined },
+    { label: 'Sınıf / Yıl', value: student.grade ?? undefined },
+  ].filter((row) => row.value);
+
+  if (rows.length === 0) return null;
+  return (
+    <Section icon="id" title="Öğrenci Bilgileri" subtitle="Kayıt formunda bildirilenler">
+      {rows.map((row) => (
+        <InfoRow key={row.label} label={row.label} value={row.value} mono={row.mono} />
+      ))}
+    </Section>
+  );
+}
+
+/** Primary contact person rows, rendered only when provided. */
+function ContactRows({ student }: { student: Student }) {
+  if (!student.contactName && !student.contactPhone) return null;
+  return (
+    <>
+      {student.contactName && (
+        <InfoRow
+          label="İletişim Kişisi"
+          value={`${student.contactName}${
+            student.contactRelation ? ` (${student.contactRelation})` : ''
+          }`}
+        />
+      )}
+      {student.contactPhone && (
+        <InfoRow label="İletişim Telefonu" value={student.contactPhone} mono />
+      )}
+    </>
   );
 }
 
