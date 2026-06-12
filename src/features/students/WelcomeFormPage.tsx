@@ -187,13 +187,20 @@ export function WelcomeFormPage() {
       <div className="welcome-bg flex min-h-screen flex-col">
         <WelcomeHeader isPreview={isPreview} />
         <div className="flex flex-1 items-center justify-center px-5 py-10">
-          <div className="card mesh-aurora anim-scale-in max-w-[460px] p-8 text-center">
-            <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-[18px] bg-ok-soft text-ok" style={{ animation: 'pop 0.45s cubic-bezier(0.2,0.8,0.3,1) both' }}>
+          <div className="card-rainbow anim-scale-in relative max-w-[480px] p-9 text-center">
+            <div className="confetti" aria-hidden>
+              {Array.from({ length: 10 }, (_, i) => (
+                <i key={i} />
+              ))}
+            </div>
+            <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-[18px] bg-gradient-to-br from-ok to-[hsl(170_60%_38%)] text-white shadow-pop" style={{ animation: 'pop 0.45s cubic-bezier(0.2,0.8,0.3,1) both' }}>
               <Icon name="checkCircle" size={34} />
               <Icon name="partyPopper" size={20} className="absolute -right-2 -top-2 text-accent-2" />
             </div>
-            <h1 className="m-0 text-[22px] font-bold tracking-[-0.02em]">
-              Aramıza hoş geldin{form.name ? `, ${form.name.split(' ')[0]}` : ''}!
+            <h1 className="m-0 text-[24px] font-bold tracking-[-0.02em]">
+              Aramıza{' '}
+              <span className="font-script text-gradient-brand text-[34px] font-semibold leading-none">hoş geldin</span>
+              {form.name ? `, ${form.name.split(' ')[0]}` : ''}!
             </h1>
             <p className="mt-2.5 mb-0 text-[14.5px] text-ink-2">
               Power ailesinin bir parçası olmana çok az kaldı. Kayıt ekibimiz en kısa sürede

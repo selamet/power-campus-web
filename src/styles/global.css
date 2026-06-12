@@ -235,6 +235,36 @@
     box-shadow: var(--shadow-md);
   }
 
+  /* One-shot confetti burst for the welcome success card. Parent must be
+     relatively positioned; pieces fall, spin and fade inside it. */
+  .confetti {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .confetti i {
+    position: absolute;
+    top: -14px;
+    width: 8px;
+    height: 13px;
+    border-radius: 2px;
+    opacity: 0;
+    animation: confettiFall 2.8s ease-in both;
+  }
+  .confetti i:nth-child(1) { left: 6%; background: var(--accent); animation-delay: 0.15s; }
+  .confetti i:nth-child(2) { left: 16%; background: hsl(38 92% 52%); animation-delay: 0.5s; height: 10px; }
+  .confetti i:nth-child(3) { left: 27%; background: var(--accent-2); animation-delay: 0.05s; }
+  .confetti i:nth-child(4) { left: 38%; background: hsl(330 78% 56%); animation-delay: 0.65s; height: 11px; }
+  .confetti i:nth-child(5) { left: 49%; background: var(--ok); animation-delay: 0.3s; }
+  .confetti i:nth-child(6) { left: 60%; background: var(--accent); animation-delay: 0.75s; height: 10px; }
+  .confetti i:nth-child(7) { left: 70%; background: var(--accent-2); animation-delay: 0.2s; }
+  .confetti i:nth-child(8) { left: 80%; background: hsl(38 92% 52%); animation-delay: 0.55s; }
+  .confetti i:nth-child(9) { left: 89%; background: hsl(330 78% 56%); animation-delay: 0.1s; height: 11px; }
+  .confetti i:nth-child(10) { left: 95%; background: var(--ok); animation-delay: 0.4s; }
+
   /* Brand gradient text — red through pink into indigo. */
   .text-gradient-brand {
     background: linear-gradient(
@@ -547,6 +577,19 @@
 @keyframes drawCheck {
   to {
     stroke-dashoffset: 0;
+  }
+}
+@keyframes confettiFall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(360px) rotate(560deg);
   }
 }
 @keyframes welcomeDrift {
