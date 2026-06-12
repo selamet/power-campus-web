@@ -168,7 +168,7 @@ export function WelcomeFormPage() {
   if (linkError) {
     return (
       <div className="welcome-bg flex min-h-screen flex-col">
-        <WelcomeHeader isPreview={isPreview} />
+        <WelcomeDecor isPreview={isPreview} />
         <div className="flex flex-1 items-center justify-center px-5 py-10">
           <div className="card anim-scale-in max-w-[460px] p-8 text-center">
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-[18px] bg-warn-soft text-warn">
@@ -178,6 +178,7 @@ export function WelcomeFormPage() {
             <p className="mt-2.5 mb-0 text-[14.5px] text-ink-2">{linkError}</p>
           </div>
         </div>
+        <WelcomeFooter />
       </div>
     );
   }
@@ -185,7 +186,7 @@ export function WelcomeFormPage() {
   if (done) {
     return (
       <div className="welcome-bg flex min-h-screen flex-col">
-        <WelcomeHeader isPreview={isPreview} />
+        <WelcomeDecor isPreview={isPreview} />
         <div className="flex flex-1 items-center justify-center px-5 py-10">
           <div className="card-glow anim-scale-in relative max-w-[480px] p-9 text-center">
             <div className="confetti" aria-hidden>
@@ -208,6 +209,7 @@ export function WelcomeFormPage() {
             </p>
           </div>
         </div>
+        <WelcomeFooter />
       </div>
     );
   }
@@ -215,14 +217,19 @@ export function WelcomeFormPage() {
   const firstName = form.name.trim().split(' ')[0];
 
   return (
-    <div className="welcome-bg min-h-screen">
-      <WelcomeHeader isPreview={isPreview} />
+    <div className="welcome-bg flex min-h-screen flex-col">
+      <WelcomeDecor isPreview={isPreview} />
 
-      <div className="mx-auto max-w-[720px] px-5 pt-8 pb-8">
-        <div className="anim-fade-up mb-7 text-center">
-          <h1 className="m-0 text-[clamp(26px,5vw,38px)] font-bold leading-[1.15] tracking-[-0.03em]">
+      <div className="mx-auto w-full max-w-[720px] flex-1 px-5 pt-9 pb-8">
+        <div className="anim-fade-up mb-6 text-center">
+          <span className="kicker mb-2 inline-flex items-center gap-1.5 text-accent">
+            <Icon name="sparkle" size={13} />
+            Yeni öğrenci kaydı
+            <Icon name="sparkle" size={13} />
+          </span>
+          <h1 className="m-0 text-[clamp(28px,7.5vw,42px)] font-bold leading-[1.1] tracking-[-0.03em]">
             Power'ın{' '}
-            <span className="font-script text-gradient-brand text-[clamp(36px,6.5vw,52px)] font-semibold leading-none">
+            <span className="font-script text-gradient-brand block py-1 text-[clamp(48px,13vw,76px)] font-semibold leading-[1.05]">
               ayrıcalıklı
             </span>{' '}
             dünyasına hoş geldin{firstName ? `, ${firstName}` : ''}!
@@ -233,7 +240,7 @@ export function WelcomeFormPage() {
           <Steps steps={FORM_STEPS} current={step} progress={stepProgress} />
         </div>
 
-        <div className="card-glow p-6">
+        <div className="card-glow p-5 sm:p-6">
           {step === 0 && (
             <div className="anim-fade-in">
               <SectionHead icon="user" title="Senin Bilgilerin" desc="Kimlik ve temel bilgiler" tone="accent" />
@@ -361,6 +368,8 @@ export function WelcomeFormPage() {
           )}
         </div>
       </div>
+
+      <WelcomeFooter />
     </div>
   );
 }
@@ -378,14 +387,11 @@ function BackdropWords() {
   );
 }
 
-/** Centered brand mark at the top of the page — no navbar on the public form. */
-function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
+/** Decorative backdrop + preview badge — the public form has no navbar. */
+function WelcomeDecor({ isPreview }: { isPreview: boolean }) {
   return (
     <>
       <BackdropWords />
-      <div className="flex justify-center pt-10">
-        <Logo height={34} />
-      </div>
       {isPreview && (
         <span className="fixed right-5 top-5 z-20 flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-semibold text-accent shadow-card">
           <Icon name="eye" size={14} />
@@ -393,6 +399,15 @@ function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
         </span>
       )}
     </>
+  );
+}
+
+/** Brand mark anchored at the bottom of every welcome screen. */
+function WelcomeFooter() {
+  return (
+    <div className="flex justify-center pb-7 pt-4">
+      <Logo height={26} />
+    </div>
   );
 }
 
