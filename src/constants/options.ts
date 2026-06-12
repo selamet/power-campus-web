@@ -135,6 +135,9 @@ export const GENDERS = ['Kadın', 'Erkek', 'Belirtmek istemiyor'] as const;
 /** Free-schedule plan — the student pays whenever they want. */
 export const CUSTOM_PLAN = 'Özel';
 
+/** Dynamic plan — one payment per course term ("kur"). */
+export const PER_TERM_PLAN = 'Kur Başına';
+
 export const PAYMENT_PLANS = [
   'Peşin',
   ...Array.from({ length: 11 }, (_, i) => `${i + 2} Taksit`),

@@ -8,6 +8,7 @@ import {
   LEVELS,
   PAYMENT_PLANS,
   PAY_METHODS,
+  PER_TERM_PLAN,
   TERM_COUNTS,
 } from '@/constants/options';
 import {
@@ -39,7 +40,7 @@ interface FormState extends PersonCoreForm {
   course: string;
   terms: string;
   start: string;
-  fee: string;
+  termFee: string;
   plan: string;
   payMethod: string;
   firstDate: string;
@@ -57,7 +58,7 @@ const initialForm: FormState = {
   course: COURSES[0],
   terms: '1',
   start: '',
-  fee: '',
+  termFee: '',
   plan: 'Peşin',
   payMethod: PAY_METHODS[0],
   firstDate: '',
@@ -67,9 +68,15 @@ const initialForm: FormState = {
   note: '',
 };
 
-/** Net amount, discount and opening payment derived from the finance step. */
+/**
+ * Totals derived from the finance step. The registration fee is dynamic:
+ * number of terms ("kur") × price per term, then discount and the opening
+ * payment are applied on top.
+ */
 function financeSummary(form: FormState) {
-  const fee = Number(form.fee) || 0;
+  const terms = Number(form.terms) || 1;
+  const termFee = Number(form.termFee) || 0;
+  const fee = terms * termFee;
   const rawDiscount = Number(form.discount) || 0;
   const discountValue =
     form.discountType === 'percent'
@@ -77,7 +84,7 @@ function financeSummary(form: FormState) {
       : Math.min(rawDiscount, fee);
   const net = Math.max(0, fee - discountValue);
   const paidNow = Math.min(Number(form.paidNow) || 0, net);
-  return { fee, discountValue, net, paidNow, remaining: net - paidNow };
+  return { terms, termFee, fee, discountValue, net, paidNow, remaining: net - paidNow };
 }
 
 /**
@@ -96,8 +103,11 @@ export function RegistrationFormPage() {
   const close = () => navigate(paths.overview);
 
   const save = () => {
-    const { net, paidNow } = financeSummary(form);
-    const fee = form.fee ? net : 18500;
+    const { terms, net, paidNow } = financeSummary(form);
+    const fee = form.termFee ? net : 18500;
+    // "Kur Başına" resolves to one installment per term so the backend can
+    // build the schedule from the plan label.
+    const plan = form.plan === PER_TERM_PLAN ? `${terms} Taksit` : form.plan;
     // Peşin with no explicit opening payment means paid in full; a custom
     // plan has no fixed next date unless one was picked.
     const paid = form.plan === 'Peşin' && !paidNow ? fee : paidNow;
@@ -115,7 +125,7 @@ export function RegistrationFormPage() {
       start: form.start || '2026-06-15',
       fee,
       paid,
-      plan: form.plan,
+      plan,
       next,
       joined: '2026-05-30',
       email: form.email || 'ogrenci@gmail.com',
@@ -282,9 +292,10 @@ interface FinanceSectionProps {
 }
 
 function FinanceSection({ form, update, patch }: FinanceSectionProps) {
-  const { fee, discountValue, net, paidNow, remaining } = financeSummary(form);
+  const { terms, termFee, fee, discountValue, net, paidNow, remaining } = financeSummary(form);
   const isCustom = form.plan === CUSTOM_PLAN;
-  const installmentCount = parseInt(form.plan, 10);
+  const isPerTerm = form.plan === PER_TERM_PLAN;
+  const installmentCount = isPerTerm ? terms : parseInt(form.plan, 10);
 
   const digits = (value: string) => value.replace(/\D/g, '');
 
@@ -293,14 +304,18 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
       <SectionHead
         icon="wallet"
         title="Finans & Ödeme Planı"
-        desc="Kayıt ücreti, indirim, taksit ve ödeme yöntemi"
+        desc="Kur ücreti, indirim, taksit ve ödeme yöntemi"
       />
       <div className={FORM_GRID}>
-        <Field label="Kayıt Ücreti (₺)" required>
+        <Field
+          label="Kur Ücreti (₺)"
+          required
+          hint={termFee > 0 ? `${terms} Kur × ${formatMoney(termFee)} = ${formatMoney(fee)}` : `${terms} Kur seçildi — toplam otomatik hesaplanır`}
+        >
           <Input
-            value={form.fee}
-            onChange={(event) => patch({ fee: digits(event.target.value) })}
-            placeholder="Örn. 18500"
+            value={form.termFee}
+            onChange={(event) => patch({ termFee: digits(event.target.value) })}
+            placeholder="Örn. 2000"
             className="font-mono"
             inputMode="numeric"
           />
@@ -338,10 +353,20 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
         </Field>
         <Field
           label="Ödeme Planı"
-          hint={isCustom ? 'Serbest plan — öğrenci istediği zaman öder' : undefined}
+          hint={
+            isCustom
+              ? 'Serbest plan — öğrenci istediği zaman öder'
+              : isPerTerm
+                ? `Her kur başında bir ödeme (${terms} ödeme)`
+                : undefined
+          }
         >
           <Select value={form.plan} onChange={update('plan')}>
-            {PAYMENT_PLANS.map((item) => (
+            <option>Peşin</option>
+            <option value={PER_TERM_PLAN}>
+              Kur Başına ({terms} ödeme)
+            </option>
+            {PAYMENT_PLANS.filter((item) => item !== 'Peşin').map((item) => (
               <option key={item}>{item}</option>
             ))}
           </Select>
@@ -382,7 +407,9 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
       {/* summary */}
       <div className="mt-4 rounded-[14px] border border-accent-soft-border bg-accent-soft p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-[13.5px] text-ink-2">Kayıt Ücreti</span>
+          <span className="text-[13.5px] text-ink-2">
+            {terms > 1 ? `Toplam (${terms} Kur × ${formatMoney(termFee)})` : 'Kayıt Ücreti'}
+          </span>
           <span className="font-mono text-sm tabular-nums">{formatMoney(fee)}</span>
         </div>
         {discountValue > 0 && (
@@ -413,6 +440,10 @@ function FinanceSection({ form, update, patch }: FinanceSectionProps) {
         {net > 0 && (isCustom ? (
           <p className="mt-2 mb-0 text-right font-mono text-[11.5px] text-ink-3">
             Özel plan · ödeme tarihleri esnek
+          </p>
+        ) : isPerTerm ? (
+          <p className="mt-2 mb-0 text-right font-mono text-[11.5px] text-ink-3">
+            Kur Başına · {terms} × {formatMoney(Math.round(net / terms))}
           </p>
         ) : (
           !Number.isNaN(installmentCount) && (
