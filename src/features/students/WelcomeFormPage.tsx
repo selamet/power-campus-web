@@ -421,7 +421,15 @@ function WelcomeFooter() {
     <div className="flex flex-col items-center gap-2 pb-7 pt-4">
       <Logo height={38} />
       <span className="font-mono text-[11px] tracking-[0.08em] text-ink-3">
-        Crafted by selamet.dev
+        Crafted by{' '}
+        <a
+          href="https://selamet.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-ink-2 underline decoration-line-strong underline-offset-2 transition-colors hover:text-accent"
+        >
+          selamet.dev
+        </a>
       </span>
     </div>
   );
