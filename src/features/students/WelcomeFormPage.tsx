@@ -227,14 +227,6 @@ export function WelcomeFormPage() {
             </span>{' '}
             dünyasına hoş geldin{firstName ? `, ${firstName}` : ''}!
           </h1>
-          <p className="mx-auto mt-3 mb-0 max-w-[460px] text-[15px] text-ink-2">
-            Üç kısa adımda kaydını tamamla, gerisini Power ekibi halletsin.
-          </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-            <HeroChip icon="sparkle" tone="accent" text="3 kolay adım" />
-            <HeroChip icon="clock" tone="accent-2" text="2 dakikada biter" />
-            <HeroChip icon="shield" tone="ok" text="Bilgilerin güvende" />
-          </div>
         </div>
 
         <div className="mb-5">
@@ -373,35 +365,20 @@ export function WelcomeFormPage() {
   );
 }
 
+/** Centered brand mark at the top of the page — no navbar on the public form. */
 function WelcomeHeader({ isPreview }: { isPreview: boolean }) {
   return (
-    <div className="sticky top-0 z-20 flex items-center border-b border-line bg-[hsl(30_24%_97%/0.85)] px-6 py-3 backdrop-blur-[12px] dark:bg-[hsl(24_12%_8%/0.85)]">
-      <Logo height={26} />
-      <div className="flex-1" />
+    <>
+      <div className="flex justify-center pt-10">
+        <Logo height={34} />
+      </div>
       {isPreview && (
-        <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-semibold text-accent">
+        <span className="fixed right-5 top-5 z-20 flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-semibold text-accent shadow-card">
           <Icon name="eye" size={14} />
           Önizleme
         </span>
       )}
-    </div>
-  );
-}
-
-const CHIP_TONES = {
-  accent: 'border-accent-soft-border bg-accent-soft text-accent',
-  'accent-2': 'border-accent-2-soft-border bg-accent-2-soft text-accent-2',
-  ok: 'border-ok/25 bg-ok-soft text-ok',
-} as const;
-
-function HeroChip({ icon, tone, text }: { icon: string; tone: keyof typeof CHIP_TONES; text: string }) {
-  return (
-    <span
-      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold ${CHIP_TONES[tone]}`}
-    >
-      <Icon name={icon} size={14} />
-      {text}
-    </span>
+    </>
   );
 }
 
