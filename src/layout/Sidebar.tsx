@@ -20,13 +20,14 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: paths.overview, label: 'Genel Bakış', icon: 'grid', end: true, permission: PERMISSIONS.dashboardRead },
   { to: paths.students, label: 'Öğrenciler', icon: 'users', permission: PERMISSIONS.studentsRead },
+  { to: paths.terms, label: 'Dönemler', icon: 'calendar', permission: PERMISSIONS.termsRead },
   { to: paths.staff, label: 'Yetkililer', icon: 'shield', permission: PERMISSIONS.usersRead },
 ];
 
 const NAV_SOON = [
   { label: 'Sınıflar', icon: 'layers' },
   { label: 'Yoklama', icon: 'clipboard' },
-  { label: 'Ders Programı', icon: 'calendar' },
+  { label: 'Ders Programı', icon: 'clock' },
   { label: 'Dökümanlar', icon: 'folder' },
 ];
 

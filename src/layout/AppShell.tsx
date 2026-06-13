@@ -39,6 +39,9 @@ export function AppShell() {
     if (location.pathname.startsWith(paths.staff)) {
       return { title: 'Yetkililer', subtitle: 'Panel kullanıcıları ve izinleri' };
     }
+    if (location.pathname.startsWith(paths.terms)) {
+      return { title: 'Dönemler', subtitle: 'Kurs dönemleri (sömestr)' };
+    }
     return {
       title: 'Genel Bakış',
       subtitle: `${user?.branch ?? 'Power Akademi'} · yönetim paneli`,

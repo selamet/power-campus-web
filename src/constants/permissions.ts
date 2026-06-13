@@ -6,6 +6,8 @@ export const PERMISSIONS = {
   financeRead: 'finance:read',
   financeWrite: 'finance:write',
   invitesWrite: 'invites:write',
+  termsRead: 'terms:read',
+  termsWrite: 'terms:write',
   usersRead: 'users:read',
   usersWrite: 'users:write',
 } as const;

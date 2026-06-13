@@ -44,6 +44,19 @@ export interface Student {
   /** Approval audit (null while the enrollment is pending). */
   approvedByName?: string | null;
   approvedAt?: string | null;
+  /** The term (semester) this enrollment belongs to, if assigned. */
+  termId?: number | null;
+  termName?: string | null;
+}
+
+/** A teaching period (semester) courses run in. */
+export interface Term {
+  id: number;
+  name: string;
+  start: string;
+  end: string;
+  /** True when today falls inside the term's date range. */
+  current: boolean;
 }
 
 /** Payload used when creating a student through the manual registration form. */

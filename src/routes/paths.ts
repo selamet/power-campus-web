@@ -5,6 +5,7 @@ export const paths = {
   overview: '/',
   students: '/students',
   staff: '/staff',
+  terms: '/terms',
   newStudent: '/students/new',
   studentDetail: '/students/:tckn',
   welcome: '/hosgeldin/:tckn',
