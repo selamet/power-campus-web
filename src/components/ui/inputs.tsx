@@ -189,7 +189,16 @@ export function Select({
             setActive(0);
             if (!open) setOpen(true);
           }}
+          onMouseDown={() => {
+            // Clicking the field toggles the panel both ways, so it can be
+            // dismissed without forcing a selection even while it stays focused.
+            setQuery('');
+            setActive(0);
+            setOpen((prev) => !prev);
+          }}
           onFocus={() => {
+            // Keyboard focus (Tab) opens it; mouse opens are handled above.
+            if (open) return;
             setQuery('');
             setActive(0);
             setOpen(true);
