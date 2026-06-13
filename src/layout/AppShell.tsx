@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { fetchCurrentUser, selectCurrentUser } from '@/features/auth/authSlice';
+import { usePermission } from '@/features/auth/usePermission';
+import { PERMISSIONS } from '@/constants/permissions';
 import { fetchStudents, selectStudents } from '@/features/students/studentsSlice';
 import { AddStudentModal } from '@/features/students/components/AddStudentModal';
 import { InviteFlowModal } from '@/features/students/components/InviteFlowModal';
@@ -17,6 +19,8 @@ export function AppShell() {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectCurrentUser);
   const students = useAppSelector(selectStudents);
+  const { hasAny } = usePermission();
+  const canAdd = hasAny([PERMISSIONS.studentsWrite, PERMISSIONS.invitesWrite]);
 
   // Load the authenticated user and student list once the shell mounts.
   useEffect(() => {
@@ -56,6 +60,7 @@ export function AppShell() {
           onSearchChange={setSearch}
           onMenu={() => setNavOpen(true)}
           onAdd={() => setChoiceOpen(true)}
+          canAdd={canAdd}
         />
         <main className="flex-1 p-7">
           <Outlet context={shellContext} />

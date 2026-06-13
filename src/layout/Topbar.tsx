@@ -11,9 +11,19 @@ interface TopbarProps {
   onSearchChange: (value: string) => void;
   onMenu: () => void;
   onAdd: () => void;
+  /** Whether the signed-in user may start the add-student / invite flow. */
+  canAdd?: boolean;
 }
 
-export function Topbar({ title, subtitle, search, onSearchChange, onMenu, onAdd }: TopbarProps) {
+export function Topbar({
+  title,
+  subtitle,
+  search,
+  onSearchChange,
+  onMenu,
+  onAdd,
+  canAdd = true,
+}: TopbarProps) {
   const dispatch = useAppDispatch();
   const theme = useAppSelector(selectTheme);
 
@@ -61,10 +71,12 @@ export function Topbar({ title, subtitle, search, onSearchChange, onMenu, onAdd 
         <span className="absolute top-[9px] right-2.5 size-2 rounded-full border-2 border-surface bg-accent" />
       </Button>
 
-      <Button variant="primary" onClick={onAdd} className="topbar-add">
-        <Icon name="plus" size={18} />
-        <span>Öğrenci Ekle</span>
-      </Button>
+      {canAdd && (
+        <Button variant="primary" onClick={onAdd} className="topbar-add">
+          <Icon name="plus" size={18} />
+          <span>Öğrenci Ekle</span>
+        </Button>
+      )}
     </header>
   );
 }

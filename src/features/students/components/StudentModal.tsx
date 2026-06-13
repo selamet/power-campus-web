@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Avatar, Badge, type BadgeKind, Button, DatePicker, Field, Icon, Input, Modal, Select } from '@/components/ui';
+import { PERMISSIONS } from '@/constants/permissions';
+import { usePermission } from '@/features/auth/usePermission';
 import {
   COURSES,
   CUSTOM_PLAN,
@@ -130,6 +132,10 @@ const toEditDraft = (s: Student): EditDraft => ({
 /** Centered modal with tabbed student details, approval flow, editing and payments. */
 export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, onPay }: StudentModalProps) {
   const isPending = student.status === 'pending';
+  const { has } = usePermission();
+  const canWriteStudents = has(PERMISSIONS.studentsWrite);
+  const canReadFinance = has(PERMISSIONS.financeRead);
+  const canWriteFinance = has(PERMISSIONS.financeWrite);
   const [current, setCurrent] = useState<Student>(student);
   const [tab, setTab] = useState<string>(isPending ? 'onay' : 'ozet');
   const [rejecting, setRejecting] = useState(false);
@@ -163,7 +169,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
   };
 
   useEffect(() => {
-    if (student.status === 'pending') return;
+    if (student.status === 'pending' || !canReadFinance) return;
     let active = true;
     Promise.all([studentsApi.installments(student.id), studentsApi.payments(student.id)])
       .then(([ins, pays]) => {
@@ -176,7 +182,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
     return () => {
       active = false;
     };
-  }, [student.id, student.status]);
+  }, [student.id, student.status, canReadFinance]);
 
   const fin = financeFromForm(approval);
   const tcknError =
@@ -262,7 +268,7 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
       setCurrent(updated);
       setPaying(false);
       patchPay({ amount: '', note: '' });
-      await reloadSchedule();
+      if (canReadFinance) await reloadSchedule();
     }
   };
 
@@ -437,7 +443,12 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
       {/* footer */}
       <div className="sticky bottom-0 z-10 border-t border-line bg-surface px-6 py-4">
         {isPending ? (
-          !rejecting ? (
+          !canWriteStudents ? (
+            <span className="flex items-center justify-center gap-1.5 text-[12.5px] font-medium text-ink-3">
+              <Icon name="lock" size={14} />
+              Bu kaydı onaylama yetkiniz yok.
+            </span>
+          ) : !rejecting ? (
             <div className="flex flex-col gap-2">
               {!canApprove && (
                 <span className="flex items-center gap-1.5 text-[12px] font-medium text-warn-ink">
@@ -542,24 +553,33 @@ export function StudentModal({ student, onClose, onApprove, onReject, onUpdate, 
               </Button>
             </div>
           </div>
-        ) : (
+        ) : canWriteStudents || canWriteFinance ? (
           <div className="flex items-center gap-3">
-            <Button variant="ghost" block onClick={() => setEditing(true)}>
-              <Icon name="edit" size={17} />
-              Düzenle
-            </Button>
-            <Button
-              variant="soft"
-              block
-              onClick={() => {
-                setTab('finans');
-                setPaying(true);
-              }}
-            >
-              <Icon name="wallet" size={17} />
-              Ödeme Al
-            </Button>
+            {canWriteStudents && (
+              <Button variant="ghost" block onClick={() => setEditing(true)}>
+                <Icon name="edit" size={17} />
+                Düzenle
+              </Button>
+            )}
+            {canWriteFinance && (
+              <Button
+                variant="soft"
+                block
+                onClick={() => {
+                  setTab('finans');
+                  setPaying(true);
+                }}
+              >
+                <Icon name="wallet" size={17} />
+                Ödeme Al
+              </Button>
+            )}
           </div>
+        ) : (
+          <span className="flex items-center justify-center gap-1.5 text-[12.5px] font-medium text-ink-3">
+            <Icon name="lock" size={14} />
+            Yalnızca görüntüleme yetkiniz var.
+          </span>
         )}
       </div>
     </Modal>

@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useAppSelector } from '@/app/hooks';
 import { Avatar, Badge, Button, Icon } from '@/components/ui';
+import { PERMISSIONS } from '@/constants/permissions';
 import { STATUS } from '@/constants/status';
+import { usePermission } from '@/features/auth/usePermission';
 import { selectStudents } from '@/features/students/studentsSlice';
 import { useStudentActions } from '@/features/students/useStudentActions';
 import { StudentModal } from '@/features/students/components/StudentModal';
@@ -15,6 +17,9 @@ type FilterValue = 'all' | StudentStatus;
 export function StudentsPage() {
   const { search, openAddFlow } = useShellContext();
   const students = useAppSelector(selectStudents);
+  const { has, hasAny } = usePermission();
+  const canWrite = has(PERMISSIONS.studentsWrite);
+  const canAdd = hasAny([PERMISSIONS.studentsWrite, PERMISSIONS.invitesWrite]);
   const { approve, reject, update, pay } = useStudentActions();
   const [filter, setFilter] = useState<FilterValue>('all');
   const [selected, setSelected] = useState<Student | null>(null);
@@ -72,10 +77,12 @@ export function StudentsPage() {
             <Icon name="download" size={17} />
             Dışa Aktar
           </Button>
-          <Button variant="primary" onClick={openAddFlow}>
-            <Icon name="plus" size={18} />
-            Öğrenci Ekle
-          </Button>
+          {canAdd && (
+            <Button variant="primary" onClick={openAddFlow}>
+              <Icon name="plus" size={18} />
+              Öğrenci Ekle
+            </Button>
+          )}
         </div>
       </div>
 
@@ -139,7 +146,7 @@ export function StudentsPage() {
                   </div>
                 </div>
                 <div className="flex justify-end">
-                  {student.status === 'pending' ? (
+                  {student.status === 'pending' && canWrite ? (
                     <Button
                       variant="soft"
                       onClick={(event) => {
