@@ -27,8 +27,8 @@ export const authApi = {
     return data;
   },
 
-  async changePassword(input: ChangePasswordInput): Promise<Staff> {
-    const { data } = await axiosClient.post<Staff>('/auth/password', input);
+  async changePassword(input: ChangePasswordInput): Promise<LoginResult> {
+    const { data } = await axiosClient.post<LoginResult>('/auth/password', input);
     return data;
   },
 };

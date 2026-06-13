@@ -47,7 +47,11 @@ export const changePassword = createAsyncThunk(
   'auth/changePassword',
   async (input: ChangePasswordInput, { rejectWithValue }) => {
     try {
-      return await authApi.changePassword(input);
+      // The change returns a fresh token (old ones are invalidated server-side);
+      // persist it so the current session keeps working.
+      const result = await authApi.changePassword(input);
+      tokenStorage.set(result.token);
+      return result;
     } catch (error) {
       return rejectWithValue((error as ApiError)?.message ?? 'Parola güncellenemedi.');
     }
@@ -85,7 +89,8 @@ const authSlice = createSlice({
         state.user = action.payload;
       })
       .addCase(changePassword.fulfilled, (state, action) => {
-        state.user = action.payload;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
       });
   },
 });
