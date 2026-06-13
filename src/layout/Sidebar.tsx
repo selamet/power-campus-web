@@ -2,6 +2,8 @@ import { NavLink } from 'react-router-dom';
 import { useAppSelector } from '@/app/hooks';
 import { Avatar, Icon, Logo } from '@/components/ui';
 import { selectCurrentUser } from '@/features/auth/authSlice';
+import { usePermission } from '@/features/auth/usePermission';
+import { PERMISSIONS } from '@/constants/permissions';
 import { roleLabel } from '@/constants/roles';
 import { paths } from '@/routes/paths';
 import { cn } from '@/utils/cn';
@@ -11,11 +13,14 @@ interface NavItem {
   label: string;
   icon: string;
   end?: boolean;
+  /** Permission required to see this item; omitted means always visible. */
+  permission?: string;
 }
 
 const NAV: NavItem[] = [
-  { to: paths.overview, label: 'Genel Bakış', icon: 'grid', end: true },
-  { to: paths.students, label: 'Öğrenciler', icon: 'users' },
+  { to: paths.overview, label: 'Genel Bakış', icon: 'grid', end: true, permission: PERMISSIONS.dashboardRead },
+  { to: paths.students, label: 'Öğrenciler', icon: 'users', permission: PERMISSIONS.studentsRead },
+  { to: paths.staff, label: 'Yetkililer', icon: 'shield', permission: PERMISSIONS.usersRead },
 ];
 
 const NAV_SOON = [
@@ -32,6 +37,8 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const user = useAppSelector(selectCurrentUser);
+  const { has } = usePermission();
+  const navItems = NAV.filter((item) => !item.permission || has(item.permission));
 
   return (
     <>
@@ -52,7 +59,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         <nav className="flex-1 overflow-y-auto px-3 py-1.5">
           <div className="kicker px-2.5 pt-3 pb-2">Menü</div>
-          {NAV.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

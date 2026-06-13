@@ -3,6 +3,7 @@ export const paths = {
   login: '/login',
   overview: '/',
   students: '/students',
+  staff: '/staff',
   newStudent: '/students/new',
   welcome: '/hosgeldin/:tckn',
   welcomePreview: '/hosgeldin/preview',

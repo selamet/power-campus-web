@@ -58,6 +58,51 @@ export interface Staff {
   role: string;
   email: string;
   branch: string;
+  /** Permission keys (`module:action`) the signed-in user holds. */
+  permissions: string[];
+}
+
+/** A staff account as managed from the admin panel. */
+export interface StaffAccount {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  branch: string | null;
+  isActive: boolean;
+  permissions: string[];
+}
+
+export interface CreateStaffInput {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  branch?: string | null;
+  permissions: string[];
+}
+
+export interface UpdateStaffInput {
+  name?: string;
+  role?: string;
+  branch?: string | null;
+  isActive?: boolean;
+  password?: string;
+  permissions?: string[];
+}
+
+/** A single grantable permission, as described by the API catalog. */
+export interface PermissionItem {
+  key: string;
+  action: string;
+  label: string;
+}
+
+/** A module grouping related permissions in the editor. */
+export interface PermissionGroup {
+  module: string;
+  label: string;
+  permissions: PermissionItem[];
 }
 
 export type ActivityKind = 'accent' | 'neutral' | 'ok';

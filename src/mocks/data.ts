@@ -1,3 +1,4 @@
+import { PERMISSIONS } from '@/constants/permissions';
 import type { ActivityItem, Staff, Student } from '@/types/domain';
 
 /**
@@ -8,9 +9,10 @@ import type { ActivityItem, Staff, Student } from '@/types/domain';
 
 export const MOCK_STAFF: Staff = {
   name: 'Elif Demir',
-  role: 'Personel',
+  role: 'admin',
   email: 'elif.demir@powerakademi.com',
   branch: 'Kadıköy Şube',
+  permissions: Object.values(PERMISSIONS),
 };
 
 export const MOCK_STUDENTS: Student[] = [
