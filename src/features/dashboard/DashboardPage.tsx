@@ -9,7 +9,7 @@ import { useShellContext } from '@/layout/shellContext';
 import { paths, studentLink } from '@/routes/paths';
 import type { ActivityItem } from '@/types/domain';
 import { cn } from '@/utils/cn';
-import { formatDate, formatMoney } from '@/utils/format';
+import { formatDate, formatMoney, levelCode } from '@/utils/format';
 import {
   dashboardApi,
   type DashboardStats,
@@ -199,7 +199,7 @@ export function DashboardPage() {
                       )}
                     </div>
                     <span className="text-[12.5px] text-ink-3">
-                      {student.lang} · {student.level.split(' — ')[0]} · {student.course}
+                      {student.lang} · {levelCode(student.level)} · {student.course}
                     </span>
                   </div>
                   <div className="approve-actions flex items-center gap-2">

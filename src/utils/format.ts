@@ -34,3 +34,7 @@ export const formatDate = (iso: string | null | undefined): string => {
 /** Percentage of fee paid, clamped to a whole number. */
 export const paidPercent = (paid: number, fee: number): number =>
   fee > 0 ? Math.round((paid / fee) * 100) : 0;
+
+/** Just the level code, dropping the description: "C1 — İleri" -> "C1". */
+export const levelCode = (level: string | null | undefined): string =>
+  (level ?? '').split('—')[0].trim();

@@ -30,7 +30,7 @@ import { paths } from '@/routes/paths';
 import { fetchTerms, selectCurrentTerm, selectTerms } from '@/features/terms/termsSlice';
 import type { Student, Term } from '@/types/domain';
 import { cn } from '@/utils/cn';
-import { digitsOnly, formatDate, formatMoney, paidPercent, todayIso } from '@/utils/format';
+import { digitsOnly, formatDate, formatMoney, levelCode, paidPercent, todayIso } from '@/utils/format';
 import { isValidTckn } from '@/utils/validation';
 import { FinanceFields } from './components/FinanceFields';
 import { ContactFields, EducationFields, PersonalFields } from './components/StudentFormKit';
@@ -560,7 +560,7 @@ function StudentDetailView({ student }: { student: Student }) {
             <>
               <Section icon="graduation" title="Eğitim">
                 <InfoRow label="Dil" value={student.lang} />
-                <InfoRow label="Seviye" value={student.level} />
+                <InfoRow label="Seviye" value={levelCode(student.level)} />
                 <InfoRow label="Kur / Program" value={student.course} />
                 {student.termName && <InfoRow label="Dönem" value={student.termName} />}
                 {(student.terms ?? 1) > 1 && (
@@ -991,7 +991,7 @@ function EnrollmentHistory({ items }: { items: Enrollment[] }) {
               {item.termName ?? 'Dönem atanmadı'}
             </span>
             <span className="text-[12.5px] text-ink-3">
-              {item.lang} · {item.level.split(' — ')[0]} · {item.course}
+              {item.lang} · {levelCode(item.level)} · {item.course}
             </span>
             <Badge kind={badge.kind} dot>
               {badge.label}
