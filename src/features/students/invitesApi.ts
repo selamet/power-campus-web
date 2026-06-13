@@ -1,11 +1,6 @@
 import { axiosClient } from '@/api/axiosClient';
-import { env } from '@/config/env';
-import { mockDelay } from '@/mocks/data';
 
-/**
- * Invite / self-service registration data access. Talks to the REST API, or
- * resolves bundled mock data when VITE_USE_MOCKS is enabled.
- */
+/** Invite / self-service registration data access. */
 
 export interface CreateInviteInput {
   tckn: string;
@@ -51,25 +46,16 @@ export interface WelcomeSubmitResult {
 
 export const invitesApi = {
   async create(input: CreateInviteInput): Promise<Invite> {
-    if (env.useMocks) {
-      return mockDelay({ ...input, name: input.name ?? null, status: 'pending', path: `/hosgeldin/${input.tckn}` });
-    }
     const { data } = await axiosClient.post<Invite>('/invites', input);
     return data;
   },
 
   async getPublic(tckn: string): Promise<Invite> {
-    if (env.useMocks) {
-      return mockDelay({ tckn, name: null, lang: 'İngilizce', course: 'Online Canlı', status: 'pending' });
-    }
     const { data } = await axiosClient.get<Invite>(`/invites/${tckn}`);
     return data;
   },
 
   async submit(tckn: string, input: WelcomeSubmitInput): Promise<WelcomeSubmitResult> {
-    if (env.useMocks) {
-      return mockDelay({ studentCode: 'PA-1099', status: 'pending' });
-    }
     const { data } = await axiosClient.post<WelcomeSubmitResult>(`/invites/${tckn}/submit`, input);
     return data;
   },
