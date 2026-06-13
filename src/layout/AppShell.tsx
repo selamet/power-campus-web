@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { fetchCurrentUser, selectCurrentUser } from '@/features/auth/authSlice';
+import { selectCurrentUser } from '@/features/auth/authSlice';
 import { usePermission } from '@/features/auth/usePermission';
 import { PERMISSIONS } from '@/constants/permissions';
 import { fetchStudents, selectStudents } from '@/features/students/studentsSlice';
@@ -22,9 +22,8 @@ export function AppShell() {
   const { hasAny } = usePermission();
   const canAdd = hasAny([PERMISSIONS.studentsWrite, PERMISSIONS.invitesWrite]);
 
-  // Load the authenticated user and student list once the shell mounts.
+  // The password-set guard already loaded the user; fetch the student list.
   useEffect(() => {
-    void dispatch(fetchCurrentUser());
     void dispatch(fetchStudents());
   }, [dispatch]);
 

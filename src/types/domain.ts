@@ -60,6 +60,8 @@ export interface Staff {
   branch: string;
   /** Permission keys (`module:action`) the signed-in user holds. */
   permissions: string[];
+  /** True until a provisioned user picks their own password on first login. */
+  mustChangePassword: boolean;
 }
 
 /** A staff account as managed from the admin panel. */
@@ -71,6 +73,7 @@ export interface StaffAccount {
   branch: string | null;
   isActive: boolean;
   permissions: string[];
+  mustChangePassword: boolean;
 }
 
 export interface CreateStaffInput {

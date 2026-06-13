@@ -5,6 +5,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { store } from '@/app/store';
 import { ThemeManager } from '@/app/ThemeManager';
 import { ToastProvider } from '@/components/ui';
+import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { StaffPage } from '@/features/staff/StaffPage';
@@ -14,6 +15,7 @@ import { WelcomeFormPage } from '@/features/students/WelcomeFormPage';
 import { AppShell } from '@/layout/AppShell';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
+import { RequirePasswordSet } from '@/routes/RequirePasswordSet';
 import { RequirePermission } from '@/routes/RequirePermission';
 import { paths } from '@/routes/paths';
 import '@/styles/global.css';
@@ -26,18 +28,24 @@ const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      { path: paths.setPassword, element: <ChangePasswordPage /> },
       {
-        element: <AppShell />,
+        element: <RequirePasswordSet />,
         children: [
-          { path: paths.overview, element: <DashboardPage /> },
-          { path: paths.students, element: <StudentsPage /> },
           {
-            element: <RequirePermission permission={PERMISSIONS.usersRead} />,
-            children: [{ path: paths.staff, element: <StaffPage /> }],
+            element: <AppShell />,
+            children: [
+              { path: paths.overview, element: <DashboardPage /> },
+              { path: paths.students, element: <StudentsPage /> },
+              {
+                element: <RequirePermission permission={PERMISSIONS.usersRead} />,
+                children: [{ path: paths.staff, element: <StaffPage /> }],
+              },
+            ],
           },
+          { path: paths.newStudent, element: <RegistrationFormPage /> },
         ],
       },
-      { path: paths.newStudent, element: <RegistrationFormPage /> },
     ],
   },
   { path: '*', element: <Navigate to={paths.overview} replace /> },

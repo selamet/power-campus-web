@@ -19,8 +19,8 @@ export function LoginPage() {
   const status = useAppSelector(selectAuthStatus);
   const error = useAppSelector(selectAuthError);
 
-  const [email, setEmail] = useState('elif.demir@powerakademi.com');
-  const [password, setPassword] = useState('demo1234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
   const loading = status === 'loading';
 
@@ -28,7 +28,9 @@ export function LoginPage() {
     event.preventDefault();
     const result = await dispatch(login({ email, password }));
     if (login.fulfilled.match(result)) {
-      navigate(paths.overview, { replace: true });
+      // First sign-in for a provisioned account: go set a real password.
+      const dest = result.payload.user.mustChangePassword ? paths.setPassword : paths.overview;
+      navigate(dest, { replace: true });
     }
   };
 

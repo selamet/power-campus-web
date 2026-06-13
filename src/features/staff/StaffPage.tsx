@@ -87,6 +87,12 @@ export function StaffPage() {
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-sm font-semibold">{account.name}</span>
                 <span className="truncate text-[12px] text-ink-3">{account.email}</span>
+                {account.mustChangePassword && (
+                  <span className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-warn-ink">
+                    <Icon name="lock" size={11} />
+                    Parola belirlenmedi
+                  </span>
+                )}
               </div>
             </div>
             <div className="w-[110px]">

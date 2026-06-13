@@ -11,6 +11,11 @@ export interface LoginResult {
   token: string;
 }
 
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export const authApi = {
   async login(credentials: LoginCredentials): Promise<LoginResult> {
     const { data } = await axiosClient.post<LoginResult>('/auth/login', credentials);
@@ -19,6 +24,11 @@ export const authApi = {
 
   async me(): Promise<Staff> {
     const { data } = await axiosClient.get<Staff>('/auth/me');
+    return data;
+  },
+
+  async changePassword(input: ChangePasswordInput): Promise<Staff> {
+    const { data } = await axiosClient.post<Staff>('/auth/password', input);
     return data;
   },
 };

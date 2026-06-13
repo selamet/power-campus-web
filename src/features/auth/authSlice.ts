@@ -3,7 +3,7 @@ import type { ApiError } from '@/api/axiosClient';
 import { tokenStorage } from '@/api/tokenStorage';
 import type { RootState } from '@/app/store';
 import type { Staff } from '@/types/domain';
-import { authApi, type LoginCredentials } from './authApi';
+import { authApi, type ChangePasswordInput, type LoginCredentials } from './authApi';
 
 interface AuthState {
   user: Staff | null;
@@ -43,6 +43,17 @@ export const fetchCurrentUser = createAsyncThunk(
   },
 );
 
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async (input: ChangePasswordInput, { rejectWithValue }) => {
+    try {
+      return await authApi.changePassword(input);
+    } catch (error) {
+      return rejectWithValue((error as ApiError)?.message ?? 'Parola güncellenemedi.');
+    }
+  },
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -72,6 +83,9 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload;
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.user = action.payload;
       });
   },
 });
@@ -83,3 +97,5 @@ export const selectIsAuthenticated = (state: RootState): boolean => Boolean(stat
 export const selectCurrentUser = (state: RootState): Staff | null => state.auth.user;
 export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState): string | null => state.auth.error;
+export const selectMustChangePassword = (state: RootState): boolean =>
+  Boolean(state.auth.user?.mustChangePassword);

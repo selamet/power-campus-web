@@ -1,6 +1,7 @@
 /** Centralized route paths. */
 export const paths = {
   login: '/login',
+  setPassword: '/parola-belirle',
   overview: '/',
   students: '/students',
   staff: '/staff',
