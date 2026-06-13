@@ -67,6 +67,27 @@ export function AppShell() {
         <main className="flex-1 p-7">
           <Outlet context={shellContext} />
         </main>
+        <footer className="border-t border-line px-7 py-5 text-center">
+          <span className="font-mono text-[11px] tracking-[0.06em] text-ink-3">
+            <a
+              href="https://laboflush.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-ink-2 no-underline transition-colors hover:text-accent"
+            >
+              laboflush
+            </a>
+            {' · crafted by '}
+            <a
+              href="https://selamet.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-inherit no-underline transition-colors hover:text-accent"
+            >
+              selamet.dev
+            </a>
+          </span>
+        </footer>
       </div>
 
       <AddStudentModal
