@@ -33,6 +33,8 @@ export function AddStudentsModal({
   const candidates = useMemo(() => {
     const text = query.trim().toLowerCase();
     return students
+      // Only active students can join a term; pending/inactive ones are excluded.
+      .filter((student) => student.status === 'active')
       .filter((student) => !enrolledCodes.has(student.id))
       .filter((student) =>
         text ? `${student.name}${student.id}`.toLowerCase().includes(text) : true,
@@ -70,8 +72,8 @@ export function AddStudentsModal({
         <div>
           <h2 className="text-[19px] font-bold tracking-[-0.01em]">Öğrenci Ekle</h2>
           <p className="mt-0.5 text-[13px] text-ink-3">
-            Mevcut öğrencileri bu döneme ekleyin. Kur ve ücret daha sonra öğrencinin
-            kaydından belirlenir.
+            Yalnızca aktif öğrenciler bu döneme eklenebilir. Kur ve ücret daha sonra
+            öğrencinin kaydından belirlenir.
           </p>
         </div>
         <Button variant="quiet" onClick={onClose} className="p-2" aria-label="Kapat">
