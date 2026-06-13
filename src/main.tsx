@@ -7,11 +7,14 @@ import { ThemeManager } from '@/app/ThemeManager';
 import { ToastProvider } from '@/components/ui';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
+import { StaffPage } from '@/features/staff/StaffPage';
 import { RegistrationFormPage } from '@/features/students/RegistrationFormPage';
 import { StudentsPage } from '@/features/students/StudentsPage';
 import { WelcomeFormPage } from '@/features/students/WelcomeFormPage';
 import { AppShell } from '@/layout/AppShell';
+import { PERMISSIONS } from '@/constants/permissions';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
+import { RequirePermission } from '@/routes/RequirePermission';
 import { paths } from '@/routes/paths';
 import '@/styles/global.css';
 
@@ -28,6 +31,10 @@ const router = createBrowserRouter([
         children: [
           { path: paths.overview, element: <DashboardPage /> },
           { path: paths.students, element: <StudentsPage /> },
+          {
+            element: <RequirePermission permission={PERMISSIONS.usersRead} />,
+            children: [{ path: paths.staff, element: <StaffPage /> }],
+          },
         ],
       },
       { path: paths.newStudent, element: <RegistrationFormPage /> },

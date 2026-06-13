@@ -1,5 +1,11 @@
 import { PERMISSIONS } from '@/constants/permissions';
-import type { ActivityItem, Staff, Student } from '@/types/domain';
+import type {
+  ActivityItem,
+  PermissionGroup,
+  Staff,
+  StaffAccount,
+  Student,
+} from '@/types/domain';
 
 /**
  * Bundled mock data used while VITE_USE_MOCKS is enabled.
@@ -14,6 +20,71 @@ export const MOCK_STAFF: Staff = {
   branch: 'Kadıköy Şube',
   permissions: Object.values(PERMISSIONS),
 };
+
+/** Mirrors the API's permission catalog for mock-mode rendering. */
+export const MOCK_PERMISSION_CATALOG: PermissionGroup[] = [
+  {
+    module: 'dashboard',
+    label: 'Genel Bakış',
+    permissions: [{ key: 'dashboard:read', action: 'read', label: 'Görüntüleme' }],
+  },
+  {
+    module: 'students',
+    label: 'Öğrenciler',
+    permissions: [
+      { key: 'students:read', action: 'read', label: 'Görüntüleme' },
+      { key: 'students:write', action: 'write', label: 'Düzenleme' },
+    ],
+  },
+  {
+    module: 'finance',
+    label: 'Finans / Ödemeler',
+    permissions: [
+      { key: 'finance:read', action: 'read', label: 'Görüntüleme' },
+      { key: 'finance:write', action: 'write', label: 'Düzenleme' },
+    ],
+  },
+  {
+    module: 'invites',
+    label: 'Davetler',
+    permissions: [{ key: 'invites:write', action: 'write', label: 'Davet gönderme' }],
+  },
+  {
+    module: 'users',
+    label: 'Yetkililer',
+    permissions: [
+      { key: 'users:read', action: 'read', label: 'Görüntüleme' },
+      { key: 'users:write', action: 'write', label: 'Düzenleme' },
+    ],
+  },
+];
+
+export const MOCK_STAFF_ACCOUNTS: StaffAccount[] = [
+  {
+    id: 1,
+    name: 'Sistem Yöneticisi',
+    email: 'admin@powerakademi.com',
+    role: 'admin',
+    branch: 'Power Akademi',
+    isActive: true,
+    permissions: Object.values(PERMISSIONS),
+  },
+  {
+    id: 2,
+    name: 'Elif Demir',
+    email: 'elif.demir@powerakademi.com',
+    role: 'manager',
+    branch: 'Kadıköy Şube',
+    isActive: true,
+    permissions: [
+      'dashboard:read',
+      'students:read',
+      'students:write',
+      'finance:read',
+      'invites:write',
+    ],
+  },
+];
 
 export const MOCK_STUDENTS: Student[] = [
   { id: 'PA-1042', name: 'Zeynep Kaya', lang: 'İngilizce', level: 'B1 — Orta', course: 'Hafta İçi Akşam', status: 'active', phone: '0532 114 22 87', start: '2026-02-03', fee: 18500, paid: 18500, plan: '3 Taksit', next: null, joined: '2026-01-28', email: 'zeynep.kaya@gmail.com' },

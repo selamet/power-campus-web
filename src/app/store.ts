@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '@/features/auth/authSlice';
+import staffReducer from '@/features/staff/staffSlice';
 import studentsReducer from '@/features/students/studentsSlice';
 import uiReducer, { persistUiState } from '@/features/ui/uiSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    staff: staffReducer,
     students: studentsReducer,
     ui: uiReducer,
   },
