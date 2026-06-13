@@ -1,39 +1,25 @@
 import { useMemo, useState } from 'react';
 import { useAppSelector } from '@/app/hooks';
-import {
-  Avatar,
-  Button,
-  DatePicker,
-  Field,
-  Icon,
-  Input,
-  Modal,
-  Select,
-  useToast,
-} from '@/components/ui';
-import { COURSES, LANGUAGES, LEVELS, PAYMENT_PLANS } from '@/constants/options';
+import { Avatar, Button, Icon, Input, Modal, useToast } from '@/components/ui';
 import { selectStudents } from '@/features/students/studentsSlice';
 import type { ApiError } from '@/api/axiosClient';
 import { cn } from '@/utils/cn';
-import { digitsOnly } from '@/utils/format';
 import { termsApi, type TermStudent } from '../termsApi';
 
 interface AddStudentsModalProps {
   open: boolean;
   onClose: () => void;
   termId: number;
-  termStart: string;
   /** Codes already enrolled in this term, hidden from the picker. */
   enrolledCodes: Set<string>;
   onEnrolled: (roster: TermStudent[]) => void;
 }
 
-/** Bulk-enroll existing students into a term with shared course/finance. */
+/** Add existing students to a term. No course or finance is set here. */
 export function AddStudentsModal({
   open,
   onClose,
   termId,
-  termStart,
   enrolledCodes,
   onEnrolled,
 }: AddStudentsModalProps) {
@@ -42,12 +28,6 @@ export function AddStudentsModal({
 
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [lang, setLang] = useState<string>(LANGUAGES[0]);
-  const [level, setLevel] = useState<string>(LEVELS[2]);
-  const [course, setCourse] = useState<string>(COURSES[0]);
-  const [plan, setPlan] = useState('Peşin');
-  const [fee, setFee] = useState('');
-  const [start, setStart] = useState(termStart || '');
   const [submitting, setSubmitting] = useState(false);
 
   const candidates = useMemo(() => {
@@ -67,21 +47,13 @@ export function AddStudentsModal({
       return next;
     });
 
-  const canSubmit = selected.size > 0 && Number(fee) > 0 && !!start && !submitting;
+  const canSubmit = selected.size > 0 && !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      const roster = await termsApi.bulkEnroll(termId, {
-        studentCodes: [...selected],
-        lang,
-        level,
-        course,
-        plan,
-        fee: Number(fee) || 0,
-        start,
-      });
+      const roster = await termsApi.bulkEnroll(termId, { studentCodes: [...selected] });
       onEnrolled(roster);
       toast(`${selected.size} öğrenci döneme eklendi`, 'checkCircle');
       onClose();
@@ -98,8 +70,8 @@ export function AddStudentsModal({
         <div>
           <h2 className="text-[19px] font-bold tracking-[-0.01em]">Öğrenci Ekle</h2>
           <p className="mt-0.5 text-[13px] text-ink-3">
-            Mevcut öğrencileri bu döneme yeni bir kayıtla ekleyin. Seçilen kur ve ücret
-            hepsine uygulanır.
+            Mevcut öğrencileri bu döneme ekleyin. Kur ve ücret daha sonra öğrencinin
+            kaydından belirlenir.
           </p>
         </div>
         <Button variant="quiet" onClick={onClose} className="p-2" aria-label="Kapat">
@@ -107,50 +79,7 @@ export function AddStudentsModal({
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3">
-        <Field label="Dil">
-          <Select value={lang} onChange={(e) => setLang(e.target.value)}>
-            {LANGUAGES.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Seviye">
-          <Select value={level} onChange={(e) => setLevel(e.target.value)}>
-            {LEVELS.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Kur / Program">
-          <Select value={course} onChange={(e) => setCourse(e.target.value)}>
-            {COURSES.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Ödeme Planı">
-          <Select value={plan} onChange={(e) => setPlan(e.target.value)}>
-            {PAYMENT_PLANS.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Kur Ücreti (₺)" required>
-          <Input
-            value={fee}
-            onChange={(e) => setFee(digitsOnly(e.target.value))}
-            inputMode="numeric"
-            className="font-mono"
-            placeholder="Örn. 5000"
-          />
-        </Field>
-        <Field label="Başlangıç" required>
-          <DatePicker value={start} onChange={setStart} placeholder="gg.aa.yyyy" />
-        </Field>
-      </div>
-
-      <div className="mt-5">
+      <div>
         <div className="mb-2.5 flex items-center justify-between">
           <span className="text-[13px] font-semibold text-ink-2">
             Öğrenciler {selected.size > 0 && `· ${selected.size} seçili`}
@@ -164,7 +93,7 @@ export function AddStudentsModal({
             />
           </div>
         </div>
-        <div className="flex max-h-[280px] flex-col overflow-y-auto rounded-token-sm border border-line">
+        <div className="flex max-h-[360px] flex-col overflow-y-auto rounded-token-sm border border-line">
           {candidates.map((student) => {
             const checked = selected.has(student.id);
             return (

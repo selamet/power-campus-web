@@ -28,16 +28,6 @@ export interface TermStudent {
 /** Payload for bulk-enrolling existing students into a term. */
 export interface BulkEnrollInput {
   studentCodes: string[];
-  lang: string;
-  level: string;
-  course: string;
-  plan: string;
-  fee: number;
-  paid?: number;
-  next?: string | null;
-  start: string;
-  terms?: number;
-  note?: string | null;
 }
 
 /** Terms (semesters) management against the REST API. */

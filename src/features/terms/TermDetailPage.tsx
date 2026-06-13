@@ -117,7 +117,7 @@ export function TermDetailPage() {
                 </div>
               </div>
               <div className="w-[180px] text-[13px] text-ink-2">
-                {row.lang} · {row.course}
+                {[row.lang, row.course].filter(Boolean).join(' · ') || '—'}
               </div>
               <div className="w-[90px]">
                 <Badge kind={badge.kind} dot>
@@ -144,7 +144,6 @@ export function TermDetailPage() {
           open={addOpen}
           onClose={() => setAddOpen(false)}
           termId={termId}
-          termStart={term.start}
           enrolledCodes={enrolledCodes}
           onEnrolled={setRoster}
         />
