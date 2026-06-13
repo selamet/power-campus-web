@@ -95,7 +95,7 @@ export function TermDetailPage() {
       <div className="card overflow-hidden p-0">
         <div className="hidden items-center gap-4 border-b border-line px-5 py-3 text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase md:flex">
           <span className="flex-1">Öğrenci</span>
-          <span className="w-[180px]">Dil / Kur</span>
+          <span className="w-[180px]">Seviye</span>
           <span className="w-[90px]">Durum</span>
         </div>
 
@@ -116,7 +116,7 @@ export function TermDetailPage() {
                 </div>
               </div>
               <div className="w-[180px] text-[13px] text-ink-2">
-                {[row.lang, row.course].filter(Boolean).join(' · ') || '—'}
+                {row.level || '—'}
               </div>
               <div className="w-[90px]">
                 <Badge kind={badge.kind} dot>
