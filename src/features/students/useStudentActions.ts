@@ -54,7 +54,7 @@ export function useStudentActions() {
         toast('Öğrenci bilgileri güncellendi', 'check');
         return true;
       }
-      toast('Güncelleme başarısız oldu', 'xCircle');
+      toast((result.payload as string) || 'Güncelleme başarısız oldu', 'xCircle');
       return false;
     },
     [dispatch, toast],

@@ -103,18 +103,6 @@ export function StudentDetailPage() {
   );
 }
 
-/** Simple field edits for an already-active student. */
-interface EditDraft {
-  name: string;
-  email: string;
-  phone: string;
-  lang: string;
-  level: string;
-  course: string;
-  plan: string;
-  fee: string;
-}
-
 /** Education + finance choices made while approving a pending student. */
 interface ApprovalDraft extends FinanceCoreForm {
   lang: string;
@@ -122,33 +110,16 @@ interface ApprovalDraft extends FinanceCoreForm {
   course: string;
 }
 
-/** Personal + education details editable while reviewing a pending student. */
+/** Personal + education details, shared by approval review and active editing. */
 type InfoDraft = PersonCoreForm & EducationCoreForm;
 
-const toEditDraft = (s: Student): EditDraft => ({
-  name: s.name,
-  email: s.email,
-  phone: s.phone,
-  lang: s.lang,
-  level: s.level,
-  course: s.course,
-  plan: s.plan,
-  fee: String(s.fee),
-});
-
-const toApprovalDraft = (s: Student): ApprovalDraft => {
-  const terms = s.terms && s.terms > 0 ? s.terms : 1;
-  return {
-    ...FINANCE_FORM_DEFAULTS,
-    lang: s.lang,
-    level: s.level,
-    course: s.course,
-    terms: String(terms),
-    termFee: s.fee > 0 ? String(Math.round(s.fee / terms)) : '',
-    plan: s.plan || 'Peşin',
-    paidNow: s.paid > 0 ? String(s.paid) : '',
-    note: s.note ?? '',
-  };
+/** Full edit of an already-active student: profile, contact, course and fee. */
+type EditDraft = InfoDraft & {
+  lang: string;
+  level: string;
+  course: string;
+  plan: string;
+  fee: string;
 };
 
 const toInfoDraft = (s: Student): InfoDraft => ({
@@ -167,6 +138,30 @@ const toInfoDraft = (s: Student): InfoDraft => ({
   school: s.school ?? '',
   department: s.department ?? '',
   grade: s.grade ?? '',
+});
+
+const toApprovalDraft = (s: Student): ApprovalDraft => {
+  const terms = s.terms && s.terms > 0 ? s.terms : 1;
+  return {
+    ...FINANCE_FORM_DEFAULTS,
+    lang: s.lang,
+    level: s.level,
+    course: s.course,
+    terms: String(terms),
+    termFee: s.fee > 0 ? String(Math.round(s.fee / terms)) : '',
+    plan: s.plan || 'Peşin',
+    paidNow: s.paid > 0 ? String(s.paid) : '',
+    note: s.note ?? '',
+  };
+};
+
+const toEditDraft = (s: Student): EditDraft => ({
+  ...toInfoDraft(s),
+  lang: s.lang,
+  level: s.level,
+  course: s.course,
+  plan: s.plan,
+  fee: String(s.fee),
 });
 
 function StudentDetailView({ student }: { student: Student }) {
@@ -229,6 +224,8 @@ function StudentDetailView({ student }: { student: Student }) {
   const fin = financeFromForm(approval);
   const tcknError = info.tckn && !isValidTckn(info.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
   const canApprove = fin.termFee > 0 && !tcknError;
+  const editTcknError =
+    draft.tckn && !isValidTckn(draft.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
   const status = STATUS[student.status];
 
   const startEdit = () => {
@@ -244,10 +241,23 @@ function StudentDetailView({ student }: { student: Student }) {
   };
 
   const saveEdit = async () => {
+    if (editTcknError) return;
     const patch: StudentUpdateInput = {
-      name: draft.name,
+      name: draft.name.trim() || student.name,
       email: draft.email,
       phone: draft.phone,
+      tckn: draft.tckn || null,
+      birthDate: draft.birth || null,
+      gender: draft.gender || null,
+      city: draft.city || null,
+      address: draft.addr || null,
+      educationLevel: draft.eduLevel || null,
+      school: draft.school || null,
+      department: draft.department || null,
+      grade: draft.grade || null,
+      contactName: draft.cName || null,
+      contactRelation: draft.cName ? draft.cRelation : null,
+      contactPhone: draft.cPhone || null,
       lang: draft.lang,
       level: draft.level,
       course: draft.course,
@@ -398,6 +408,7 @@ function StudentDetailView({ student }: { student: Student }) {
               draft={draft}
               update={updateEdit}
               patch={patchEdit}
+              tcknError={editTcknError}
               saving={saving}
               onCancel={() => setEditing(false)}
               onSave={saveEdit}
@@ -604,44 +615,43 @@ interface EditPanelProps {
   draft: EditDraft;
   update: FieldUpdater<EditDraft>;
   patch: (partial: Partial<EditDraft>) => void;
+  tcknError?: string;
   saving: boolean;
   onCancel: () => void;
   onSave: () => void;
 }
 
-function EditPanel({ draft, update, patch, saving, onCancel, onSave }: EditPanelProps) {
+function EditPanel({ draft, update, patch, tcknError, saving, onCancel, onSave }: EditPanelProps) {
   return (
     <>
-      <Section icon="user" title="Kişisel & İletişim">
-        <div className="flex flex-col gap-3 pt-1">
-          <Field label="Ad Soyad">
-            <Input value={draft.name} onChange={update('name')} />
-          </Field>
-          <Field label="E-posta">
-            <Input type="email" value={draft.email} onChange={update('email')} />
-          </Field>
-          <Field label="Telefon">
-            <Input value={draft.phone} onChange={update('phone')} inputMode="tel" />
-          </Field>
+      <Section icon="user" title="Kişisel Bilgiler">
+        <div className="pt-1">
+          <PersonalFields form={draft} update={update} patch={patch} tcknError={tcknError} />
         </div>
       </Section>
-      <Section icon="graduation" title="Eğitim & Finans">
-        <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-          <Field label="Dil">
+      <Section icon="graduation" title="Eğitim Bilgileri">
+        <div className="pt-1">
+          <EducationFields form={draft} update={update} />
+        </div>
+      </Section>
+      <Section icon="phone" title="İletişim">
+        <div className="pt-1">
+          <ContactFields form={draft} update={update} />
+        </div>
+      </Section>
+      <Section icon="wallet" title="Kayıt & Finans">
+        <div className={FORM_GRID}>
+          <Field label="Dil" icon="globe">
             <OptionSelect value={draft.lang} onChange={(v) => patch({ lang: v })} options={LANGUAGES} />
           </Field>
-          <Field label="Seviye">
+          <Field label="Seviye" icon="trend">
             <OptionSelect value={draft.level} onChange={(v) => patch({ level: v })} options={LEVELS} />
           </Field>
-          <Field label="Kur / Program">
+          <Field label="Kur / Program" icon="book">
             <OptionSelect value={draft.course} onChange={(v) => patch({ course: v })} options={COURSES} />
           </Field>
-          <Field label="Ödeme Planı">
-            <OptionSelect
-              value={draft.plan}
-              onChange={(v) => patch({ plan: v })}
-              options={PAYMENT_PLANS}
-            />
+          <Field label="Ödeme Planı" icon="wallet">
+            <OptionSelect value={draft.plan} onChange={(v) => patch({ plan: v })} options={PAYMENT_PLANS} />
           </Field>
           <Field label="Kayıt Ücreti (₺)">
             <Input
@@ -657,7 +667,7 @@ function EditPanel({ draft, update, patch, saving, onCancel, onSave }: EditPanel
         <Button variant="ghost" block disabled={saving} onClick={onCancel}>
           Vazgeç
         </Button>
-        <Button variant="primary" block onClick={onSave} disabled={saving}>
+        <Button variant="primary" block onClick={onSave} disabled={saving || !!tcknError}>
           <Icon name="check" size={17} />
           {saving ? 'Kaydediliyor…' : 'Kaydet'}
         </Button>
