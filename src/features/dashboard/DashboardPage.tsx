@@ -5,10 +5,9 @@ import { Avatar, Badge, Button, Icon } from '@/components/ui';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { selectStudents } from '@/features/students/studentsSlice';
 import { useStudentActions } from '@/features/students/useStudentActions';
-import { StudentModal } from '@/features/students/components/StudentModal';
 import { useShellContext } from '@/layout/shellContext';
-import { paths } from '@/routes/paths';
-import type { ActivityItem, Student } from '@/types/domain';
+import { paths, studentLink } from '@/routes/paths';
+import type { ActivityItem } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { formatDate, formatMoney } from '@/utils/format';
 import {
@@ -36,8 +35,7 @@ export function DashboardPage() {
   const { openAddFlow } = useShellContext();
   const user = useAppSelector(selectCurrentUser);
   const students = useAppSelector(selectStudents);
-  const { approve, reject, update, pay } = useStudentActions();
-  const [selected, setSelected] = useState<Student | null>(null);
+  const { approve } = useStudentActions();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [overdue, setOverdue] = useState<OverdueItem[]>([]);
@@ -74,7 +72,7 @@ export function DashboardPage() {
 
   const collectOverdue = (studentId: string) => {
     const student = students.find((item) => item.id === studentId);
-    if (student) setSelected(student);
+    navigate(studentLink(student ?? { id: studentId }));
   };
 
   const inviteTotal = (stats?.invitesPending ?? 0) + (stats?.invitesCompleted ?? 0);
@@ -207,14 +205,16 @@ export function DashboardPage() {
                   <div className="approve-actions flex items-center gap-2">
                     <Button
                       variant="ghost"
-                      onClick={() => setSelected(student)}
+                      onClick={() => navigate(studentLink(student))}
                       className="px-3 py-[9px] text-[13px]"
                     >
                       İncele
                     </Button>
                     <Button
                       variant="primary"
-                      onClick={() => (student.fee > 0 ? approve(student.id) : setSelected(student))}
+                      onClick={() =>
+                        student.fee > 0 ? approve(student.id) : navigate(studentLink(student))
+                      }
                       className="px-3.5 py-[9px] text-[13px]"
                     >
                       <Icon name="check" size={16} />
@@ -301,17 +301,6 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {selected && (
-        <StudentModal
-          student={selected}
-          onClose={() => setSelected(null)}
-          onApprove={approve}
-          onReject={reject}
-          onUpdate={update}
-          onPay={pay}
-        />
-      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { StaffPage } from '@/features/staff/StaffPage';
 import { RegistrationFormPage } from '@/features/students/RegistrationFormPage';
+import { StudentDetailPage } from '@/features/students/StudentDetailPage';
 import { StudentsPage } from '@/features/students/StudentsPage';
 import { WelcomeFormPage } from '@/features/students/WelcomeFormPage';
 import { AppShell } from '@/layout/AppShell';
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
             children: [
               { path: paths.overview, element: <DashboardPage /> },
               { path: paths.students, element: <StudentsPage /> },
+              { path: paths.studentDetail, element: <StudentDetailPage /> },
               {
                 element: <RequirePermission permission={PERMISSIONS.usersRead} />,
                 children: [{ path: paths.staff, element: <StaffPage /> }],

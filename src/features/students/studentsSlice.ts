@@ -29,6 +29,17 @@ export const fetchStudents = createAsyncThunk('students/fetch', async (_, { reje
   }
 });
 
+export const fetchStudent = createAsyncThunk(
+  'students/fetchOne',
+  async (identifier: string, { rejectWithValue }) => {
+    try {
+      return await studentsApi.get(identifier);
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
 export const createStudent = createAsyncThunk(
   'students/create',
   async (input: NewStudentInput, { rejectWithValue }) => {
@@ -102,6 +113,11 @@ const studentsSlice = createSlice({
         state.status = 'failed';
         state.error = (action.payload as string) ?? 'Öğrenciler yüklenemedi.';
       })
+      .addCase(fetchStudent.fulfilled, (state, action) => {
+        const index = state.items.findIndex((student) => student.id === action.payload.id);
+        if (index === -1) state.items.unshift(action.payload);
+        else state.items[index] = action.payload;
+      })
       .addCase(createStudent.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
       })
@@ -137,3 +153,14 @@ export const selectStudentsByStatus = createSelector(
 
 export const selectPendingStudents = (state: RootState): Student[] =>
   state.students.items.filter((student) => student.status === 'pending');
+
+/** Find a student by its public code or TCKN — the keys the detail URL uses. */
+export const selectStudentByIdentifier = (
+  state: RootState,
+  identifier: string | undefined,
+): Student | undefined =>
+  identifier
+    ? state.students.items.find(
+        (student) => student.id === identifier || student.tckn === identifier,
+      )
+    : undefined;

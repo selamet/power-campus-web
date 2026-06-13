@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/app/hooks';
 import { Avatar, Badge, Button, Icon } from '@/components/ui';
 import { PERMISSIONS } from '@/constants/permissions';
@@ -6,9 +7,9 @@ import { STATUS } from '@/constants/status';
 import { usePermission } from '@/features/auth/usePermission';
 import { selectStudents } from '@/features/students/studentsSlice';
 import { useStudentActions } from '@/features/students/useStudentActions';
-import { StudentModal } from '@/features/students/components/StudentModal';
 import { useShellContext } from '@/layout/shellContext';
-import type { Student, StudentStatus } from '@/types/domain';
+import { studentLink } from '@/routes/paths';
+import type { StudentStatus } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { formatMoney, paidPercent } from '@/utils/format';
 
@@ -16,13 +17,13 @@ type FilterValue = 'all' | StudentStatus;
 
 export function StudentsPage() {
   const { search, openAddFlow } = useShellContext();
+  const navigate = useNavigate();
   const students = useAppSelector(selectStudents);
   const { has, hasAny } = usePermission();
   const canWrite = has(PERMISSIONS.studentsWrite);
   const canAdd = hasAny([PERMISSIONS.studentsWrite, PERMISSIONS.invitesWrite]);
-  const { approve, reject, update, pay } = useStudentActions();
+  const { approve } = useStudentActions();
   const [filter, setFilter] = useState<FilterValue>('all');
-  const [selected, setSelected] = useState<Student | null>(null);
 
   const rows = useMemo(() => {
     let result = students;
@@ -106,7 +107,7 @@ export function StudentsPage() {
               <div
                 key={student.id}
                 className="strow sbody"
-                onClick={() => setSelected(student)}
+                onClick={() => navigate(studentLink(student))}
                 style={{ animationDelay: `${index * 0.03}s` }}
               >
                 <div className="flex min-w-0 items-center gap-3">
@@ -152,9 +153,9 @@ export function StudentsPage() {
                       onClick={(event) => {
                         event.stopPropagation();
                         // Without a fee there is no payment plan yet — open the
-                        // modal so staff can set it before approving.
+                        // detail page so staff can set it before approving.
                         if (student.fee > 0) approve(student.id);
-                        else setSelected(student);
+                        else navigate(studentLink(student));
                       }}
                       className="px-3 py-2 text-[12.5px]"
                     >
@@ -162,14 +163,9 @@ export function StudentsPage() {
                       {student.fee > 0 ? 'Onayla' : 'Planı Belirle'}
                     </Button>
                   ) : (
-                    <Button
-                      variant="quiet"
-                      onClick={(event) => event.stopPropagation()}
-                      className="p-2"
-                      aria-label="Detay"
-                    >
+                    <span className="flex justify-end text-ink-3" aria-hidden>
                       <Icon name="chevR" size={18} />
-                    </Button>
+                    </span>
                   )}
                 </div>
               </div>
@@ -181,17 +177,6 @@ export function StudentsPage() {
           )}
         </div>
       </div>
-
-      {selected && (
-        <StudentModal
-          student={selected}
-          onClose={() => setSelected(null)}
-          onApprove={approve}
-          onReject={reject}
-          onUpdate={update}
-          onPay={pay}
-        />
-      )}
     </div>
   );
 }

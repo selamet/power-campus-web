@@ -36,6 +36,12 @@ export const studentsApi = {
     return data;
   },
 
+  /** Fetch one student by TCKN (or the public PA- code for records without one). */
+  async get(identifier: string): Promise<Student> {
+    const { data } = await axiosClient.get<Student>(`/students/${identifier}`);
+    return data;
+  },
+
   async create(input: NewStudentInput): Promise<Student> {
     const { data } = await axiosClient.post<Student>('/students', input);
     return data;
