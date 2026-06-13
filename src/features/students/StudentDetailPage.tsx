@@ -27,7 +27,8 @@ import {
 } from '@/constants/options';
 import { STATUS } from '@/constants/status';
 import { paths } from '@/routes/paths';
-import type { Student } from '@/types/domain';
+import { fetchTerms, selectCurrentTerm, selectTerms } from '@/features/terms/termsSlice';
+import type { Student, Term } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { digitsOnly, formatDate, formatMoney, paidPercent, todayIso } from '@/utils/format';
 import { isValidTckn } from '@/utils/validation';
@@ -78,6 +79,10 @@ export function StudentDetailPage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    void dispatch(fetchTerms());
+  }, [dispatch]);
+
+  useEffect(() => {
     if (!tckn) return;
     let active = true;
     setNotFound(false);
@@ -108,6 +113,7 @@ interface ApprovalDraft extends FinanceCoreForm {
   lang: string;
   level: string;
   course: string;
+  termId: string;
 }
 
 /** Personal + education details, shared by approval review and active editing. */
@@ -120,6 +126,7 @@ type EditDraft = InfoDraft & {
   course: string;
   plan: string;
   fee: string;
+  termId: string;
 };
 
 const toInfoDraft = (s: Student): InfoDraft => ({
@@ -152,6 +159,7 @@ const toApprovalDraft = (s: Student): ApprovalDraft => {
     plan: s.plan || 'Peşin',
     paidNow: s.paid > 0 ? String(s.paid) : '',
     note: s.note ?? '',
+    termId: s.termId ? String(s.termId) : '',
   };
 };
 
@@ -162,6 +170,7 @@ const toEditDraft = (s: Student): EditDraft => ({
   course: s.course,
   plan: s.plan,
   fee: String(s.fee),
+  termId: s.termId ? String(s.termId) : '',
 });
 
 function StudentDetailView({ student }: { student: Student }) {
@@ -171,6 +180,8 @@ function StudentDetailView({ student }: { student: Student }) {
   const canWriteStudents = has(PERMISSIONS.studentsWrite);
   const canReadFinance = has(PERMISSIONS.financeRead);
   const canWriteFinance = has(PERMISSIONS.financeWrite);
+  const terms = useAppSelector(selectTerms);
+  const currentTerm = useAppSelector(selectCurrentTerm);
   const { approve, reject, update, pay } = useStudentActions();
 
   const [editing, setEditing] = useState(false);
@@ -220,6 +231,13 @@ function StudentDetailView({ student }: { student: Student }) {
       active = false;
     };
   }, [student.id, student.status, canReadFinance]);
+
+  // Default a pending student's term to the current one, once terms load.
+  useEffect(() => {
+    if (isPending && !approval.termId && !student.termId && currentTerm) {
+      setApprovalField({ termId: String(currentTerm.id) });
+    }
+  }, [currentTerm, isPending, student.termId, approval.termId, setApprovalField]);
 
   const fin = financeFromForm(approval);
   const tcknError = info.tckn && !isValidTckn(info.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
@@ -275,6 +293,7 @@ function StudentDetailView({ student }: { student: Student }) {
       course: draft.course,
       plan: draft.plan,
       fee: Number(draft.fee) || 0,
+      termId: Number(draft.termId) || null,
     };
     setSaving(true);
     const ok = await update(student.id, patch);
@@ -318,6 +337,7 @@ function StudentDetailView({ student }: { student: Student }) {
       terms: fin.terms,
       note: approval.note.trim() || null,
       next,
+      termId: Number(approval.termId) || null,
     });
     if (ok) await approve(student.id);
     setSaving(false);
@@ -399,6 +419,7 @@ function StudentDetailView({ student }: { student: Student }) {
           {isPending ? (
             <PendingPanels
               student={student}
+              terms={terms}
               approval={approval}
               updateApproval={updateApproval}
               setApprovalField={setApprovalField}
@@ -418,6 +439,7 @@ function StudentDetailView({ student }: { student: Student }) {
           ) : editing ? (
             <EditPanel
               draft={draft}
+              terms={terms}
               update={updateEdit}
               patch={patchEdit}
               tcknError={editTcknError}
@@ -440,6 +462,7 @@ function StudentDetailView({ student }: { student: Student }) {
                 <InfoRow label="Dil" value={student.lang} />
                 <InfoRow label="Seviye" value={student.level} />
                 <InfoRow label="Kur / Program" value={student.course} />
+                {student.termName && <InfoRow label="Dönem" value={student.termName} />}
                 {(student.terms ?? 1) > 1 && (
                   <InfoRow label="Kur Sayısı" value={`${student.terms} Kur`} />
                 )}
@@ -477,6 +500,7 @@ function StudentDetailView({ student }: { student: Student }) {
 
 interface PendingPanelsProps {
   student: Student;
+  terms: Term[];
   approval: ApprovalDraft;
   updateApproval: FieldUpdater<ApprovalDraft>;
   setApprovalField: (partial: Partial<ApprovalDraft>) => void;
@@ -496,6 +520,7 @@ interface PendingPanelsProps {
 
 function PendingPanels({
   student,
+  terms,
   approval,
   updateApproval,
   setApprovalField,
@@ -555,6 +580,13 @@ function PendingPanels({
                 </option>
               ))}
             </Select>
+          </Field>
+          <Field label="Dönem" icon="calendar" hint="Opsiyonel — varsayılan güncel dönem">
+            <TermSelect
+              terms={terms}
+              value={approval.termId}
+              onChange={(v) => setApprovalField({ termId: v })}
+            />
           </Field>
         </div>
       </Section>
@@ -627,6 +659,7 @@ function PendingPanels({
 
 interface EditPanelProps {
   draft: EditDraft;
+  terms: Term[];
   update: FieldUpdater<EditDraft>;
   patch: (partial: Partial<EditDraft>) => void;
   tcknError?: string;
@@ -635,7 +668,16 @@ interface EditPanelProps {
   onSave: () => void;
 }
 
-function EditPanel({ draft, update, patch, tcknError, saving, onCancel, onSave }: EditPanelProps) {
+function EditPanel({
+  draft,
+  terms,
+  update,
+  patch,
+  tcknError,
+  saving,
+  onCancel,
+  onSave,
+}: EditPanelProps) {
   return (
     <>
       <Section icon="user" title="Kişisel Bilgiler">
@@ -674,6 +716,9 @@ function EditPanel({ draft, update, patch, tcknError, saving, onCancel, onSave }
               inputMode="numeric"
               className="font-mono"
             />
+          </Field>
+          <Field label="Dönem" icon="calendar">
+            <TermSelect terms={terms} value={draft.termId} onChange={(v) => patch({ termId: v })} />
           </Field>
         </div>
       </Section>
@@ -989,6 +1034,28 @@ function OptionSelect({
       {!hasValue && value && <option value={value}>{value}</option>}
       {options.map((option) => (
         <option key={option}>{option}</option>
+      ))}
+    </Select>
+  );
+}
+
+function TermSelect({
+  terms,
+  value,
+  onChange,
+}: {
+  terms: Term[];
+  value: string;
+  onChange: (termId: string) => void;
+}) {
+  return (
+    <Select value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Dönem seçilmedi</option>
+      {terms.map((term) => (
+        <option key={term.id} value={term.id}>
+          {term.name}
+          {term.current ? ' · güncel' : ''}
+        </option>
       ))}
     </Select>
   );
