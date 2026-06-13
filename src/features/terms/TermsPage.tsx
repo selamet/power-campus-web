@@ -1,38 +1,27 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { Badge, Button, Icon } from '@/components/ui';
 import { PERMISSIONS } from '@/constants/permissions';
 import { usePermission } from '@/features/auth/usePermission';
-import type { Term } from '@/types/domain';
-import { cn } from '@/utils/cn';
+import { termLink } from '@/routes/paths';
 import { formatDate } from '@/utils/format';
 import { TermFormModal } from './components/TermFormModal';
 import { fetchTerms, selectTerms, selectTermsStatus } from './termsSlice';
 
 export function TermsPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const terms = useAppSelector(selectTerms);
   const status = useAppSelector(selectTermsStatus);
   const { has } = usePermission();
   const canWrite = has(PERMISSIONS.termsWrite);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Term | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     void dispatch(fetchTerms());
   }, [dispatch]);
-
-  const openCreate = () => {
-    setEditing(null);
-    setModalOpen(true);
-  };
-
-  const openEdit = (term: Term) => {
-    if (!canWrite) return;
-    setEditing(term);
-    setModalOpen(true);
-  };
 
   return (
     <div className="anim-fade-up mx-auto flex max-w-[900px] flex-col gap-4">
@@ -44,7 +33,7 @@ export function TermsPage() {
           </p>
         </div>
         {canWrite && (
-          <Button variant="primary" onClick={openCreate}>
+          <Button variant="primary" onClick={() => setCreateOpen(true)}>
             <Icon name="plus" size={18} />
             Yeni Dönem
           </Button>
@@ -62,12 +51,8 @@ export function TermsPage() {
           <button
             key={term.id}
             type="button"
-            onClick={() => openEdit(term)}
-            disabled={!canWrite}
-            className={cn(
-              'flex w-full flex-wrap items-center gap-4 border-b border-line px-5 py-3.5 text-left transition-colors last:border-b-0',
-              canWrite ? 'cursor-pointer hover:bg-surface-2' : 'cursor-default',
-            )}
+            onClick={() => navigate(termLink(term.id))}
+            className="flex w-full flex-wrap items-center gap-4 border-b border-line px-5 py-3.5 text-left transition-colors last:border-b-0 hover:bg-surface-2"
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
@@ -78,7 +63,7 @@ export function TermsPage() {
             <div className="w-[260px] font-mono text-[12.5px] text-ink-2">
               {formatDate(term.start)} – {formatDate(term.end)}
             </div>
-            <div className="w-[90px]">
+            <div className="flex w-[90px] items-center justify-between gap-2">
               {term.current ? (
                 <Badge kind="ok" dot>
                   Güncel
@@ -86,6 +71,7 @@ export function TermsPage() {
               ) : (
                 <Badge kind="neutral">Arşiv</Badge>
               )}
+              <Icon name="chevR" size={18} className="text-ink-3" />
             </div>
           </button>
         ))}
@@ -98,13 +84,8 @@ export function TermsPage() {
         )}
       </div>
 
-      {modalOpen && (
-        <TermFormModal
-          key={editing?.id ?? 'new'}
-          open={modalOpen}
-          term={editing}
-          onClose={() => setModalOpen(false)}
-        />
+      {createOpen && (
+        <TermFormModal open={createOpen} term={null} onClose={() => setCreateOpen(false)} />
       )}
     </div>
   );

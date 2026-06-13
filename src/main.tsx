@@ -13,6 +13,7 @@ import { RegistrationFormPage } from '@/features/students/RegistrationFormPage';
 import { StudentDetailPage } from '@/features/students/StudentDetailPage';
 import { StudentsPage } from '@/features/students/StudentsPage';
 import { WelcomeFormPage } from '@/features/students/WelcomeFormPage';
+import { TermDetailPage } from '@/features/terms/TermDetailPage';
 import { TermsPage } from '@/features/terms/TermsPage';
 import { AppShell } from '@/layout/AppShell';
 import { PERMISSIONS } from '@/constants/permissions';
@@ -42,7 +43,10 @@ const router = createBrowserRouter([
               { path: paths.studentDetail, element: <StudentDetailPage /> },
               {
                 element: <RequirePermission permission={PERMISSIONS.termsRead} />,
-                children: [{ path: paths.terms, element: <TermsPage /> }],
+                children: [
+                  { path: paths.terms, element: <TermsPage /> },
+                  { path: paths.termDetail, element: <TermDetailPage /> },
+                ],
               },
               {
                 element: <RequirePermission permission={PERMISSIONS.usersRead} />,
