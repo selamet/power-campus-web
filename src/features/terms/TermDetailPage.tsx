@@ -95,8 +95,8 @@ export function TermDetailPage() {
       <div className="card overflow-hidden p-0">
         <div className="hidden items-center gap-4 border-b border-line px-5 py-3 text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase md:flex">
           <span className="flex-1">Öğrenci</span>
-          <span className="w-[180px]">Seviye</span>
-          <span className="w-[90px]">Durum</span>
+          <span className="w-[180px] shrink-0">Seviye</span>
+          <span className="w-[150px] shrink-0">Durum</span>
         </div>
 
         {roster.map((row) => {
@@ -115,10 +115,10 @@ export function TermDetailPage() {
                   <span className="font-mono text-[11px] text-ink-3">{row.studentId}</span>
                 </div>
               </div>
-              <div className="w-[180px] text-[13px] text-ink-2">
+              <div className="w-[180px] shrink-0 text-[13px] text-ink-2">
                 {row.level || '—'}
               </div>
-              <div className="w-[90px]">
+              <div className="w-[150px] shrink-0">
                 <Badge kind={badge.kind} dot>
                   {badge.label}
                 </Badge>
