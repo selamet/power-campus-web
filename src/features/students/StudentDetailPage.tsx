@@ -240,6 +240,18 @@ function StudentDetailView({ student }: { student: Student }) {
     setPaying(true);
   };
 
+  /** Open the payment panel pre-filled with an installment's remaining amount. */
+  const collectInstallment = (item: Installment) => {
+    const remaining = Math.max(0, item.amount - item.paidAmount);
+    patchPay({
+      amount: remaining > 0 ? String(remaining) : '',
+      note: `${item.sequence}. taksit`,
+      paidAt: todayIso(),
+    });
+    setEditing(false);
+    setPaying(true);
+  };
+
   const saveEdit = async () => {
     if (editTcknError) return;
     const patch: StudentUpdateInput = {
@@ -444,6 +456,8 @@ function StudentDetailView({ student }: { student: Student }) {
                   student={student}
                   installments={installments}
                   payments={payments}
+                  canWriteFinance={canWriteFinance}
+                  onCollect={collectInstallment}
                 />
               )}
             </>
@@ -739,10 +753,14 @@ function FinanceSection({
   student,
   installments,
   payments,
+  canWriteFinance,
+  onCollect,
 }: {
   student: Student;
   installments: Installment[];
   payments: Payment[];
+  canWriteFinance: boolean;
+  onCollect: (item: Installment) => void;
 }) {
   const pct = paidPercent(student.paid, student.fee);
   return (
@@ -796,7 +814,7 @@ function FinanceSection({
             return (
               <div
                 key={item.sequence}
-                className="flex items-center justify-between border-b border-line py-[7px] text-[13px] last:border-0"
+                className="flex items-center justify-between gap-2 border-b border-line py-[7px] text-[13px] last:border-0"
               >
                 <span className="text-ink-3">
                   #{item.sequence} · {formatDate(item.dueDate)}
@@ -804,6 +822,15 @@ function FinanceSection({
                 <span className="flex items-center gap-2">
                   <span className="font-mono tabular-nums">{formatMoney(item.amount)}</span>
                   <Badge kind={badge.kind}>{badge.label}</Badge>
+                  {canWriteFinance && item.status !== 'paid' && (
+                    <Button
+                      variant="quiet"
+                      onClick={() => onCollect(item)}
+                      className="px-2 py-1 text-[12px]"
+                    >
+                      Tahsil et
+                    </Button>
+                  )}
                 </span>
               </div>
             );
@@ -935,8 +962,14 @@ function FinanceSnapshot({ student }: { student: Student }) {
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button variant="quiet" onClick={onClick} className="p-2" aria-label="Öğrenci listesine dön">
-      <Icon name="chevL" size={20} />
+    <Button
+      variant="quiet"
+      onClick={onClick}
+      className="px-2 py-1.5 text-[13px] text-ink-3"
+      aria-label="Öğrenci listesine dön"
+    >
+      <Icon name="chevL" size={18} />
+      Öğrenciler
     </Button>
   );
 }
