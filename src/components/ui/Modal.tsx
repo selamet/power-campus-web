@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
 
 interface ModalProps {
@@ -22,7 +23,9 @@ export function Modal({ open, onClose, children, width = 520, pad = true }: Moda
 
   if (!open) return null;
 
-  return (
+  // Portal to <body> so the dialog escapes the topbar's stacking context
+  // (its backdrop-blur creates one) and always renders above the app chrome.
+  return createPortal(
     <div
       onMouseDown={onClose}
       className="anim-fade-in fixed inset-0 z-[150] flex items-center justify-center bg-[hsl(20_30%_8%/0.5)] p-5 backdrop-blur-[4px]"
@@ -37,6 +40,7 @@ export function Modal({ open, onClose, children, width = 520, pad = true }: Moda
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -60,7 +60,6 @@ export function StaffFormModal({ open, onClose, staff }: StaffFormModalProps) {
   const [email, setEmail] = useState(staff?.email ?? '');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(staff?.role ?? 'manager');
-  const [branch, setBranch] = useState(staff?.branch ?? '');
   const [isActive, setIsActive] = useState(staff?.isActive ?? true);
   const [permissions, setPermissions] = useState<Set<string>>(
     () => new Set(staff?.permissions ?? []),
@@ -96,7 +95,6 @@ export function StaffFormModal({ open, onClose, staff }: StaffFormModalProps) {
       const patch: UpdateStaffInput = {
         name: name.trim(),
         role,
-        branch: branch.trim() || null,
         isActive,
         permissions: permissionList,
       };
@@ -117,7 +115,6 @@ export function StaffFormModal({ open, onClose, staff }: StaffFormModalProps) {
       email: email.trim(),
       password,
       role,
-      branch: branch.trim() || null,
       permissions: permissionList,
     };
     const result = await dispatch(createStaff(input));
@@ -179,9 +176,6 @@ export function StaffFormModal({ open, onClose, staff }: StaffFormModalProps) {
               </option>
             ))}
           </Select>
-        </Field>
-        <Field label="Şube" full>
-          <Input value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="Kadıköy Şube" />
         </Field>
       </div>
 

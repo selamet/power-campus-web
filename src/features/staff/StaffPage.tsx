@@ -67,7 +67,6 @@ export function StaffPage() {
         <div className="hidden items-center gap-4 border-b border-line px-5 py-3 text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase md:flex">
           <span className="flex-1">Kullanıcı</span>
           <span className="w-[110px]">Rol</span>
-          <span className="w-[150px]">Şube</span>
           <span className="w-[110px]">İzinler</span>
           <span className="w-[90px]">Durum</span>
         </div>
@@ -94,9 +93,6 @@ export function StaffPage() {
               <span className="inline-flex rounded-md bg-bg-2 px-2 py-1 font-mono text-[11px] font-bold tracking-[0.03em] text-ink-2 uppercase">
                 {roleLabel(account.role)}
               </span>
-            </div>
-            <div className="w-[150px] truncate text-[13.5px] text-ink-2">
-              {account.branch ?? '—'}
             </div>
             <div className="w-[110px] text-[13px] text-ink-2">{permissionSummary(account)}</div>
             <div className="w-[90px]">
