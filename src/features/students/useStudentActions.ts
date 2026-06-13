@@ -20,14 +20,15 @@ export function useStudentActions() {
   const students = useAppSelector(selectStudents);
 
   const approve = useCallback(
-    async (id: string) => {
+    async (id: string): Promise<boolean> => {
       const student = students.find((item) => item.id === id);
       const result = await dispatch(approveStudent(id));
       if (approveStudent.fulfilled.match(result)) {
         toast(`${student?.name ?? 'Öğrenci'} onaylandı`, 'checkCircle');
-      } else {
-        toast((result.payload as string) || 'Onay başarısız oldu', 'xCircle');
+        return true;
       }
+      toast((result.payload as string) || 'Onay başarısız oldu', 'xCircle');
+      return false;
     },
     [dispatch, students, toast],
   );

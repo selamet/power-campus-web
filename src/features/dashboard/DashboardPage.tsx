@@ -5,6 +5,8 @@ import { Avatar, Badge, Button, Icon } from '@/components/ui';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { selectStudents } from '@/features/students/studentsSlice';
 import { useStudentActions } from '@/features/students/useStudentActions';
+import { ApproveStudentModal } from '@/features/students/components/ApproveStudentModal';
+import type { Student } from '@/types/domain';
 import { useShellContext } from '@/layout/shellContext';
 import { paths, studentLink } from '@/routes/paths';
 import type { ActivityItem } from '@/types/domain';
@@ -40,6 +42,16 @@ export function DashboardPage() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [overdue, setOverdue] = useState<OverdueItem[]>([]);
   const [monthly, setMonthly] = useState<MonthlyPoint[]>([]);
+  const [approveTarget, setApproveTarget] = useState<Student | null>(null);
+  const [approving, setApproving] = useState(false);
+
+  const confirmApprove = async () => {
+    if (!approveTarget) return;
+    setApproving(true);
+    const ok = await approve(approveTarget.id);
+    setApproving(false);
+    if (ok) setApproveTarget(null);
+  };
 
   useEffect(() => {
     dashboardApi.stats().then(setStats).catch(() => {});
@@ -213,7 +225,9 @@ export function DashboardPage() {
                     <Button
                       variant="primary"
                       onClick={() =>
-                        student.fee > 0 ? approve(student.id) : navigate(studentLink(student))
+                        student.fee > 0
+                          ? setApproveTarget(student)
+                          : navigate(studentLink(student))
                       }
                       className="px-3.5 py-[9px] text-[13px]"
                     >
@@ -301,6 +315,13 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <ApproveStudentModal
+        student={approveTarget}
+        submitting={approving}
+        onClose={() => setApproveTarget(null)}
+        onConfirm={confirmApprove}
+      />
     </div>
   );
 }

@@ -7,9 +7,10 @@ import { STATUS } from '@/constants/status';
 import { usePermission } from '@/features/auth/usePermission';
 import { selectStudents } from '@/features/students/studentsSlice';
 import { useStudentActions } from '@/features/students/useStudentActions';
+import { ApproveStudentModal } from '@/features/students/components/ApproveStudentModal';
 import { useShellContext } from '@/layout/shellContext';
 import { studentLink } from '@/routes/paths';
-import type { StudentStatus } from '@/types/domain';
+import type { Student, StudentStatus } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { formatMoney, paidPercent } from '@/utils/format';
 
@@ -24,6 +25,16 @@ export function StudentsPage() {
   const canAdd = hasAny([PERMISSIONS.studentsWrite, PERMISSIONS.invitesWrite]);
   const { approve } = useStudentActions();
   const [filter, setFilter] = useState<FilterValue>('all');
+  const [approveTarget, setApproveTarget] = useState<Student | null>(null);
+  const [approving, setApproving] = useState(false);
+
+  const confirmApprove = async () => {
+    if (!approveTarget) return;
+    setApproving(true);
+    const ok = await approve(approveTarget.id);
+    setApproving(false);
+    if (ok) setApproveTarget(null);
+  };
 
   const rows = useMemo(() => {
     let result = students;
@@ -154,7 +165,7 @@ export function StudentsPage() {
                         event.stopPropagation();
                         // Without a fee there is no payment plan yet — open the
                         // detail page so staff can set it before approving.
-                        if (student.fee > 0) approve(student.id);
+                        if (student.fee > 0) setApproveTarget(student);
                         else navigate(studentLink(student));
                       }}
                       className="px-3 py-2 text-[12.5px]"
@@ -177,6 +188,13 @@ export function StudentsPage() {
           )}
         </div>
       </div>
+
+      <ApproveStudentModal
+        student={approveTarget}
+        submitting={approving}
+        onClose={() => setApproveTarget(null)}
+        onConfirm={confirmApprove}
+      />
     </div>
   );
 }
