@@ -50,6 +50,7 @@ import {
 import { fetchStudent, selectStudentByIdentifier } from './studentsSlice';
 import {
   studentsApi,
+  type Enrollment,
   type Installment,
   type InstallmentStatus,
   type Payment,
@@ -173,6 +174,22 @@ const toEditDraft = (s: Student): EditDraft => ({
   termId: s.termId ? String(s.termId) : '',
 });
 
+/** Education + finance for enrolling the student into another term. */
+type NewEnrollDraft = FinanceCoreForm & {
+  lang: string;
+  level: string;
+  course: string;
+  termId: string;
+};
+
+const toNewEnrollDraft = (s: Student, termId: string): NewEnrollDraft => ({
+  ...FINANCE_FORM_DEFAULTS,
+  lang: s.lang,
+  level: s.level,
+  course: s.course,
+  termId,
+});
+
 function StudentDetailView({ student }: { student: Student }) {
   const navigate = useNavigate();
   const isPending = student.status === 'pending';
@@ -182,13 +199,16 @@ function StudentDetailView({ student }: { student: Student }) {
   const canWriteFinance = has(PERMISSIONS.financeWrite);
   const terms = useAppSelector(selectTerms);
   const currentTerm = useAppSelector(selectCurrentTerm);
-  const { approve, reject, update, pay } = useStudentActions();
+  const { approve, reject, update, pay, enroll } = useStudentActions();
 
   const [editing, setEditing] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingPay, setSavingPay] = useState(false);
+  const [savingEnroll, setSavingEnroll] = useState(false);
+  const [history, setHistory] = useState<Enrollment[]>([]);
 
   const { form: draft, setForm: setDraft, update: updateEdit, patch: patchEdit } =
     useFormDraft<EditDraft>(toEditDraft(student));
@@ -203,6 +223,12 @@ function StudentDetailView({ student }: { student: Student }) {
     paidAt: todayIso(),
     note: '',
   });
+  const {
+    form: newEnroll,
+    update: updateNewEnroll,
+    patch: patchNewEnroll,
+    setForm: setNewEnroll,
+  } = useFormDraft<NewEnrollDraft>(toNewEnrollDraft(student, ''));
 
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -214,6 +240,10 @@ function StudentDetailView({ student }: { student: Student }) {
     ]);
     setInstallments(ins);
     setPayments(pays);
+  };
+
+  const reloadHistory = async () => {
+    setHistory(await studentsApi.enrollments(student.id));
   };
 
   useEffect(() => {
@@ -231,6 +261,18 @@ function StudentDetailView({ student }: { student: Student }) {
       active = false;
     };
   }, [student.id, student.status, canReadFinance]);
+
+  useEffect(() => {
+    if (student.status === 'pending') return;
+    let active = true;
+    studentsApi
+      .enrollments(student.id)
+      .then((list) => active && setHistory(list))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [student.id, student.status]);
 
   // Default a pending student's term to the current one, once terms load.
   useEffect(() => {
@@ -255,7 +297,15 @@ function StudentDetailView({ student }: { student: Student }) {
   const startPay = () => {
     patchPay({ amount: '', note: '', paidAt: todayIso() });
     setEditing(false);
+    setEnrolling(false);
     setPaying(true);
+  };
+
+  const startEnroll = () => {
+    setNewEnroll(toNewEnrollDraft(student, currentTerm ? String(currentTerm.id) : ''));
+    setEditing(false);
+    setPaying(false);
+    setEnrolling(true);
   };
 
   /** Open the payment panel pre-filled with an installment's remaining amount. */
@@ -360,6 +410,39 @@ function StudentDetailView({ student }: { student: Student }) {
     }
   };
 
+  const finNew = financeFromForm(newEnroll);
+  const submitNewEnrollment = async () => {
+    if (finNew.termFee <= 0) return;
+    const plan = resolvePlan(newEnroll.plan, finNew.terms);
+    const paid = newEnroll.plan === 'Peşin' && !finNew.paidNow ? finNew.net : finNew.paidNow;
+    const chosenTerm = terms.find((term) => String(term.id) === newEnroll.termId);
+    const start = chosenTerm?.start || todayIso();
+    const next =
+      newEnroll.plan === 'Peşin' || paid >= finNew.net
+        ? null
+        : newEnroll.firstDate || (newEnroll.plan === CUSTOM_PLAN ? null : start);
+    setSavingEnroll(true);
+    const updated = await enroll(student.id, {
+      termId: Number(newEnroll.termId) || null,
+      lang: newEnroll.lang,
+      level: newEnroll.level,
+      course: newEnroll.course,
+      plan,
+      fee: finNew.net,
+      paid,
+      terms: finNew.terms,
+      note: newEnroll.note.trim() || null,
+      next,
+      start,
+      payMethod: newEnroll.payMethod,
+    });
+    setSavingEnroll(false);
+    if (updated) {
+      setEnrolling(false);
+      await reloadHistory();
+    }
+  };
+
   const doReject = () => {
     reject(student.id);
     navigate(paths.students);
@@ -395,8 +478,8 @@ function StudentDetailView({ student }: { student: Student }) {
             {student.tckn && <span>· TCKN {student.tckn}</span>}
           </div>
         </div>
-        {!isPending && !editing && !paying && (
-          <div className="flex items-center gap-2">
+        {!isPending && !editing && !paying && !enrolling && (
+          <div className="flex flex-wrap items-center gap-2">
             {canWriteStudents && (
               <Button variant="ghost" onClick={startEdit}>
                 <Icon name="edit" size={17} />
@@ -407,6 +490,12 @@ function StudentDetailView({ student }: { student: Student }) {
               <Button variant="soft" onClick={startPay}>
                 <Icon name="wallet" size={17} />
                 Ödeme Al
+              </Button>
+            )}
+            {canWriteStudents && (
+              <Button variant="primary" onClick={startEnroll}>
+                <Icon name="plus" size={17} />
+                Yeni Dönem Kaydı
               </Button>
             )}
           </div>
@@ -456,6 +545,17 @@ function StudentDetailView({ student }: { student: Student }) {
               onCancel={() => setPaying(false)}
               onSubmit={submitPayment}
             />
+          ) : enrolling ? (
+            <NewEnrollmentPanel
+              terms={terms}
+              draft={newEnroll}
+              update={updateNewEnroll}
+              patch={patchNewEnroll}
+              fin={finNew}
+              saving={savingEnroll}
+              onCancel={() => setEnrolling(false)}
+              onSubmit={submitNewEnrollment}
+            />
           ) : (
             <>
               <Section icon="graduation" title="Eğitim">
@@ -483,6 +583,7 @@ function StudentDetailView({ student }: { student: Student }) {
                   onCollect={collectInstallment}
                 />
               )}
+              <EnrollmentHistory items={history} />
             </>
           )}
         </main>
@@ -788,6 +889,120 @@ function PaymentPanel({ form, update, patch, saving, onCancel, onSubmit }: Payme
           </Button>
         </div>
       </div>
+    </Section>
+  );
+}
+
+/* ---------------- New term enrollment ---------------- */
+
+interface NewEnrollmentPanelProps {
+  terms: Term[];
+  draft: NewEnrollDraft;
+  update: FieldUpdater<NewEnrollDraft>;
+  patch: (partial: Partial<NewEnrollDraft>) => void;
+  fin: ReturnType<typeof financeFromForm>;
+  saving: boolean;
+  onCancel: () => void;
+  onSubmit: () => void;
+}
+
+function NewEnrollmentPanel({
+  terms,
+  draft,
+  update,
+  patch,
+  fin,
+  saving,
+  onCancel,
+  onSubmit,
+}: NewEnrollmentPanelProps) {
+  const chosenTerm = terms.find((term) => String(term.id) === draft.termId);
+  const canSubmit = fin.termFee > 0;
+  return (
+    <>
+      <p className="m-0 flex items-start gap-2.5 rounded-xl bg-accent-soft px-3.5 py-3 text-[13px] leading-[1.5] text-ink-2">
+        <Icon name="info" size={18} className="mt-px shrink-0 text-accent" />
+        <span>
+          Bu öğrenciyi seçtiğin döneme yeni bir kayıtla ekliyorsun; önceki kayıtları korunur.
+        </span>
+      </p>
+      <Section icon="graduation" title="Eğitim & Dönem">
+        <div className={FORM_GRID}>
+          <Field label="Dönem" icon="calendar">
+            <TermSelect terms={terms} value={draft.termId} onChange={(v) => patch({ termId: v })} />
+          </Field>
+          <Field label="Kur Sayısı" icon="layers">
+            <Select value={draft.terms} onChange={update('terms')}>
+              {TERM_COUNTS.map((count) => (
+                <option key={count} value={count}>
+                  {count} Kur
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Dil" icon="globe">
+            <OptionSelect value={draft.lang} onChange={(v) => patch({ lang: v })} options={LANGUAGES} />
+          </Field>
+          <Field label="Seviye" icon="trend">
+            <OptionSelect value={draft.level} onChange={(v) => patch({ level: v })} options={LEVELS} />
+          </Field>
+          <Field label="Kur / Program" icon="book">
+            <OptionSelect value={draft.course} onChange={(v) => patch({ course: v })} options={COURSES} />
+          </Field>
+        </div>
+      </Section>
+      <Section icon="wallet" title="Finans & Ödeme Planı" subtitle="Kayıt için belirleyin">
+        <FinanceFields form={draft} update={update} patch={patch} startDate={chosenTerm?.start} />
+      </Section>
+      <div className="flex flex-col gap-2">
+        {!canSubmit && (
+          <span className="flex items-center gap-1.5 text-[12px] font-medium text-warn-ink">
+            <Icon name="info" size={14} />
+            Kayıt için kur ücreti girilmeli.
+          </span>
+        )}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" block disabled={saving} onClick={onCancel}>
+            Vazgeç
+          </Button>
+          <Button variant="primary" block disabled={saving || !canSubmit} onClick={onSubmit}>
+            <Icon name="check" size={17} />
+            {saving ? 'Kaydediliyor…' : 'Döneme Kaydet'}
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function EnrollmentHistory({ items }: { items: Enrollment[] }) {
+  if (items.length === 0) return null;
+  const currentId = items.reduce((max, item) => Math.max(max, item.id), 0);
+  return (
+    <Section icon="layers" title="Dönem Kayıtları" subtitle="Öğrencinin tüm dönem kayıtları">
+      {items.map((item) => {
+        const badge = STATUS[item.status];
+        return (
+          <div
+            key={item.id}
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line py-2.5 last:border-0"
+          >
+            <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold">
+              {item.termName ?? 'Dönem atanmadı'}
+            </span>
+            <span className="text-[12.5px] text-ink-3">
+              {item.lang} · {item.level.split(' — ')[0]} · {item.course}
+            </span>
+            <Badge kind={badge.kind} dot>
+              {badge.label}
+            </Badge>
+            <span className="font-mono text-[12.5px] tabular-nums">
+              {formatMoney(item.paid)} / {formatMoney(item.fee)}
+            </span>
+            {item.id === currentId && <Badge kind="accent">Güncel</Badge>}
+          </div>
+        );
+      })}
     </Section>
   );
 }

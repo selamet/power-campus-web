@@ -1,8 +1,44 @@
 import { axiosClient } from '@/api/axiosClient';
-import type { NewStudentInput, Student } from '@/types/domain';
+import type { NewStudentInput, Student, StudentStatus } from '@/types/domain';
 
 /** Editable subset of a student (everything except the generated id). */
 export type StudentUpdateInput = Partial<Omit<Student, 'id'>>;
+
+/** One term registration of a student (matches the API's EnrollmentOut). */
+export interface Enrollment {
+  id: number;
+  termId: number | null;
+  termName: string | null;
+  lang: string;
+  level: string;
+  course: string;
+  plan: string;
+  status: StudentStatus;
+  fee: number;
+  paid: number;
+  terms: number;
+  note: string | null;
+  start: string;
+  next: string | null;
+  approvedByName: string | null;
+  approvedAt: string | null;
+}
+
+/** Payload for enrolling an existing student into another term. */
+export interface NewEnrollmentInput {
+  termId?: number | null;
+  lang: string;
+  level: string;
+  course: string;
+  plan: string;
+  fee: number;
+  paid?: number;
+  next?: string | null;
+  start: string;
+  terms?: number;
+  note?: string | null;
+  payMethod?: string;
+}
 
 export type InstallmentStatus = 'paid' | 'partial' | 'overdue' | 'pending';
 
@@ -64,6 +100,16 @@ export const studentsApi = {
 
   async recordPayment(id: string, input: RecordPaymentInput): Promise<Student> {
     const { data } = await axiosClient.post<Student>(`/students/${id}/payments`, input);
+    return data;
+  },
+
+  async enrollments(id: string): Promise<Enrollment[]> {
+    const { data } = await axiosClient.get<Enrollment[]>(`/students/${id}/enrollments`);
+    return data;
+  },
+
+  async addEnrollment(id: string, input: NewEnrollmentInput): Promise<Student> {
+    const { data } = await axiosClient.post<Student>(`/students/${id}/enrollments`, input);
     return data;
   },
 

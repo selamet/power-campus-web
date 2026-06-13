@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { useToast } from '@/components/ui';
 import {
+  addEnrollment,
   approveStudent,
   createStudent,
   recordPayment,
@@ -9,7 +10,7 @@ import {
   selectStudents,
   updateStudent,
 } from './studentsSlice';
-import type { RecordPaymentInput, StudentUpdateInput } from './studentsApi';
+import type { NewEnrollmentInput, RecordPaymentInput, StudentUpdateInput } from './studentsApi';
 import type { NewStudentInput, Student } from '@/types/domain';
 
 /** Encapsulates student mutations together with their user-facing toasts. */
@@ -73,5 +74,18 @@ export function useStudentActions() {
     [dispatch, toast],
   );
 
-  return { approve, reject, create, update, pay };
+  const enroll = useCallback(
+    async (id: string, input: NewEnrollmentInput): Promise<Student | null> => {
+      const result = await dispatch(addEnrollment({ id, input }));
+      if (addEnrollment.fulfilled.match(result)) {
+        toast('Yeni dönem kaydı oluşturuldu', 'checkCircle');
+        return result.payload;
+      }
+      toast((result.payload as string) || 'Kayıt oluşturulamadı', 'xCircle');
+      return null;
+    },
+    [dispatch, toast],
+  );
+
+  return { approve, reject, create, update, pay, enroll };
 }

@@ -2,7 +2,12 @@ import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import type { ApiError } from '@/api/axiosClient';
 import type { RootState } from '@/app/store';
 import type { NewStudentInput, Student } from '@/types/domain';
-import { studentsApi, type RecordPaymentInput, type StudentUpdateInput } from './studentsApi';
+import {
+  studentsApi,
+  type NewEnrollmentInput,
+  type RecordPaymentInput,
+  type StudentUpdateInput,
+} from './studentsApi';
 
 export type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
@@ -73,6 +78,17 @@ export const recordPayment = createAsyncThunk(
   },
 );
 
+export const addEnrollment = createAsyncThunk(
+  'students/addEnrollment',
+  async ({ id, input }: { id: string; input: NewEnrollmentInput }, { rejectWithValue }) => {
+    try {
+      return await studentsApi.addEnrollment(id, input);
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
 export const approveStudent = createAsyncThunk(
   'students/approve',
   async (id: string, { rejectWithValue }) => {
@@ -126,6 +142,10 @@ const studentsSlice = createSlice({
         if (index !== -1) state.items[index] = action.payload;
       })
       .addCase(recordPayment.fulfilled, (state, action) => {
+        const index = state.items.findIndex((student) => student.id === action.payload.id);
+        if (index !== -1) state.items[index] = action.payload;
+      })
+      .addCase(addEnrollment.fulfilled, (state, action) => {
         const index = state.items.findIndex((student) => student.id === action.payload.id);
         if (index !== -1) state.items[index] = action.payload;
       })
