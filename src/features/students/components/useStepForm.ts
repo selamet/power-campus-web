@@ -10,7 +10,10 @@ export type FieldUpdater<T> = (
 /** Fields common to both registration forms. */
 export interface PersonCoreForm {
   name: string;
+  /** True for foreign students, who are keyed by passport instead of TCKN. */
+  isForeign: boolean;
   tckn: string;
+  passport: string;
   birth: string;
   gender: string;
   city: string;
@@ -39,7 +42,9 @@ export const EDUCATION_FORM_DEFAULTS: EducationCoreForm = {
 
 export const PERSON_FORM_DEFAULTS: PersonCoreForm = {
   name: '',
+  isForeign: false,
   tckn: '',
+  passport: '',
   birth: '',
   gender: '',
   city: 'İstanbul',

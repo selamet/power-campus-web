@@ -30,6 +30,10 @@ export interface Student {
   note?: string | null;
   // Extended profile, filled by the welcome or manual registration form.
   tckn?: string | null;
+  /** Passport number for foreign students (keyed by passport instead of TCKN). */
+  passportNo?: string | null;
+  /** True when the student is a foreign national (has a passport, no TCKN). */
+  isForeign?: boolean;
   birthDate?: string | null;
   gender?: string | null;
   city?: string | null;

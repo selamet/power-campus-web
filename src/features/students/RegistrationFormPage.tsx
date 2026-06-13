@@ -68,7 +68,11 @@ export function RegistrationFormPage() {
     form.tckn.length === 11 && !isValidTckn(form.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
 
   const stepValid = useMemo(() => {
-    if (step === 0) return form.name.trim().length > 1 && isValidTckn(form.tckn);
+    if (step === 0)
+      return (
+        form.name.trim().length > 1 &&
+        (form.isForeign ? form.passport.trim().length >= 5 : isValidTckn(form.tckn))
+      );
     if (step === 1) return Boolean(form.start);
     if (step === 2)
       return isValidEmail(form.email) && isValidPhone(form.phone);
@@ -100,6 +104,8 @@ export function RegistrationFormPage() {
       joined: todayIso(),
       email: form.email,
       source: 'manuel',
+      tckn: form.isForeign ? null : form.tckn,
+      passportNo: form.isForeign ? form.passport.trim() : null,
       terms,
       note: form.note.trim() || null,
       payMethod: form.payMethod,

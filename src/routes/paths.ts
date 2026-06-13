@@ -17,11 +17,15 @@ export const paths = {
 export const welcomeLink = (tckn: string) => `/hosgeldin/${tckn}`;
 
 /**
- * Detail-page link for a student. Prefers the TCKN (the address the panel uses)
- * and falls back to the public code for records without one (manual entries).
+ * Detail-page link for a student. Prefers the human identifier the panel
+ * addresses students by — TCKN for Turkish students, passport number for
+ * foreign ones — and falls back to the public code for records without either.
  */
-export const studentLink = (student: { id: string; tckn?: string | null }) =>
-  `/students/${student.tckn || student.id}`;
+export const studentLink = (student: {
+  id: string;
+  tckn?: string | null;
+  passportNo?: string | null;
+}) => `/students/${student.tckn || student.passportNo || student.id}`;
 
 /** Detail-page link for a term. */
 export const termLink = (id: number) => `/terms/${id}`;

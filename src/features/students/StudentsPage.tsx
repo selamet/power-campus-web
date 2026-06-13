@@ -42,7 +42,9 @@ export function StudentsPage() {
     const query = search.trim().toLowerCase();
     if (query) {
       result = result.filter((s) =>
-        `${s.name}${s.id}${s.phone}${s.lang}`.toLowerCase().includes(query),
+        `${s.name}${s.id}${s.phone}${s.lang}${s.tckn ?? ''}${s.passportNo ?? ''}`
+          .toLowerCase()
+          .includes(query),
       );
     }
     return result;

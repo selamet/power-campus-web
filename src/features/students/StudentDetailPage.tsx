@@ -132,7 +132,9 @@ type EditDraft = InfoDraft & {
 
 const toInfoDraft = (s: Student): InfoDraft => ({
   name: s.name,
+  isForeign: s.isForeign ?? false,
   tckn: s.tckn ?? '',
+  passport: s.passportNo ?? '',
   birth: s.birthDate ?? '',
   gender: s.gender ?? '',
   city: s.city || 'İstanbul',
@@ -282,10 +284,13 @@ function StudentDetailView({ student }: { student: Student }) {
   }, [currentTerm, isPending, student.termId, approval.termId, setApprovalField]);
 
   const fin = financeFromForm(approval);
-  const tcknError = info.tckn && !isValidTckn(info.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
+  const tcknError =
+    !info.isForeign && info.tckn && !isValidTckn(info.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
   const canApprove = fin.termFee > 0 && !tcknError;
   const editTcknError =
-    draft.tckn && !isValidTckn(draft.tckn) ? 'Geçersiz T.C. Kimlik No' : undefined;
+    !draft.isForeign && draft.tckn && !isValidTckn(draft.tckn)
+      ? 'Geçersiz T.C. Kimlik No'
+      : undefined;
   const status = STATUS[student.status];
 
   const startEdit = () => {
@@ -326,7 +331,8 @@ function StudentDetailView({ student }: { student: Student }) {
       name: draft.name.trim() || student.name,
       email: draft.email,
       phone: draft.phone,
-      tckn: draft.tckn || null,
+      tckn: draft.isForeign ? null : draft.tckn || null,
+      passportNo: draft.isForeign ? draft.passport.trim() || null : null,
       birthDate: draft.birth || null,
       gender: draft.gender || null,
       city: draft.city || null,
@@ -366,7 +372,8 @@ function StudentDetailView({ student }: { student: Student }) {
       name: info.name.trim() || student.name,
       email: info.email,
       phone: info.phone,
-      tckn: info.tckn || null,
+      tckn: info.isForeign ? null : info.tckn || null,
+      passportNo: info.isForeign ? info.passport.trim() || null : null,
       birthDate: info.birth || null,
       gender: info.gender || null,
       city: info.city || null,
@@ -476,6 +483,7 @@ function StudentDetailView({ student }: { student: Student }) {
           <div className="flex flex-wrap items-center gap-2 font-mono text-[12px] text-ink-3">
             <span>{student.id}</span>
             {student.tckn && <span>· TCKN {student.tckn}</span>}
+            {student.passportNo && <span>· Pasaport {student.passportNo}</span>}
           </div>
         </div>
         {!isPending && !editing && !paying && !enrolling && (
@@ -1122,7 +1130,9 @@ function FinanceSection({
 /** Profile details submitted through the welcome or manual form; only filled rows. */
 function ProfileSection({ student }: { student: Student }) {
   const rows: { label: string; value?: string; mono?: boolean }[] = [
-    { label: 'T.C. Kimlik No', value: student.tckn ?? undefined, mono: true },
+    student.isForeign
+      ? { label: 'Pasaport No', value: student.passportNo ?? undefined, mono: true }
+      : { label: 'T.C. Kimlik No', value: student.tckn ?? undefined, mono: true },
     {
       label: 'Doğum Tarihi',
       value: student.birthDate ? formatDate(student.birthDate) : undefined,
@@ -1172,6 +1182,7 @@ function QuickFacts({ student }: { student: Student }) {
     <Section icon="info" title="Hızlı Bilgi">
       <InfoRow label="Öğrenci No" value={student.id} mono />
       {student.tckn && <InfoRow label="T.C. Kimlik No" value={student.tckn} mono />}
+      {student.passportNo && <InfoRow label="Pasaport No" value={student.passportNo} mono />}
       <InfoRow label="Kayıt Tarihi" value={formatDate(student.joined)} />
       {student.approvedByName && (
         <InfoRow

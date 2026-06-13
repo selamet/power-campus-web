@@ -181,6 +181,9 @@ export const selectStudentByIdentifier = (
 ): Student | undefined =>
   identifier
     ? state.students.items.find(
-        (student) => student.id === identifier || student.tckn === identifier,
+        (student) =>
+          student.id === identifier ||
+          student.tckn === identifier ||
+          student.passportNo === identifier,
       )
     : undefined;

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { DatePicker, Field, Icon, Input, Logo, Select, Textarea } from '@/components/ui';
+import { DatePicker, Field, Icon, Input, Logo, Select, Textarea, Toggle } from '@/components/ui';
 import { CITIES, EDU_LEVELS, GENDERS, RELATIONS } from '@/constants/options';
 import { digitsOnly } from '@/utils/format';
 import {
@@ -25,7 +25,7 @@ interface PersonalFieldsProps {
   tcknError?: string;
 }
 
-/** Identity basics: name, TCKN, birth date, gender, city, address. */
+/** Identity basics: name, TCKN/passport, birth date, gender, city, address. */
 export function PersonalFields({
   form,
   update,
@@ -39,16 +39,45 @@ export function PersonalFields({
       <Field label="Ad Soyad" required full>
         <Input value={form.name} onChange={update('name')} placeholder="Örn. Ayşe Yılmaz" />
       </Field>
-      <Field label="T.C. Kimlik No" required hint={tcknHint} error={tcknError}>
-        <Input
-          value={form.tckn}
-          onChange={(event) => patch({ tckn: digitsOnly(event.target.value).slice(0, 11) })}
-          placeholder="Örn. 12345678901"
-          className="font-mono"
-          inputMode="numeric"
-          readOnly={tcknReadOnly}
-        />
-      </Field>
+      {!tcknReadOnly && (
+        <div className="col-span-full flex items-center justify-between gap-3 rounded-token-sm border border-line bg-surface-2 px-3.5 py-2.5">
+          <div className="flex flex-col">
+            <span className="text-[13px] font-semibold">Yabancı uyruklu</span>
+            <span className="text-[12px] text-ink-3">
+              TCKN yerine pasaport numarası kullanılır.
+            </span>
+          </div>
+          <Toggle
+            checked={form.isForeign}
+            onChange={(checked) =>
+              patch(checked ? { isForeign: true, tckn: '' } : { isForeign: false, passport: '' })
+            }
+          />
+        </div>
+      )}
+      {form.isForeign ? (
+        <Field label="Pasaport No" required hint={tcknHint} error={tcknError}>
+          <Input
+            value={form.passport}
+            onChange={(event) =>
+              patch({ passport: event.target.value.toUpperCase().slice(0, 32) })
+            }
+            placeholder="Örn. U1234567"
+            className="font-mono"
+          />
+        </Field>
+      ) : (
+        <Field label="T.C. Kimlik No" required hint={tcknHint} error={tcknError}>
+          <Input
+            value={form.tckn}
+            onChange={(event) => patch({ tckn: digitsOnly(event.target.value).slice(0, 11) })}
+            placeholder="Örn. 12345678901"
+            className="font-mono"
+            inputMode="numeric"
+            readOnly={tcknReadOnly}
+          />
+        </Field>
+      )}
       <Field label="Doğum Tarihi">
         <DatePicker
           value={form.birth}
