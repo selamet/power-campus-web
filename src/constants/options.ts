@@ -1,14 +1,7 @@
 /** Static option lists used across registration and invite forms. */
 
-export const LANGUAGES = [
-  'İngilizce',
-  'Almanca',
-  'Fransızca',
-  'İspanyolca',
-  'İtalyanca',
-  'Rusça',
-  'Arapça',
-] as const;
+// Only English is offered for now. Re-add the other languages here to expand.
+export const LANGUAGES = ['İngilizce'] as const;
 
 export const LEVELS = [
   'A1 — Başlangıç',
