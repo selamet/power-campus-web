@@ -116,7 +116,7 @@ export function TermDetailPage() {
                 </div>
               </div>
               <div className="w-[180px] shrink-0 text-[13px] text-ink-2">
-                {row.level || '—'}
+                {row.level ? row.level.split('—')[0].trim() : '—'}
               </div>
               <div className="w-[150px] shrink-0">
                 <Badge kind={badge.kind} dot>
