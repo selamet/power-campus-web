@@ -6,7 +6,7 @@ import { PERMISSIONS } from '@/constants/permissions';
 import { STATUS } from '@/constants/status';
 import { usePermission } from '@/features/auth/usePermission';
 import { paths, studentLink } from '@/routes/paths';
-import { formatDate, formatMoney } from '@/utils/format';
+import { formatDate } from '@/utils/format';
 import { AddStudentsModal } from './components/AddStudentsModal';
 import { TermFormModal } from './components/TermFormModal';
 import { termsApi, type TermStudent } from './termsApi';
@@ -97,7 +97,6 @@ export function TermDetailPage() {
           <span className="flex-1">Öğrenci</span>
           <span className="w-[180px]">Dil / Kur</span>
           <span className="w-[90px]">Durum</span>
-          <span className="w-[140px]">Ödeme</span>
         </div>
 
         {roster.map((row) => {
@@ -123,9 +122,6 @@ export function TermDetailPage() {
                 <Badge kind={badge.kind} dot>
                   {badge.label}
                 </Badge>
-              </div>
-              <div className="w-[140px] font-mono text-[12.5px] tabular-nums">
-                {formatMoney(row.paid)} / {formatMoney(row.fee)}
               </div>
             </button>
           );
