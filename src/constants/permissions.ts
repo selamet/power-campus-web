@@ -8,6 +8,8 @@ export const PERMISSIONS = {
   invitesWrite: 'invites:write',
   termsRead: 'terms:read',
   termsWrite: 'terms:write',
+  classesRead: 'classes:read',
+  classesWrite: 'classes:write',
   usersRead: 'users:read',
   usersWrite: 'users:write',
 } as const;

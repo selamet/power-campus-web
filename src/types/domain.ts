@@ -63,6 +63,29 @@ export interface Term {
   current: boolean;
 }
 
+/** A class (section) within a term, e.g. "A1/1". */
+export interface SchoolClass {
+  id: number;
+  termId: number;
+  termName: string;
+  /** Full level label, e.g. "A1 — Başlangıç". */
+  level: string;
+  section: number;
+  /** Display label, e.g. "A1/1". */
+  name: string;
+  studentCount: number;
+  /** True when the class's term is the current one. */
+  current: boolean;
+}
+
+/** A student on a class roster. */
+export interface ClassStudent {
+  studentId: string;
+  name: string;
+  level: string;
+  status: StudentStatus;
+}
+
 /** Payload used when creating a student through the manual registration form. */
 export type NewStudentInput = Omit<Student, 'id'> & {
   id?: string;
