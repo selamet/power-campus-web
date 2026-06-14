@@ -76,17 +76,21 @@ export function RegistrationFormPage() {
     if (step === 1) return Boolean(form.start);
     if (step === 2)
       return isValidEmail(form.email) && isValidPhone(form.phone);
-    return Number(form.termFee) > 0;
+    // Finance is optional: leaving it empty creates a pending student.
+    return true;
   }, [step, form]);
 
   const save = () => {
     const { terms, net, paidNow } = financeFromForm(form);
+    // Finance entered (a fee was set) auto-approves the student; otherwise the
+    // student is created pending, awaiting approval once a plan is defined.
+    const hasFinance = net > 0;
     const plan = resolvePlan(form.plan, terms);
     // Peşin with no explicit opening payment means paid in full; a custom
     // plan has no fixed next date unless one was picked.
-    const paid = form.plan === 'Peşin' && !paidNow ? net : paidNow;
-    const next =
-      form.plan === 'Peşin' || paid >= net
+    const paid = hasFinance ? (form.plan === 'Peşin' && !paidNow ? net : paidNow) : 0;
+    const nextDate =
+      !hasFinance || form.plan === 'Peşin' || paid >= net
         ? null
         : form.firstDate || (form.plan === CUSTOM_PLAN ? null : form.start);
     const newStudent: NewStudentInput = {
@@ -94,13 +98,13 @@ export function RegistrationFormPage() {
       lang: form.lang,
       level: form.level,
       course: form.course,
-      status: 'active',
+      status: hasFinance ? 'active' : 'pending',
       phone: form.phone,
       start: form.start,
-      fee: net,
+      fee: hasFinance ? net : 0,
       paid,
       plan,
-      next,
+      next: nextDate,
       joined: todayIso(),
       email: form.email,
       source: 'manuel',
@@ -240,6 +244,10 @@ export function RegistrationFormPage() {
                 title="Finans & Ödeme Planı"
                 desc="Kur ücreti, indirim, taksit ve ödeme yöntemi"
               />
+              <p className="mb-4 rounded-token-sm bg-surface-2 px-3.5 py-2.5 text-[12.5px] text-ink-2">
+                Ücret girerseniz öğrenci <strong>otomatik onaylanır</strong>. Boş bırakırsanız{' '}
+                <strong>onay bekleyen</strong> olarak kaydedilir; ödeme planı sonra belirlenir.
+              </p>
               <FinanceFields
                 form={form}
                 update={update}
@@ -268,7 +276,7 @@ export function RegistrationFormPage() {
           ) : (
             <Button variant="primary" disabled={!stepValid} onClick={save}>
               <Icon name="check" size={18} />
-              Kaydı Tamamla
+              {Number(form.termFee) > 0 ? 'Kaydet ve Onayla' : 'Onaya Gönder'}
             </Button>
           )}
         </div>
