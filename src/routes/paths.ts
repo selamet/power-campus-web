@@ -7,6 +7,8 @@ export const paths = {
   staff: '/staff',
   terms: '/terms',
   termDetail: '/terms/:id',
+  classes: '/classes',
+  classDetail: '/classes/:id',
   newStudent: '/students/new',
   studentDetail: '/students/:tckn',
   welcome: '/hosgeldin/:tckn',
@@ -29,3 +31,6 @@ export const studentLink = (student: {
 
 /** Detail-page link for a term. */
 export const termLink = (id: number) => `/terms/${id}`;
+
+/** Detail-page link for a class. */
+export const classLink = (id: number) => `/classes/${id}`;

@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '@/features/auth/authSlice';
+import classesReducer from '@/features/classes/classesSlice';
 import staffReducer from '@/features/staff/staffSlice';
 import studentsReducer from '@/features/students/studentsSlice';
 import termsReducer from '@/features/terms/termsSlice';
@@ -8,6 +9,7 @@ import uiReducer, { persistUiState } from '@/features/ui/uiSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    classes: classesReducer,
     staff: staffReducer,
     students: studentsReducer,
     terms: termsReducer,
