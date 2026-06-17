@@ -28,7 +28,7 @@ import {
 import { STATUS } from '@/constants/status';
 import { paths } from '@/routes/paths';
 import { fetchTerms, selectCurrentTerm, selectTerms } from '@/features/terms/termsSlice';
-import type { Student, Term } from '@/types/domain';
+import type { Student, StudentActivity, Term } from '@/types/domain';
 import { cn } from '@/utils/cn';
 import { digitsOnly, formatDate, formatMoney, levelCode, paidPercent, todayIso } from '@/utils/format';
 import { isValidTckn } from '@/utils/validation';
@@ -234,6 +234,7 @@ function StudentDetailView({ student }: { student: Student }) {
 
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [activity, setActivity] = useState<StudentActivity[]>([]);
 
   const reloadSchedule = async () => {
     const [ins, pays] = await Promise.all([
@@ -275,6 +276,21 @@ function StudentDetailView({ student }: { student: Student }) {
       active = false;
     };
   }, [student.id, student.status]);
+
+  useEffect(() => {
+    let active = true;
+    studentsApi
+      .activity(student.id)
+      .then((rows) => {
+        if (active) setActivity(rows);
+      })
+      .catch(() => {
+        if (active) setActivity([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [student.id]);
 
   // Default a pending student's term to the current one, once terms load.
   useEffect(() => {
@@ -592,6 +608,7 @@ function StudentDetailView({ student }: { student: Student }) {
                 />
               )}
               <EnrollmentHistory items={history} />
+              <ActivityTimeline items={activity} />
             </>
           )}
         </main>
@@ -1011,6 +1028,39 @@ function EnrollmentHistory({ items }: { items: Enrollment[] }) {
           </div>
         );
       })}
+    </Section>
+  );
+}
+
+const ACTIVITY_ICON: Record<StudentActivity['kind'], string> = {
+  created: 'plus',
+  approved: 'check',
+  enrolled: 'layers',
+  payment_recorded: 'wallet',
+  status_changed: 'trend',
+  note_added: 'clipboard',
+};
+
+function ActivityTimeline({ items }: { items: StudentActivity[] }) {
+  if (items.length === 0) return null;
+  return (
+    <Section icon="clock" title="Aktivite" subtitle="Öğrenci kaydındaki son işlemler">
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="flex items-start gap-3 border-b border-line py-2.5 last:border-0"
+        >
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+            <Icon name={ACTIVITY_ICON[item.kind] ?? 'info'} size={13} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="m-0 text-[13.5px] font-medium">{item.message}</p>
+            <p className="m-0 text-[12px] text-ink-3">
+              {item.actorName ?? 'Sistem'} · {formatDate(item.createdAt)}
+            </p>
+          </div>
+        </div>
+      ))}
     </Section>
   );
 }
