@@ -4,10 +4,11 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { Avatar, Badge, Button, Icon, Input, useToast } from '@/components/ui';
 import { PERMISSIONS } from '@/constants/permissions';
 import { STATUS } from '@/constants/status';
-import type { StudentStatus, ClassStudent } from '@/types/domain';
+import type { StudentStatus, ClassStudent, Teacher } from '@/types/domain';
 import { usePermission } from '@/features/auth/usePermission';
 import { fetchTerms } from '@/features/terms/termsSlice';
-import { paths, studentLink } from '@/routes/paths';
+import { teachersApi } from '@/features/teachers/teachersApi';
+import { paths, studentLink, teacherLink } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 import { levelCode } from '@/utils/format';
 import { AddStudentsToClassModal } from './components/AddStudentsToClassModal';
@@ -33,6 +34,8 @@ export function ClassDetailPage() {
   const [autoBusy, setAutoBusy] = useState(false);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatus | null>(null);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [assigning, setAssigning] = useState(false);
 
   useEffect(() => {
     void dispatch(fetchClasses(undefined));
@@ -50,6 +53,17 @@ export function ClassDetailPage() {
       active = false;
     };
   }, [classId]);
+
+  useEffect(() => {
+    let active = true;
+    teachersApi
+      .list('active')
+      .then((rows) => active && setTeachers(rows))
+      .catch(() => active && setTeachers([]));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const enrolledCodes = useMemo(
     () => new Set(roster.map((row) => row.studentId)),
@@ -82,6 +96,19 @@ export function ClassDetailPage() {
       toast('Otomatik atama başarısız oldu', 'xCircle');
     } finally {
       setAutoBusy(false);
+    }
+  };
+
+  const assignTeacher = async (teacherId: number | null) => {
+    if (!schoolClass) return;
+    setAssigning(true);
+    try {
+      await classesApi.update(schoolClass.id, { teacherId });
+      void dispatch(fetchClasses(undefined));
+    } catch {
+      toast('Öğretmen ataması başarısız oldu', 'xCircle');
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -155,6 +182,57 @@ export function ClassDetailPage() {
           </div>
         )}
       </div>
+
+      {schoolClass && (
+        <div className="card p-[18px]">
+          <div className="mb-2 flex items-center justify-between">
+            <h4 className="m-0 text-[14.5px] font-bold">Öğretmen</h4>
+          </div>
+          {schoolClass.teacherId ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate(teacherLink(schoolClass.teacherId!))}
+                className="font-semibold hover:text-accent"
+              >
+                {schoolClass.teacherName}
+              </button>
+              {canWrite && (
+                <button
+                  onClick={() => assignTeacher(null)}
+                  disabled={assigning}
+                  className="text-[12.5px] text-ink-3 hover:text-accent"
+                >
+                  Kaldır
+                </button>
+              )}
+            </div>
+          ) : (
+            <span className="text-[13px] text-ink-3">Atanmadı</span>
+          )}
+          {canWrite && (
+            <select
+              value={schoolClass.teacherId ?? ''}
+              onChange={(e) => assignTeacher(e.target.value ? Number(e.target.value) : null)}
+              disabled={assigning}
+              className="mt-3 h-10 w-full rounded-xl border border-line bg-surface px-3 text-[14px]"
+            >
+              <option value="">— Öğretmen seç —</option>
+              {[...teachers]
+                .sort((a, b) => {
+                  const am = a.levels.map(levelCode).includes(levelCode(schoolClass.level)) ? 0 : 1;
+                  const bm = b.levels.map(levelCode).includes(levelCode(schoolClass.level)) ? 0 : 1;
+                  return am - bm || a.name.localeCompare(b.name, 'tr');
+                })
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                    {t.levels.map(levelCode).includes(levelCode(schoolClass.level)) ? ' ✓' : ''}
+                  </option>
+                ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {roster.length > 0 && (
         <div className="card flex flex-wrap items-center gap-2 p-4">

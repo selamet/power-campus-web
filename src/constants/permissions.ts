@@ -12,6 +12,8 @@ export const PERMISSIONS = {
   classesWrite: 'classes:write',
   usersRead: 'users:read',
   usersWrite: 'users:write',
+  teachersRead: 'teachers:read',
+  teachersWrite: 'teachers:write',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

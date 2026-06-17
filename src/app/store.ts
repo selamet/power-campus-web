@@ -3,6 +3,7 @@ import authReducer from '@/features/auth/authSlice';
 import classesReducer from '@/features/classes/classesSlice';
 import staffReducer from '@/features/staff/staffSlice';
 import studentsReducer from '@/features/students/studentsSlice';
+import teachersReducer from '@/features/teachers/teachersSlice';
 import termsReducer from '@/features/terms/termsSlice';
 import uiReducer, { persistUiState } from '@/features/ui/uiSlice';
 
@@ -12,6 +13,7 @@ export const store = configureStore({
     classes: classesReducer,
     staff: staffReducer,
     students: studentsReducer,
+    teachers: teachersReducer,
     terms: termsReducer,
     ui: uiReducer,
   },
