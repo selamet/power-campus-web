@@ -76,6 +76,8 @@ export interface SchoolClass {
   studentCount: number;
   /** True when the class's term is the current one. */
   current: boolean;
+  teacherId?: number | null;
+  teacherName?: string | null;
 }
 
 /** A student on a class roster. */
@@ -179,4 +181,18 @@ export interface StudentActivity {
   meta?: Record<string, unknown> | null;
   actorName?: string | null;
   createdAt: string;
+}
+
+export type TeacherStatus = 'active' | 'inactive';
+
+export interface Teacher {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  status: TeacherStatus;
+  languages: string[];
+  levels: string[];
+  note: string | null;
+  classCount: number;
 }
