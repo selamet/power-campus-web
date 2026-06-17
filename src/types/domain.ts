@@ -162,3 +162,21 @@ export interface StatusMeta {
   label: string;
   kind: 'ok' | 'warn' | 'neutral';
 }
+
+export type StudentActivityKind =
+  | 'created'
+  | 'approved'
+  | 'enrolled'
+  | 'payment_recorded'
+  | 'status_changed'
+  | 'note_added';
+
+/** One entry in a student's activity log. */
+export interface StudentActivity {
+  id: number;
+  kind: StudentActivityKind;
+  message: string;
+  meta?: Record<string, unknown> | null;
+  actorName?: string | null;
+  createdAt: string;
+}

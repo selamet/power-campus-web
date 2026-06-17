@@ -1,5 +1,5 @@
 import { axiosClient } from '@/api/axiosClient';
-import type { NewStudentInput, Student, StudentStatus } from '@/types/domain';
+import type { NewStudentInput, Student, StudentActivity, StudentStatus } from '@/types/domain';
 
 /** Editable subset of a student (everything except the generated id). */
 export type StudentUpdateInput = Partial<Omit<Student, 'id'>>;
@@ -105,6 +105,11 @@ export const studentsApi = {
 
   async enrollments(id: string): Promise<Enrollment[]> {
     const { data } = await axiosClient.get<Enrollment[]>(`/students/${id}/enrollments`);
+    return data;
+  },
+
+  async activity(id: string): Promise<StudentActivity[]> {
+    const { data } = await axiosClient.get<StudentActivity[]>(`/students/${id}/activity`);
     return data;
   },
 
