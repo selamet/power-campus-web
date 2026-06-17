@@ -10,6 +10,7 @@ export interface CreateClassInput {
 export interface UpdateClassInput {
   level?: string;
   section?: number;
+  teacherId?: number | null;
 }
 
 /** Classes (sections) management against the REST API. */
