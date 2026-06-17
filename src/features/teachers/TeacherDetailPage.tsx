@@ -9,7 +9,7 @@ import { classLink } from '@/routes/paths';
 import type { SchoolClass } from '@/types/domain';
 import { levelCode } from '@/utils/format';
 import { teachersApi } from './teachersApi';
-import { fetchTeacher, selectTeacherById } from './teachersSlice';
+import { fetchTeacher, selectTeacherById, selectTeachersStatus } from './teachersSlice';
 import { TeacherFormModal } from './TeacherFormModal';
 
 export function TeacherDetailPage() {
@@ -18,6 +18,7 @@ export function TeacherDetailPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const teacher = useAppSelector((state) => selectTeacherById(state, teacherId));
+  const teachersStatus = useAppSelector(selectTeachersStatus);
   const { has } = usePermission();
   const canWrite = has(PERMISSIONS.teachersWrite);
 
@@ -25,15 +26,27 @@ export function TeacherDetailPage() {
   const [classes, setClasses] = useState<SchoolClass[]>([]);
 
   useEffect(() => {
-    if (!teacherId) return;
+    if (Number.isNaN(teacherId)) return;
     void dispatch(fetchTeacher(teacherId));
-    teachersApi.classes(teacherId).then(setClasses).catch(() => {});
   }, [dispatch, teacherId]);
 
+  useEffect(() => {
+    if (Number.isNaN(teacherId)) return;
+    let active = true;
+    teachersApi
+      .classes(teacherId)
+      .then((rows) => { if (active) setClasses(rows); })
+      .catch(() => { if (active) setClasses([]); });
+    return () => { active = false; };
+  }, [teacherId]);
+
   if (!teacher) {
+    const loading = teachersStatus === 'idle' || teachersStatus === 'loading';
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-[14px] text-ink-3">Öğretmen bulunamadı.</p>
+        <p className="text-[14px] text-ink-3">
+          {loading ? 'Yükleniyor…' : 'Öğretmen bulunamadı.'}
+        </p>
       </div>
     );
   }
