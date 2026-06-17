@@ -22,6 +22,7 @@ const NAV: NavItem[] = [
   { to: paths.students, label: 'Öğrenciler', icon: 'users', permission: PERMISSIONS.studentsRead },
   { to: paths.terms, label: 'Dönemler', icon: 'calendar', permission: PERMISSIONS.termsRead },
   { to: paths.classes, label: 'Sınıflar', icon: 'layers', permission: PERMISSIONS.classesRead },
+  { to: paths.teachers, label: 'Öğretmenler', icon: 'user', permission: PERMISSIONS.teachersRead },
   { to: paths.staff, label: 'Yetkililer', icon: 'shield', permission: PERMISSIONS.usersRead },
 ];
 

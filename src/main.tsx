@@ -17,6 +17,8 @@ import { TermDetailPage } from '@/features/terms/TermDetailPage';
 import { TermsPage } from '@/features/terms/TermsPage';
 import { ClassDetailPage } from '@/features/classes/ClassDetailPage';
 import { ClassesPage } from '@/features/classes/ClassesPage';
+import { TeacherDetailPage } from '@/features/teachers/TeacherDetailPage';
+import { TeachersPage } from '@/features/teachers/TeachersPage';
 import { AppShell } from '@/layout/AppShell';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
@@ -60,6 +62,13 @@ const router = createBrowserRouter([
               {
                 element: <RequirePermission permission={PERMISSIONS.usersRead} />,
                 children: [{ path: paths.staff, element: <StaffPage /> }],
+              },
+              {
+                element: <RequirePermission permission={PERMISSIONS.teachersRead} />,
+                children: [
+                  { path: paths.teachers, element: <TeachersPage /> },
+                  { path: paths.teacherDetail, element: <TeacherDetailPage /> },
+                ],
               },
             ],
           },
