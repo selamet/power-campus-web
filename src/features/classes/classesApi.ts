@@ -1,5 +1,24 @@
 import { axiosClient } from '@/api/axiosClient';
-import type { ClassStudent, SchoolClass } from '@/types/domain';
+import type {
+  ClassLesson,
+  ClassStudent,
+  LessonType,
+  LessonTypeCatalog,
+  SchoolClass,
+} from '@/types/domain';
+
+export interface LessonInput {
+  lessonType: LessonType;
+  teacherId?: number | null;
+  sessionDurationMin: number;
+  sessionsPerWeek: number;
+}
+
+export interface LessonPatch {
+  teacherId?: number | null;
+  sessionDurationMin?: number;
+  sessionsPerWeek?: number;
+}
 
 export interface AutoAssignCriteria {
   limit?: number;
@@ -12,6 +31,7 @@ export interface CreateClassInput {
   termId: number;
   level: string;
   section?: number;
+  lessons?: LessonInput[];
   /** When present, students are auto-assigned right after the class is created. */
   autoAssign?: AutoAssignCriteria;
 }
@@ -67,5 +87,32 @@ export const classesApi = {
 
   async unassign(id: number, code: string): Promise<void> {
     await axiosClient.delete(`/classes/${id}/students/${code}`);
+  },
+
+  async lessonTypes(): Promise<LessonTypeCatalog[]> {
+    const { data } = await axiosClient.get<LessonTypeCatalog[]>('/classes/lesson-types');
+    return data;
+  },
+
+  async lessons(id: number): Promise<ClassLesson[]> {
+    const { data } = await axiosClient.get<ClassLesson[]>(`/classes/${id}/lessons`);
+    return data;
+  },
+
+  async addLesson(id: number, input: LessonInput): Promise<ClassLesson> {
+    const { data } = await axiosClient.post<ClassLesson>(`/classes/${id}/lessons`, input);
+    return data;
+  },
+
+  async updateLesson(id: number, lessonId: number, patch: LessonPatch): Promise<ClassLesson> {
+    const { data } = await axiosClient.patch<ClassLesson>(
+      `/classes/${id}/lessons/${lessonId}`,
+      patch,
+    );
+    return data;
+  },
+
+  async deleteLesson(id: number, lessonId: number): Promise<void> {
+    await axiosClient.delete(`/classes/${id}/lessons/${lessonId}`);
   },
 };
