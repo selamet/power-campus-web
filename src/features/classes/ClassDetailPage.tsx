@@ -8,7 +8,7 @@ import type { StudentStatus, ClassStudent, Teacher } from '@/types/domain';
 import { usePermission } from '@/features/auth/usePermission';
 import { fetchTerms } from '@/features/terms/termsSlice';
 import { teachersApi } from '@/features/teachers/teachersApi';
-import { paths, studentLink, teacherLink } from '@/routes/paths';
+import { classScheduleLink, paths, studentLink, teacherLink } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 import { levelCode } from '@/utils/format';
 import { AddStudentsToClassModal } from './components/AddStudentsToClassModal';
@@ -151,6 +151,10 @@ export function ClassDetailPage() {
         </div>
         {canWrite && schoolClass && (
           <div className="flex flex-wrap items-center gap-2">
+            <Button variant="ghost" onClick={() => navigate(classScheduleLink(classId))}>
+              <Icon name="calendar" size={17} />
+              Ders Programı
+            </Button>
             <Button variant="ghost" onClick={() => setAutoOpen(true)}>
               <Icon name="sparkle" size={17} />
               Otomatik Ata
