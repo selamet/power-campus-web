@@ -5,7 +5,9 @@ import { LEVELS } from '@/constants/options';
 import { selectTerms } from '@/features/terms/termsSlice';
 import { digitsOnly } from '@/utils/format';
 import type { SchoolClass } from '@/types/domain';
+import type { AutoAssignCriteria } from '../classesApi';
 import { createClass, updateClass } from '../classesSlice';
+import { AssignBuilderFields } from './AssignBuilderFields';
 
 interface ClassFormModalProps {
   open: boolean;
@@ -36,6 +38,12 @@ export function ClassFormModal({
     schoolClass ? String(schoolClass.section) : '',
   );
   const [submitting, setSubmitting] = useState(false);
+  // New classes can optionally auto-assign students on creation.
+  const [autoAssignOn, setAutoAssignOn] = useState(false);
+  const [criteria, setCriteria] = useState<AutoAssignCriteria>({
+    order: 'oldest',
+    payment: 'all',
+  });
 
   const error = useMemo(() => {
     if (!isEdit && !termId) return 'Dönem seçin.';
@@ -63,7 +71,12 @@ export function ClassFormModal({
     }
 
     const result = await dispatch(
-      createClass({ termId: Number(termId), level, section: sectionValue }),
+      createClass({
+        termId: Number(termId),
+        level,
+        section: sectionValue,
+        autoAssign: autoAssignOn ? criteria : undefined,
+      }),
     );
     setSubmitting(false);
     if (createClass.fulfilled.match(result)) {
@@ -122,6 +135,20 @@ export function ClassFormModal({
             />
           </Field>
         </div>
+
+        {!isEdit && (
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-2.5 text-[13px] font-medium text-ink-2">
+              <input
+                type="checkbox"
+                checked={autoAssignOn}
+                onChange={(e) => setAutoAssignOn(e.target.checked)}
+              />
+              Öğrencileri otomatik ata
+            </label>
+            {autoAssignOn && <AssignBuilderFields value={criteria} onChange={setCriteria} />}
+          </div>
+        )}
       </div>
 
       {error && <p className="mt-4 text-[12.5px] font-medium text-accent">{error}</p>}
