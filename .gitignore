@@ -35,3 +35,4 @@ dist-ssr
 
 # Design handoff bundle (reference only)
 app-powerakademi-com/
+.superpowers/
