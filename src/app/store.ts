@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '@/features/auth/authSlice';
 import classesReducer from '@/features/classes/classesSlice';
+import scheduleReducer from '@/features/schedule/scheduleSlice';
 import staffReducer from '@/features/staff/staffSlice';
 import studentsReducer from '@/features/students/studentsSlice';
 import teachersReducer from '@/features/teachers/teachersSlice';
@@ -11,6 +12,7 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     classes: classesReducer,
+    schedule: scheduleReducer,
     staff: staffReducer,
     students: studentsReducer,
     teachers: teachersReducer,
