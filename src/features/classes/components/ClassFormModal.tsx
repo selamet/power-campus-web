@@ -6,9 +6,10 @@ import { selectTerms } from '@/features/terms/termsSlice';
 import { teachersApi } from '@/features/teachers/teachersApi';
 import { digitsOnly } from '@/utils/format';
 import type { LessonType, SchoolClass, Teacher } from '@/types/domain';
-import { classesApi } from '../classesApi';
+import { classesApi, type AutoAssignCriteria } from '../classesApi';
 import { createClass, updateClass } from '../classesSlice';
 import { LessonRow, type LessonDraft } from './LessonRow';
+import { AssignBuilderFields } from './AssignBuilderFields';
 
 const LESSON_LABELS: Record<LessonType, string> = {
   speaking: 'Speaking',
@@ -48,6 +49,12 @@ export function ClassFormModal({
   const [submitting, setSubmitting] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [lessonDrafts, setLessonDrafts] = useState<LessonDraft[]>([]);
+  // New classes can optionally auto-assign students on creation.
+  const [autoAssignOn, setAutoAssignOn] = useState(false);
+  const [criteria, setCriteria] = useState<AutoAssignCriteria>({
+    order: 'oldest',
+    payment: 'all',
+  });
 
   // Creating a class: load the lesson catalog (defaulted on) and active teachers.
   useEffect(() => {
@@ -106,7 +113,13 @@ export function ClassFormModal({
       }));
 
     const result = await dispatch(
-      createClass({ termId: Number(termId), level, section: sectionValue, lessons }),
+      createClass({
+        termId: Number(termId),
+        level,
+        section: sectionValue,
+        lessons,
+        autoAssign: autoAssignOn ? criteria : undefined,
+      }),
     );
     setSubmitting(false);
     if (createClass.fulfilled.match(result)) {
@@ -180,6 +193,20 @@ export function ClassFormModal({
                 }
               />
             ))}
+          </div>
+        )}
+
+        {!isEdit && (
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-2.5 text-[13px] font-medium text-ink-2">
+              <input
+                type="checkbox"
+                checked={autoAssignOn}
+                onChange={(e) => setAutoAssignOn(e.target.checked)}
+              />
+              Öğrencileri otomatik ata
+            </label>
+            {autoAssignOn && <AssignBuilderFields value={criteria} onChange={setCriteria} />}
           </div>
         )}
       </div>
