@@ -88,6 +88,27 @@ export interface ClassStudent {
   status: StudentStatus;
 }
 
+export type LessonType = 'speaking' | 'reading' | 'writing' | 'speaking_club';
+
+export interface ClassLesson {
+  id: number;
+  classId: number;
+  lessonType: LessonType;
+  lessonTypeLabel: string;
+  teacherId: number | null;
+  teacherName: string | null;
+  sessionDurationMin: number;
+  sessionsPerWeek: number;
+  weeklyTotalMin: number;
+}
+
+export interface LessonTypeCatalog {
+  value: LessonType;
+  label: string;
+  defaultSessionsPerWeek: number;
+  defaultDurationMin: number;
+}
+
 /** Payload used when creating a student through the manual registration form. */
 export type NewStudentInput = Omit<Student, 'id'> & {
   id?: string;
