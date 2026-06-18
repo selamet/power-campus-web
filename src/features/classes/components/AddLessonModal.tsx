@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Field, Icon, Input, Modal, Select, useToast } from '@/components/ui';
-import { digitsOnly } from '@/utils/format';
+import { Button, Field, Icon, Modal, Select, useToast } from '@/components/ui';
 import { teachersApi } from '@/features/teachers/teachersApi';
 import type { ClassLesson, LessonType, LessonTypeCatalog, Teacher } from '@/types/domain';
 import { classesApi } from '../classesApi';
@@ -17,8 +16,6 @@ export function AddLessonModal({ open, onClose, classId, onAdded }: AddLessonMod
   const [catalog, setCatalog] = useState<LessonTypeCatalog[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [lessonType, setLessonType] = useState<LessonType>('speaking');
-  const [sessions, setSessions] = useState('1');
-  const [duration, setDuration] = useState('60');
   const [teacherId, setTeacherId] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -37,8 +34,6 @@ export function AddLessonModal({ open, onClose, classId, onAdded }: AddLessonMod
     try {
       const lesson = await classesApi.addLesson(classId, {
         lessonType,
-        sessionDurationMin: Math.max(1, Number(digitsOnly(duration)) || 1),
-        sessionsPerWeek: Math.max(1, Number(digitsOnly(sessions)) || 1),
         teacherId: teacherId ? Number(teacherId) : null,
       });
       onAdded(lesson);
@@ -69,24 +64,6 @@ export function AddLessonModal({ open, onClose, classId, onAdded }: AddLessonMod
             ))}
           </Select>
         </Field>
-        <div className="grid grid-cols-2 gap-3.5">
-          <Field label="Haftalık oturum">
-            <Input
-              value={sessions}
-              onChange={(e) => setSessions(digitsOnly(e.target.value).slice(0, 3))}
-              inputMode="numeric"
-              className="font-mono"
-            />
-          </Field>
-          <Field label="Süre (dk)">
-            <Input
-              value={duration}
-              onChange={(e) => setDuration(digitsOnly(e.target.value).slice(0, 3))}
-              inputMode="numeric"
-              className="font-mono"
-            />
-          </Field>
-        </div>
         <Field label="Öğretmen">
           <Select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}>
             <option value="">Atanmadı</option>

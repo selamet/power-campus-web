@@ -62,10 +62,6 @@ export function LessonsPanel({ classId, canWrite }: LessonsPanelProps) {
             className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface-2 p-3"
           >
             <span className="text-[13.5px] font-semibold">{lesson.lessonTypeLabel}</span>
-            <span className="text-[12.5px] text-ink-3">
-              {lesson.sessionsPerWeek} oturum × {lesson.sessionDurationMin} dk ={' '}
-              {lesson.weeklyTotalMin} dk/hafta
-            </span>
             <div className="ml-auto flex items-center gap-2">
               {canWrite ? (
                 <select

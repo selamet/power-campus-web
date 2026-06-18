@@ -97,16 +97,11 @@ export interface ClassLesson {
   lessonTypeLabel: string;
   teacherId: number | null;
   teacherName: string | null;
-  sessionDurationMin: number;
-  sessionsPerWeek: number;
-  weeklyTotalMin: number;
 }
 
 export interface LessonTypeCatalog {
   value: LessonType;
   label: string;
-  defaultSessionsPerWeek: number;
-  defaultDurationMin: number;
 }
 
 /** Payload used when creating a student through the manual registration form. */

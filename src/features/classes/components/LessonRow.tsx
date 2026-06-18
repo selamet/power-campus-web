@@ -1,12 +1,9 @@
-import { Input, Select } from '@/components/ui';
-import { digitsOnly } from '@/utils/format';
+import { Select } from '@/components/ui';
 import type { LessonType, Teacher } from '@/types/domain';
 
 export interface LessonDraft {
   lessonType: LessonType;
   enabled: boolean;
-  sessionDurationMin: number;
-  sessionsPerWeek: number;
   teacherId: number | null;
 }
 
@@ -17,12 +14,7 @@ interface LessonRowProps {
   onChange: (next: LessonDraft) => void;
 }
 
-const toCount = (raw: string): number => {
-  const n = Number(digitsOnly(raw).slice(0, 3));
-  return n > 0 ? n : 1;
-};
-
-/** One lesson's editable controls: enable toggle, sessions/week, duration, teacher. */
+/** One lesson's editable controls: enable toggle and teacher. */
 export function LessonRow({ label, draft, teachers, onChange }: LessonRowProps) {
   const set = (patch: Partial<LessonDraft>) => onChange({ ...draft, ...patch });
 
@@ -37,25 +29,7 @@ export function LessonRow({ label, draft, teachers, onChange }: LessonRowProps) 
         {label}
       </label>
       {draft.enabled && (
-        <div className="mt-3 grid grid-cols-3 gap-2.5">
-          <label className="flex flex-col gap-1 text-[11.5px] text-ink-3">
-            Haftalık oturum
-            <Input
-              value={String(draft.sessionsPerWeek)}
-              onChange={(e) => set({ sessionsPerWeek: toCount(e.target.value) })}
-              inputMode="numeric"
-              className="font-mono"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-[11.5px] text-ink-3">
-            Süre (dk)
-            <Input
-              value={String(draft.sessionDurationMin)}
-              onChange={(e) => set({ sessionDurationMin: toCount(e.target.value) })}
-              inputMode="numeric"
-              className="font-mono"
-            />
-          </label>
+        <div className="mt-3">
           <label className="flex flex-col gap-1 text-[11.5px] text-ink-3">
             Öğretmen
             <Select
