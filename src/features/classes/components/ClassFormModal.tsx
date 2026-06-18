@@ -1,11 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { Button, Field, Icon, Input, Modal, Select, useToast } from '@/components/ui';
 import { LEVELS } from '@/constants/options';
 import { selectTerms } from '@/features/terms/termsSlice';
+import { teachersApi } from '@/features/teachers/teachersApi';
 import { digitsOnly } from '@/utils/format';
-import type { SchoolClass } from '@/types/domain';
+import type { LessonType, SchoolClass, Teacher } from '@/types/domain';
+import { classesApi } from '../classesApi';
 import { createClass, updateClass } from '../classesSlice';
+import { LessonRow, type LessonDraft } from './LessonRow';
+
+const LESSON_LABELS: Record<LessonType, string> = {
+  speaking: 'Speaking',
+  reading: 'Reading',
+  writing: 'Writing',
+  speaking_club: 'Speaking Club',
+};
 
 interface ClassFormModalProps {
   open: boolean;
@@ -36,6 +46,30 @@ export function ClassFormModal({
     schoolClass ? String(schoolClass.section) : '',
   );
   const [submitting, setSubmitting] = useState(false);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [lessonDrafts, setLessonDrafts] = useState<LessonDraft[]>([]);
+
+  // Creating a class: load the lesson catalog (defaulted on) and active teachers.
+  useEffect(() => {
+    if (!open || isEdit) return;
+    let active = true;
+    void classesApi.lessonTypes().then((catalog) => {
+      if (!active) return;
+      setLessonDrafts(
+        catalog.map((c) => ({
+          lessonType: c.value,
+          enabled: true,
+          sessionDurationMin: c.defaultDurationMin,
+          sessionsPerWeek: c.defaultSessionsPerWeek,
+          teacherId: null,
+        })),
+      );
+    });
+    void teachersApi.list('active').then((rows) => active && setTeachers(rows));
+    return () => {
+      active = false;
+    };
+  }, [open, isEdit]);
 
   const error = useMemo(() => {
     if (!isEdit && !termId) return 'Dönem seçin.';
@@ -62,8 +96,17 @@ export function ClassFormModal({
       return;
     }
 
+    const lessons = lessonDrafts
+      .filter((d) => d.enabled)
+      .map((d) => ({
+        lessonType: d.lessonType,
+        sessionDurationMin: d.sessionDurationMin,
+        sessionsPerWeek: d.sessionsPerWeek,
+        teacherId: d.teacherId,
+      }));
+
     const result = await dispatch(
-      createClass({ termId: Number(termId), level, section: sectionValue }),
+      createClass({ termId: Number(termId), level, section: sectionValue, lessons }),
     );
     setSubmitting(false);
     if (createClass.fulfilled.match(result)) {
@@ -122,6 +165,23 @@ export function ClassFormModal({
             />
           </Field>
         </div>
+
+        {!isEdit && lessonDrafts.length > 0 && (
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[13px] font-semibold text-ink-2">Dersler</span>
+            {lessonDrafts.map((draft, index) => (
+              <LessonRow
+                key={draft.lessonType}
+                label={LESSON_LABELS[draft.lessonType]}
+                draft={draft}
+                teachers={teachers}
+                onChange={(next) =>
+                  setLessonDrafts((prev) => prev.map((d, i) => (i === index ? next : d)))
+                }
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {error && <p className="mt-4 text-[12.5px] font-medium text-accent">{error}</p>}
