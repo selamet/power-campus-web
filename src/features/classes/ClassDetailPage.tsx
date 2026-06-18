@@ -12,6 +12,7 @@ import { paths, studentLink, teacherLink } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 import { levelCode } from '@/utils/format';
 import { AddStudentsToClassModal } from './components/AddStudentsToClassModal';
+import { AutoAssignModal } from './components/AutoAssignModal';
 import { ClassFormModal } from './components/ClassFormModal';
 import { classesApi } from './classesApi';
 import { deleteClass, fetchClasses, selectClasses } from './classesSlice';
@@ -31,7 +32,7 @@ export function ClassDetailPage() {
   const [roster, setRoster] = useState<ClassStudent[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [autoBusy, setAutoBusy] = useState(false);
+  const [autoOpen, setAutoOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatus | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -84,20 +85,6 @@ export function ClassDetailPage() {
       return true;
     });
   }, [roster, query, statusFilter]);
-
-  const handleAutoAssign = async () => {
-    setAutoBusy(true);
-    try {
-      const updated = await classesApi.autoAssign(classId);
-      setRoster(updated);
-      toast('Seviyeye uyan öğrenciler atandı', 'checkCircle');
-      void dispatch(fetchClasses(undefined));
-    } catch {
-      toast('Otomatik atama başarısız oldu', 'xCircle');
-    } finally {
-      setAutoBusy(false);
-    }
-  };
 
   const assignTeacher = async (teacherId: number | null) => {
     if (!schoolClass) return;
@@ -163,9 +150,9 @@ export function ClassDetailPage() {
         </div>
         {canWrite && schoolClass && (
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="ghost" onClick={handleAutoAssign} disabled={autoBusy}>
+            <Button variant="ghost" onClick={() => setAutoOpen(true)}>
               <Icon name="sparkle" size={17} />
-              {autoBusy ? 'Atanıyor…' : 'Otomatik Ata'}
+              Otomatik Ata
             </Button>
             <Button variant="ghost" onClick={() => setEditOpen(true)}>
               <Icon name="edit" size={17} />
@@ -349,6 +336,16 @@ export function ClassDetailPage() {
           }}
         />
       )}
+
+      <AutoAssignModal
+        open={autoOpen}
+        onClose={() => setAutoOpen(false)}
+        classId={classId}
+        onAssigned={(updated) => {
+          setRoster(updated);
+          void dispatch(fetchClasses(undefined));
+        }}
+      />
     </div>
   );
 }

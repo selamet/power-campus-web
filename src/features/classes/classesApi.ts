@@ -1,10 +1,19 @@
 import { axiosClient } from '@/api/axiosClient';
 import type { ClassStudent, SchoolClass } from '@/types/domain';
 
+export interface AutoAssignCriteria {
+  limit?: number;
+  order?: 'oldest' | 'newest' | 'random';
+  payment?: 'all' | 'paidOnly';
+  includeAssigned?: boolean;
+}
+
 export interface CreateClassInput {
   termId: number;
   level: string;
   section?: number;
+  /** When present, students are auto-assigned right after the class is created. */
+  autoAssign?: AutoAssignCriteria;
 }
 
 export interface UpdateClassInput {
@@ -48,8 +57,11 @@ export const classesApi = {
     return data;
   },
 
-  async autoAssign(id: number): Promise<ClassStudent[]> {
-    const { data } = await axiosClient.post<ClassStudent[]>(`/classes/${id}/auto-assign`);
+  async autoAssign(id: number, criteria?: AutoAssignCriteria): Promise<ClassStudent[]> {
+    const { data } = await axiosClient.post<ClassStudent[]>(
+      `/classes/${id}/auto-assign`,
+      criteria ?? {},
+    );
     return data;
   },
 
