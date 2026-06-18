@@ -13,6 +13,7 @@ import { cn } from '@/utils/cn';
 import { levelCode } from '@/utils/format';
 import { AddStudentsToClassModal } from './components/AddStudentsToClassModal';
 import { ClassFormModal } from './components/ClassFormModal';
+import { LessonsPanel } from './components/LessonsPanel';
 import { classesApi } from './classesApi';
 import { deleteClass, fetchClasses, selectClasses } from './classesSlice';
 
@@ -233,6 +234,8 @@ export function ClassDetailPage() {
           )}
         </div>
       )}
+
+      {schoolClass && <LessonsPanel classId={classId} canWrite={canWrite} />}
 
       {roster.length > 0 && (
         <div className="card flex flex-wrap items-center gap-2 p-4">
