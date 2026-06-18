@@ -29,6 +29,7 @@ export function ClassDetailPage() {
   const schoolClass = useAppSelector(selectClasses).find((item) => item.id === classId);
   const { has } = usePermission();
   const canWrite = has(PERMISSIONS.classesWrite);
+  const canViewSchedule = has(PERMISSIONS.scheduleRead);
 
   const [roster, setRoster] = useState<ClassStudent[]>([]);
   const [editOpen, setEditOpen] = useState(false);
@@ -149,12 +150,16 @@ export function ClassDetailPage() {
             </span>
           )}
         </div>
-        {canWrite && schoolClass && (
+        {canViewSchedule && schoolClass && (
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="ghost" onClick={() => navigate(classScheduleLink(classId))}>
               <Icon name="calendar" size={17} />
               Ders Programı
             </Button>
+          </div>
+        )}
+        {canWrite && schoolClass && (
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="ghost" onClick={() => setAutoOpen(true)}>
               <Icon name="sparkle" size={17} />
               Otomatik Ata
