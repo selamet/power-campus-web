@@ -86,16 +86,26 @@ export function RulesPanel({
     );
   };
 
-  const persist = async (next: typeof rules) => {
+  const persist = async (next: typeof rules): Promise<boolean> => {
     const result = await dispatch(saveConfig({ classId, rules: next }));
-    if (!saveConfig.fulfilled.match(result)) toast('Kural kaydedilemedi', 'xCircle');
+    return saveConfig.fulfilled.match(result);
   };
+
+  const persistOrWarn = (next: typeof rules) =>
+    void persist(next).then((ok) => {
+      if (!ok) toast('Kural kaydedilemedi', 'xCircle');
+    });
 
   const handleCopyFrom = async (sourceId: number) => {
     try {
       const src = await scheduleApi.getConfig(sourceId);
-      await persist(src.rules);
-      toast('Kurallar kopyalandı', 'checkCircle');
+      const ok = await persist(src.rules);
+      if (ok) {
+        setCopySourceId('');
+        toast('Kurallar kopyalandı', 'checkCircle');
+      } else {
+        toast('Kopyalanamadı', 'xCircle');
+      }
     } catch {
       toast('Kopyalanamadı', 'xCircle');
     }
@@ -104,8 +114,8 @@ export function RulesPanel({
   const handleApplyTemplate = async (id: number) => {
     const tpl = templates.find((t) => t.id === id);
     if (!tpl) return;
-    await persist(tpl.rules);
-    toast('Şablon uygulandı', 'checkCircle');
+    const ok = await persist(tpl.rules);
+    toast(ok ? 'Şablon uygulandı' : 'Şablon uygulanamadı', ok ? 'checkCircle' : 'xCircle');
   };
   const handleSaveTemplate = async () => {
     const name = templateName.trim();
@@ -152,7 +162,7 @@ export function RulesPanel({
     if (durationMin === existing.durationMin && sessionsPerWeek === existing.sessionsPerWeek) {
       return;
     }
-    void persist(withLessonRule(rules, { ...existing, durationMin, sessionsPerWeek }));
+    persistOrWarn(withLessonRule(rules, { ...existing, durationMin, sessionsPerWeek }));
   };
 
   return (
@@ -243,7 +253,7 @@ export function RulesPanel({
                   <Select
                     value={rule?.pinnedWeekday != null ? String(rule.pinnedWeekday) : ''}
                     onChange={(e) =>
-                      void persist(
+                      persistOrWarn(
                         setPinnedWeekday(
                           rules,
                           lesson.lessonType,
@@ -266,7 +276,7 @@ export function RulesPanel({
                     type="checkbox"
                     checked={!!rule?.consecutive}
                     disabled={!canWrite}
-                    onChange={() => void persist(toggleConsecutive(rules, lesson.lessonType))}
+                    onChange={() => persistOrWarn(toggleConsecutive(rules, lesson.lessonType))}
                   />
                   Ardışık
                 </label>
@@ -288,7 +298,7 @@ export function RulesPanel({
                 key={d}
                 type="button"
                 disabled={!canWrite}
-                onClick={() => void persist(toggleClosedWeekday(rules, d))}
+                onClick={() => persistOrWarn(toggleClosedWeekday(rules, d))}
                 className={`rounded-lg border px-2.5 py-1 text-[12.5px] font-medium transition-colors ${
                   closed
                     ? 'border-accent bg-accent-soft text-accent'
@@ -315,7 +325,7 @@ export function RulesPanel({
                   key={`${a.id}-${b.id}`}
                   type="button"
                   disabled={!canWrite}
-                  onClick={() => void persist(toggleSeparation(rules, a.lessonType, b.lessonType))}
+                  onClick={() => persistOrWarn(toggleSeparation(rules, a.lessonType, b.lessonType))}
                   className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
                     on
                       ? 'border-accent bg-accent-soft text-accent'
