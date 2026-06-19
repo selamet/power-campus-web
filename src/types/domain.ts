@@ -259,4 +259,5 @@ export interface TermScheduleSettings {
   defaultPerDay: number;
   breakMin: number;
   teacherRules: Record<string, unknown>;
+  dayWindows: Record<string, { start: string; end: string }>;
 }

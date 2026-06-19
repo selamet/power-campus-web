@@ -10,6 +10,8 @@ interface WeekGridProps {
   dayStart: string;
   dayEnd: string;
   workingDays: number[];
+  /** Per-weekday window overrides ("HH:MM:SS"); days absent use dayStart/dayEnd. */
+  dayWindows?: Record<number, { start: string; end: string }>;
   onSelectSession?: (item: GridItem) => void;
   onEmptyClick?: (weekday: number, startHm: string) => void;
   onDropSession?: (item: GridItem, weekday: number, startHm: string) => void;
@@ -21,14 +23,19 @@ export function WeekGrid({
   dayStart,
   dayEnd,
   workingDays,
+  dayWindows = {},
   onSelectSession,
   onEmptyClick,
   onDropSession,
 }: WeekGridProps) {
-  const start = minutesOf(dayStart);
-  const end = minutesOf(dayEnd);
-  const rows = Math.max(1, Math.ceil((end - start) / SLOT_MIN));
+  const windowFor = (d: number): [number, number] => {
+    const w = dayWindows[d];
+    return w ? [minutesOf(w.start), minutesOf(w.end)] : [minutesOf(dayStart), minutesOf(dayEnd)];
+  };
   const days = [...workingDays].sort((a, b) => a - b);
+  const start = Math.min(minutesOf(dayStart), ...days.map((d) => windowFor(d)[0]));
+  const end = Math.max(minutesOf(dayEnd), ...days.map((d) => windowFor(d)[1]));
+  const rows = Math.max(1, Math.ceil((end - start) / SLOT_MIN));
 
   const rowLabel = (i: number): string => {
     const m = start + i * SLOT_MIN;
@@ -78,6 +85,7 @@ export function WeekGrid({
             onSelectSession={onSelectSession}
             onEmptyClick={onEmptyClick}
             draggable={!!onDropSession}
+            windowFor={windowFor}
           />
         ))}
       </div>
@@ -97,6 +105,7 @@ interface DayRowProps {
   onSelectSession?: (item: GridItem) => void;
   onEmptyClick?: (weekday: number, startHm: string) => void;
   draggable: boolean;
+  windowFor: (d: number) => [number, number];
 }
 
 function DayRow({
@@ -107,11 +116,23 @@ function DayRow({
   onSelectSession,
   onEmptyClick,
   draggable,
+  windowFor,
 }: DayRowProps) {
   return (
     <>
       <div className="bg-surface p-1 text-right font-mono text-[10.5px] text-ink-3">{label}</div>
       {days.map((d) => {
+        const [ws, we] = windowFor(d);
+        const inWindow = rowStartMin >= ws && rowStartMin < we;
+        if (!inWindow) {
+          return (
+            <div
+              key={`c-${d}-${rowStartMin}`}
+              className="min-h-[34px] bg-surface-2/40 p-0.5"
+              aria-hidden
+            />
+          );
+        }
         const hit = items.find(
           (it) => it.weekday === d && minutesOf(it.startTime) === rowStartMin,
         );

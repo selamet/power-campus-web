@@ -15,6 +15,7 @@ export interface TermSettingsUpdate {
   defaultPerDay: number;
   breakMin: number;
   teacherRules?: Record<string, unknown>;
+  dayWindows?: Record<string, { start: string; end: string }>;
 }
 
 /** One lesson's generator rule (subset the MVP UI edits). */
