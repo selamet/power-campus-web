@@ -14,6 +14,7 @@ import {
   type SessionMoveInput,
   type TermSettingsUpdate,
 } from './scheduleApi';
+import { normalizeRules } from './scheduleRules';
 
 export type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
@@ -177,10 +178,10 @@ const scheduleSlice = createSlice({
         state.settings = action.payload;
       })
       .addCase(fetchConfig.fulfilled, (state, action) => {
-        state.rules = action.payload.rules ?? { lessons: [] };
+        state.rules = normalizeRules(action.payload.rules);
       })
       .addCase(saveConfig.fulfilled, (state, action) => {
-        state.rules = action.payload.rules;
+        state.rules = normalizeRules(action.payload.rules);
       })
       .addCase(fetchClassSchedule.fulfilled, (state, action) => {
         state.savedSessions = action.payload;
