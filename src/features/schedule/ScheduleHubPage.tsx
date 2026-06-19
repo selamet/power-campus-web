@@ -5,19 +5,32 @@ import { PERMISSIONS } from '@/constants/permissions';
 import { usePermission } from '@/features/auth/usePermission';
 import { fetchClasses, selectClasses } from '@/features/classes/classesSlice';
 import { fetchTerms, selectCurrentTerm, selectTerms } from '@/features/terms/termsSlice';
+import { teachersApi } from '@/features/teachers/teachersApi';
+import type { Teacher } from '@/types/domain';
 import { ClassScheduleBuilder } from './ClassScheduleBuilder';
-import { ConflictReport } from './components/ConflictReport';
+import { WeekGrid } from './components/WeekGrid';
+import type { GridItem } from './components/SessionBlock';
 import {
   applyTermThunk,
   fetchClassSchedule,
   fetchSettings,
+  fetchTeacherSchedule,
   fetchTermSchedule,
   generateTermThunk,
   resetSchedule,
   selectScheduleStatus,
+  selectSettings,
+  selectTeacherSessions,
   selectTermPreview,
-  selectTermReport,
+  selectTermSessions,
 } from './scheduleSlice';
+
+type Mode = 'class' | 'teacher' | 'all';
+const MODES: { value: Mode; label: string }[] = [
+  { value: 'class', label: 'Sınıf' },
+  { value: 'teacher', label: 'Öğretmen' },
+  { value: 'all', label: 'Tüm Sınıflar' },
+];
 
 export function ScheduleHubPage() {
   const dispatch = useAppDispatch();
@@ -28,26 +41,30 @@ export function ScheduleHubPage() {
   const terms = useAppSelector(selectTerms);
   const currentTerm = useAppSelector(selectCurrentTerm);
   const classes = useAppSelector(selectClasses);
+  const settings = useAppSelector(selectSettings);
   const termPreview = useAppSelector(selectTermPreview);
-  const termReport = useAppSelector(selectTermReport);
+  const termSessions = useAppSelector(selectTermSessions);
+  const teacherSessions = useAppSelector(selectTeacherSessions);
   const status = useAppSelector(selectScheduleStatus);
 
+  const [mode, setMode] = useState<Mode>('class');
   const [termId, setTermId] = useState<number | null>(null);
   const [classId, setClassId] = useState<number | null>(null);
+  const [teacherId, setTeacherId] = useState<number | null>(null);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
 
   useEffect(() => {
     void dispatch(fetchTerms());
+    void teachersApi.list('active').then(setTeachers).catch(() => setTeachers([]));
     return () => {
       dispatch(resetSchedule());
     };
   }, [dispatch]);
 
-  // Default to the current term (or first) once terms have loaded.
   useEffect(() => {
     if (termId == null && terms.length) setTermId(currentTerm?.id ?? terms[0].id);
   }, [terms, currentTerm, termId]);
 
-  // On term change: clear stale preview, load classes + settings + applied schedule.
   useEffect(() => {
     if (termId == null) return;
     dispatch(resetSchedule());
@@ -61,20 +78,58 @@ export function ScheduleHubPage() {
     [classes, termId],
   );
 
-  // Keep a valid class selected as the class list changes.
   useEffect(() => {
-    if (termClasses.length && !termClasses.some((c) => c.id === classId)) {
-      setClassId(termClasses[0].id);
-    } else if (!termClasses.length) {
-      setClassId(null);
-    }
+    if (termClasses.length && !termClasses.some((c) => c.id === classId)) setClassId(termClasses[0].id);
+    else if (!termClasses.length) setClassId(null);
   }, [termClasses, classId]);
 
-  const selectedClass = termClasses.find((c) => c.id === classId) ?? null;
-  const classTermPreview = useMemo(
-    () => (termPreview && classId != null ? termPreview.filter((s) => s.classId === classId) : null),
-    [termPreview, classId],
+  useEffect(() => {
+    if (mode === 'teacher' && teacherId != null) void dispatch(fetchTeacherSchedule(teacherId));
+  }, [dispatch, mode, teacherId]);
+
+  const dayWindows = useMemo(
+    () =>
+      Object.fromEntries(Object.entries(settings?.dayWindows ?? {}).map(([k, w]) => [Number(k), w])),
+    [settings],
   );
+
+  const nameForClass = (cid: number) => termClasses.find((c) => c.id === cid)?.name ?? '';
+
+  const readonlyItems = useMemo<GridItem[]>(() => {
+    if (mode === 'teacher') {
+      return teacherSessions.map((s) => ({
+        key: `t-${s.id}`,
+        classLessonId: s.classLessonId,
+        weekday: s.weekday,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        lessonType: s.lessonType,
+        teacherName: s.className,
+      }));
+    }
+    // all-classes: prefer the term-bulk preview, else applied term sessions.
+    if (termPreview) {
+      return termPreview.map((s, i) => ({
+        key: `tp-${s.classId}-${s.weekday}-${s.startTime}-${i}`,
+        classLessonId: s.classLessonId,
+        weekday: s.weekday,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        lessonType: s.lessonType,
+        teacherName: nameForClass(s.classId),
+      }));
+    }
+    return termSessions.map((s) => ({
+      key: `ts-${s.id}`,
+      classLessonId: s.classLessonId,
+      weekday: s.weekday,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      lessonType: s.lessonType,
+      teacherName: s.className,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, teacherSessions, termSessions, termPreview, termClasses]);
 
   const handleGenerateAll = () => {
     if (termId != null) void dispatch(generateTermThunk(termId));
@@ -91,19 +146,30 @@ export function ScheduleHubPage() {
   };
 
   return (
-    <div className="anim-fade-up mx-auto flex w-full max-w-[1200px] flex-col gap-5 p-4">
+    <div className="anim-fade-up mx-auto flex w-full max-w-[1280px] flex-col gap-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="m-0 text-[20px] font-bold tracking-[-0.01em]">Ders Programı</h1>
-          <span className="text-[12px] text-ink-3">
-            Dönem ve sınıf seç, kuralları düzenle, üret ve uygula.
-          </span>
-        </div>
+        <h1 className="m-0 text-[20px] font-bold tracking-[-0.01em]">Ders Programı</h1>
         <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex gap-1">
+            {MODES.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => setMode(m.value)}
+                className={`rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                  mode === m.value
+                    ? 'border-accent bg-accent-soft text-accent'
+                    : 'border-line text-ink-2 hover:bg-surface-2'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
           <Select
             value={termId != null ? String(termId) : ''}
             onChange={(e) => setTermId(Number(e.target.value))}
-            className="min-w-[160px]"
+            className="min-w-[150px]"
           >
             {terms.map((t) => (
               <option key={t.id} value={t.id}>
@@ -111,6 +177,33 @@ export function ScheduleHubPage() {
               </option>
             ))}
           </Select>
+          {mode === 'class' && (
+            <Select
+              value={classId != null ? String(classId) : ''}
+              onChange={(e) => setClassId(Number(e.target.value))}
+              className="min-w-[120px]"
+            >
+              {termClasses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          )}
+          {mode === 'teacher' && (
+            <Select
+              value={teacherId != null ? String(teacherId) : ''}
+              onChange={(e) => setTeacherId(Number(e.target.value))}
+              className="min-w-[150px]"
+            >
+              <option value="">Öğretmen seç</option>
+              {teachers.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </Select>
+          )}
           {canWrite && (
             <>
               <Button variant="ghost" onClick={handleGenerateAll} disabled={status === 'loading'}>
@@ -126,42 +219,41 @@ export function ScheduleHubPage() {
         </div>
       </div>
 
-      {termClasses.length === 0 ? (
-        <p className="card p-[18px] text-[13px] text-ink-3">Bu dönemde sınıf yok.</p>
-      ) : (
-        <>
-          <div className="flex flex-wrap gap-1.5">
-            {termClasses.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setClassId(c.id)}
-                className={`rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                  classId === c.id
-                    ? 'border-accent bg-accent-soft text-accent'
-                    : 'border-line text-ink-2 hover:bg-surface-2'
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-          {termPreview && (
-            <p className="text-[12.5px] font-medium text-accent">
-              Toplu önizleme — "Hepsini uygula" ile kalıcılaşır.
-            </p>
-          )}
-          {selectedClass && (
+      {mode === 'class' &&
+        (termClasses.length === 0 ? (
+          <p className="card p-[18px] text-[13px] text-ink-3">Bu dönemde sınıf yok.</p>
+        ) : (
+          classId != null && (
             <ClassScheduleBuilder
-              key={selectedClass.id}
-              classId={selectedClass.id}
-              termId={selectedClass.termId}
+              key={classId}
+              classId={classId}
+              termId={termId!}
               canWrite={canWrite}
-              termPreview={classTermPreview}
+              termPreview={
+                termPreview && classId != null
+                  ? termPreview.filter((s) => s.classId === classId)
+                  : null
+              }
             />
+          )
+        ))}
+
+      {mode !== 'class' && (
+        <section className="card p-[18px]">
+          {mode === 'teacher' && teacherId == null ? (
+            <p className="text-[13px] text-ink-3">Bir öğretmen seçin.</p>
+          ) : settings ? (
+            <WeekGrid
+              items={readonlyItems}
+              dayStart={settings.dayStart}
+              dayEnd={settings.dayEnd}
+              workingDays={settings.workingDays}
+              dayWindows={dayWindows}
+            />
+          ) : (
+            <p className="text-[13px] text-ink-3">Dönem ayarları yükleniyor…</p>
           )}
-          {termPreview && <ConflictReport items={termReport} />}
-        </>
+        </section>
       )}
     </div>
   );

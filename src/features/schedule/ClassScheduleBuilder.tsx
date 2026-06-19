@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { useToast } from '@/components/ui';
+import { Button, Icon, useToast } from '@/components/ui';
 import type { SchedulePreviewSession } from '@/types/domain';
 import type { GridItem } from './components/SessionBlock';
 import { WeekGrid } from './components/WeekGrid';
@@ -25,17 +25,10 @@ interface ClassScheduleBuilderProps {
   classId: number;
   termId: number;
   canWrite: boolean;
-  /** Term-bulk preview filtered to this class; when set it is shown instead of
-   *  the class's own preview / applied schedule. */
   termPreview?: SchedulePreviewSession[] | null;
 }
 
-export function ClassScheduleBuilder({
-  classId,
-  termId,
-  canWrite,
-  termPreview,
-}: ClassScheduleBuilderProps) {
+export function ClassScheduleBuilder({ classId, termId, canWrite, termPreview }: ClassScheduleBuilderProps) {
   const dispatch = useAppDispatch();
   const toast = useToast();
   const settings = useAppSelector(selectSettings);
@@ -44,9 +37,10 @@ export function ClassScheduleBuilder({
   const report = useAppSelector(selectReport);
   const status = useAppSelector(selectScheduleStatus);
   const [modal, setModal] = useState<SessionModalState | null>(null);
+  const [rulesOpen, setRulesOpen] = useState(false);
 
   const effectivePreview = termPreview ?? preview;
-  const editable = canWrite && !effectivePreview; // edits operate on the applied schedule
+  const editable = canWrite && !effectivePreview;
 
   useEffect(() => {
     if (!classId) return;
@@ -89,18 +83,38 @@ export function ClassScheduleBuilder({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[340px_1fr]">
-      <aside className="card p-[18px]">
-        <RulesPanel
-          classId={classId}
-          termId={termId}
-          canWrite={canWrite}
-          generating={status === 'loading'}
-          applying={false}
-          onGenerate={handleGenerate}
-          onApply={handleApply}
-        />
-      </aside>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Button variant="ghost" onClick={() => setRulesOpen((v) => !v)}>
+          <Icon name="layers" size={16} />
+          {rulesOpen ? 'Kuralları gizle' : 'Kurallar'}
+        </Button>
+        {canWrite && (
+          <>
+            <Button variant="ghost" onClick={handleGenerate} disabled={status === 'loading'}>
+              <Icon name="sparkle" size={16} />
+              {status === 'loading' ? 'Üretiliyor…' : 'Üret'}
+            </Button>
+            <Button variant="primary" onClick={handleApply}>
+              <Icon name="check" size={16} />
+              Uygula
+            </Button>
+          </>
+        )}
+      </div>
+      {rulesOpen && (
+        <div className="card p-[18px]">
+          <RulesPanel
+            classId={classId}
+            termId={termId}
+            canWrite={canWrite}
+            generating={status === 'loading'}
+            applying={false}
+            onGenerate={handleGenerate}
+            onApply={handleApply}
+          />
+        </div>
+      )}
       <section className="card p-[18px]">
         {effectivePreview && (
           <p className="mb-2 text-[12.5px] font-medium text-accent">
@@ -113,10 +127,12 @@ export function ClassScheduleBuilder({
             dayStart={settings.dayStart}
             dayEnd={settings.dayEnd}
             workingDays={settings.workingDays}
+            dayWindows={Object.fromEntries(
+              Object.entries(settings.dayWindows ?? {}).map(([k, w]) => [Number(k), w]),
+            )}
             onSelectSession={
               editable
-                ? (it) =>
-                    setModal({ mode: 'edit', item: it, weekday: it.weekday, startHm: it.startTime.slice(0, 5) })
+                ? (it) => setModal({ mode: 'edit', item: it, weekday: it.weekday, startHm: it.startTime.slice(0, 5) })
                 : undefined
             }
             onEmptyClick={
@@ -133,8 +149,7 @@ export function ClassScheduleBuilder({
                     void dispatch(
                       moveSession({ id: item.sessionId, input: { weekday, startTime: startApi, endTime: endApi } }),
                     ).then((r) => {
-                      if (!moveSession.fulfilled.match(r))
-                        toast((r.payload as string) || 'Çakışma var.', 'xCircle');
+                      if (!moveSession.fulfilled.match(r)) toast((r.payload as string) || 'Çakışma var.', 'xCircle');
                     });
                   }
                 : undefined
