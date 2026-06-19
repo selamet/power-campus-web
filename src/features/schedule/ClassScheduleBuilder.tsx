@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { Button, Icon, useToast } from '@/components/ui';
-import type { SchedulePreviewSession } from '@/types/domain';
+import type { LessonType, SchedulePreviewSession } from '@/types/domain';
 import type { GridItem } from './components/SessionBlock';
 import { WeekGrid } from './components/WeekGrid';
+import { ScheduleLegend } from './components/ScheduleLegend';
 import { RulesPanel } from './components/RulesPanel';
 import { ConflictReport } from './components/ConflictReport';
 import { SessionModal, type SessionModalState } from './components/SessionModal';
@@ -27,9 +28,11 @@ interface ClassScheduleBuilderProps {
   termId: number;
   canWrite: boolean;
   termPreview?: SchedulePreviewSession[] | null;
+  hiddenTypes?: Set<LessonType>;
+  onToggleType?: (t: LessonType) => void;
 }
 
-export function ClassScheduleBuilder({ classId, termId, canWrite, termPreview }: ClassScheduleBuilderProps) {
+export function ClassScheduleBuilder({ classId, termId, canWrite, termPreview, hiddenTypes, onToggleType }: ClassScheduleBuilderProps) {
   const dispatch = useAppDispatch();
   const toast = useToast();
   const settings = useAppSelector(selectSettings);
@@ -50,30 +53,30 @@ export function ClassScheduleBuilder({ classId, termId, canWrite, termPreview }:
   }, [dispatch, classId]);
 
   const items = useMemo<GridItem[]>(() => {
-    if (effectivePreview) {
-      return effectivePreview.map((s, i) => ({
-        key: `p-${s.classLessonId}-${s.weekday}-${s.startTime}-${i}`,
-        classLessonId: s.classLessonId,
-        weekday: s.weekday,
-        startTime: s.startTime,
-        endTime: s.endTime,
-        lessonType: s.lessonType,
-        teacherName: s.teacherName,
-        locked: s.locked,
-      }));
-    }
-    return saved.map((s) => ({
-      key: `s-${s.id}`,
-      sessionId: s.id,
-      classLessonId: s.classLessonId,
-      weekday: s.weekday,
-      startTime: s.startTime,
-      endTime: s.endTime,
-      lessonType: s.lessonType,
-      teacherName: s.teacherName,
-      locked: s.locked,
-    }));
-  }, [effectivePreview, saved]);
+    const base: GridItem[] = effectivePreview
+      ? effectivePreview.map((s, i) => ({
+          key: `p-${s.classLessonId}-${s.weekday}-${s.startTime}-${i}`,
+          classLessonId: s.classLessonId,
+          weekday: s.weekday,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          lessonType: s.lessonType,
+          teacherName: s.teacherName,
+          locked: s.locked,
+        }))
+      : saved.map((s) => ({
+          key: `s-${s.id}`,
+          sessionId: s.id,
+          classLessonId: s.classLessonId,
+          weekday: s.weekday,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          lessonType: s.lessonType,
+          teacherName: s.teacherName,
+          locked: s.locked,
+        }));
+    return hiddenTypes ? base.filter((it) => !hiddenTypes.has(it.lessonType)) : base;
+  }, [effectivePreview, saved, hiddenTypes]);
 
   const handleGenerate = () => void dispatch(generateClass(classId));
   const handleApply = async () => {
@@ -123,6 +126,11 @@ export function ClassScheduleBuilder({ classId, termId, canWrite, termPreview }:
           <p className="mb-2 text-[12.5px] font-medium text-accent">
             Önizleme — uygulanana dek kaydedilmedi. Elle düzenleme uyguladıktan sonra açılır.
           </p>
+        )}
+        {onToggleType && hiddenTypes && (
+          <div className="mb-3">
+            <ScheduleLegend hiddenTypes={hiddenTypes} onToggle={onToggleType} />
+          </div>
         )}
         {settings ? (
           <WeekGrid
