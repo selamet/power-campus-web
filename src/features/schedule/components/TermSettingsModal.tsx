@@ -24,6 +24,7 @@ export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSetti
   const [dayStart, setDayStart] = useState('09:00');
   const [dayEnd, setDayEnd] = useState('18:00');
   const [perDay, setPerDay] = useState('3');
+  const [dayWindows, setDayWindows] = useState<Record<number, { start: string; end: string }>>({});
   const [busy, setBusy] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [teacherRules, setTeacherRules] = useState<
@@ -36,6 +37,11 @@ export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSetti
     setDayStart(hmFromApi(settings.dayStart));
     setDayEnd(hmFromApi(settings.dayEnd));
     setPerDay(String(settings.defaultPerDay));
+    const seeded: Record<number, { start: string; end: string }> = {};
+    for (const [k, w] of Object.entries(settings.dayWindows ?? {})) {
+      seeded[Number(k)] = { start: hmFromApi(w.start), end: hmFromApi(w.end) };
+    }
+    setDayWindows(seeded);
   }, [open, settings]);
 
   useEffect(() => {
@@ -102,6 +108,11 @@ export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSetti
           defaultDuration: settings?.defaultDuration ?? 45,
           defaultPerDay: Math.max(1, Number(digitsOnly(perDay)) || 1),
           breakMin: settings?.breakMin ?? 0,
+          dayWindows: Object.fromEntries(
+            Object.entries(dayWindows)
+              .filter(([, w]) => w.start && w.end)
+              .map(([d, w]) => [d, { start: toApiTime(w.start), end: toApiTime(w.end) }]),
+          ),
           teacherRules: Object.fromEntries(
             Object.entries(teacherRules)
               .map(([id, v]) => {
@@ -181,6 +192,45 @@ export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSetti
             disabled={!canWrite}
           />
         </Field>
+        {workingDays.length > 0 && (
+          <Field label="Günlere göre saat">
+            <div className="flex max-h-[30vh] flex-col gap-2 overflow-y-auto pr-1">
+              {workingDays
+                .slice()
+                .sort((a, b) => a - b)
+                .map((d) => {
+                  const win = dayWindows[d] ?? { start: '', end: '' };
+                  return (
+                    <div key={d} className="grid grid-cols-[4rem_1fr_1fr] items-center gap-2">
+                      <span className="text-[12.5px] font-semibold text-ink-2">{DAY_LABELS[d]}</span>
+                      <Input
+                        type="time"
+                        value={win.start}
+                        onChange={(e) =>
+                          setDayWindows((prev) => ({
+                            ...prev,
+                            [d]: { start: e.target.value, end: (prev[d] ?? { start: '', end: '' }).end },
+                          }))
+                        }
+                        disabled={!canWrite}
+                      />
+                      <Input
+                        type="time"
+                        value={win.end}
+                        onChange={(e) =>
+                          setDayWindows((prev) => ({
+                            ...prev,
+                            [d]: { start: (prev[d] ?? { start: '', end: '' }).start, end: e.target.value },
+                          }))
+                        }
+                        disabled={!canWrite}
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+          </Field>
+        )}
         {teachers.length > 0 && (
           <Field label="Öğretmen uygunluğu">
             <div className="flex max-h-[40vh] flex-col gap-2.5 overflow-y-auto pr-1">
