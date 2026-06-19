@@ -110,7 +110,9 @@ export function RulesPanel({
       </div>
 
       <div className="flex flex-col gap-2.5">
-        <span className="text-[12.5px] font-semibold text-ink-2">Dersler (süre × haftalık)</span>
+        <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase">
+          Dersler (süre × haftalık)
+        </span>
         {lessons.map((lesson) => {
           const values = draftFor(lesson.lessonType);
           const rule = ruleFor(rules, lesson.lessonType);
@@ -192,7 +194,9 @@ export function RulesPanel({
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-[12.5px] font-semibold text-ink-2">Sınıf kapalı günleri</span>
+        <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase">
+          Sınıf kapalı günleri
+        </span>
         <div className="flex flex-wrap gap-1.5">
           {DAY_LABELS.map((label, d) => {
             const closed = (rules.closedWeekdays ?? []).includes(d);
@@ -202,8 +206,10 @@ export function RulesPanel({
                 type="button"
                 disabled={!canWrite}
                 onClick={() => void persist(toggleClosedWeekday(rules, d))}
-                className={`rounded-lg border px-2.5 py-1 text-[12.5px] ${
-                  closed ? 'border-accent bg-accent/10 text-accent' : 'border-line text-ink-3'
+                className={`rounded-lg border px-2.5 py-1 text-[12.5px] font-medium transition-colors ${
+                  closed
+                    ? 'border-accent bg-accent-soft text-accent'
+                    : 'border-line text-ink-2 hover:bg-surface-2'
                 }`}
               >
                 {label}
@@ -214,7 +220,9 @@ export function RulesPanel({
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-[12.5px] font-semibold text-ink-2">Aynı gün olmasın</span>
+        <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase">
+          Aynı gün olmasın
+        </span>
         <div className="flex flex-col gap-1.5">
           {lessons.flatMap((a, i) =>
             lessons.slice(i + 1).map((b) => {
@@ -225,8 +233,10 @@ export function RulesPanel({
                   type="button"
                   disabled={!canWrite}
                   onClick={() => void persist(toggleSeparation(rules, a.lessonType, b.lessonType))}
-                  className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[12px] ${
-                    on ? 'border-accent bg-accent/10 text-accent' : 'border-line text-ink-3'
+                  className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
+                    on
+                      ? 'border-accent bg-accent-soft text-accent'
+                      : 'border-line text-ink-2 hover:bg-surface-2'
                   }`}
                 >
                   <span>

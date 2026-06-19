@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { useToast } from '@/components/ui';
-import { Button, Icon } from '@/components/ui';
+import { Button, Icon, useToast } from '@/components/ui';
 import { PERMISSIONS } from '@/constants/permissions';
 import { usePermission } from '@/features/auth/usePermission';
 import { fetchClasses, selectClasses } from '@/features/classes/classesSlice';
+import { termLink } from '@/routes/paths';
 import { ConflictReport } from './components/ConflictReport';
 import { TermGridTabs } from './components/TermGridTabs';
 import {
@@ -24,6 +24,7 @@ import {
 export function TermSchedulePage() {
   const { id } = useParams<{ id: string }>();
   const termId = Number(id);
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const toast = useToast();
   const { has } = usePermission();
@@ -60,11 +61,25 @@ export function TermSchedulePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h1 className="text-[22px] font-bold tracking-[-0.01em]">Dönem Programı</h1>
+    <div className="anim-fade-up mx-auto flex w-full max-w-[1200px] flex-col gap-5 p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="quiet"
+          onClick={() => navigate(termLink(termId))}
+          className="px-2 py-1.5 text-[13px] text-ink-3"
+          aria-label="Döneme dön"
+        >
+          <Icon name="chevL" size={18} />
+          Dönem
+        </Button>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h1 className="m-0 truncate text-[20px] font-bold tracking-[-0.01em]">Dönem Programı</h1>
+          <span className="text-[12px] text-ink-3">
+            Dönemdeki tüm sınıfların programını üret, önizle ve uygula.
+          </span>
+        </div>
         {canWrite && (
-          <div className="flex gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="ghost" onClick={handleGenerate} disabled={status === 'loading'}>
               <Icon name="sparkle" size={16} />
               {status === 'loading' ? 'Üretiliyor…' : 'Tüm sınıfları üret'}
@@ -77,7 +92,7 @@ export function TermSchedulePage() {
         )}
       </div>
       {preview && (
-        <p className="mb-2 text-[12.5px] font-medium text-accent">
+        <p className="-mt-2 text-[12.5px] font-medium text-accent">
           Önizleme — uygulanana dek kaydedilmedi.
         </p>
       )}

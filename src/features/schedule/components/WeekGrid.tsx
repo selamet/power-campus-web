@@ -48,31 +48,39 @@ export function WeekGrid({
   };
 
   const grid = (
-    <div
-      className="grid gap-px overflow-x-auto rounded-xl bg-line text-[11px]"
-      style={{ gridTemplateColumns: `56px repeat(${days.length}, minmax(96px, 1fr))` }}
-    >
-      {/* header row */}
-      <div className="bg-surface p-2" />
-      {days.map((d) => (
-        <div key={`h-${d}`} className="bg-surface p-2 text-center font-semibold">
-          {DAY_LABELS[d]}
-        </div>
-      ))}
+    <div className="overflow-x-auto rounded-xl border border-line">
+      <div
+        className="grid gap-px bg-line text-[11px]"
+        style={{
+          gridTemplateColumns: `56px repeat(${days.length}, minmax(96px, 1fr))`,
+          minWidth: `${56 + days.length * 96}px`,
+        }}
+      >
+        {/* header row */}
+        <div className="sticky top-0 z-10 bg-surface-2 p-2" />
+        {days.map((d) => (
+          <div
+            key={`h-${d}`}
+            className="sticky top-0 z-10 bg-surface-2 p-2 text-center text-[11.5px] font-semibold tracking-[0.02em] text-ink-2 uppercase"
+          >
+            {DAY_LABELS[d]}
+          </div>
+        ))}
 
-      {/* time rows */}
-      {Array.from({ length: rows }, (_, r) => (
-        <DayRow
-          key={`r-${r}`}
-          label={rowLabel(r)}
-          rowStartMin={start + r * SLOT_MIN}
-          days={days}
-          items={items}
-          onSelectSession={onSelectSession}
-          onEmptyClick={onEmptyClick}
-          draggable={!!onDropSession}
-        />
-      ))}
+        {/* time rows */}
+        {Array.from({ length: rows }, (_, r) => (
+          <DayRow
+            key={`r-${r}`}
+            label={rowLabel(r)}
+            rowStartMin={start + r * SLOT_MIN}
+            days={days}
+            items={items}
+            onSelectSession={onSelectSession}
+            onEmptyClick={onEmptyClick}
+            draggable={!!onDropSession}
+          />
+        ))}
+      </div>
     </div>
   );
 
@@ -102,7 +110,7 @@ function DayRow({
 }: DayRowProps) {
   return (
     <>
-      <div className="bg-surface p-1 text-right font-mono text-ink-3">{label}</div>
+      <div className="bg-surface p-1 text-right font-mono text-[10.5px] text-ink-3">{label}</div>
       {days.map((d) => {
         const hit = items.find(
           (it) => it.weekday === d && minutesOf(it.startTime) === rowStartMin,
@@ -140,10 +148,13 @@ function DropCell({
 }) {
   const startHm = `${String(Math.floor(rowStartMin / 60)).padStart(2, '0')}:${String(rowStartMin % 60).padStart(2, '0')}`;
   const { setNodeRef, isOver } = useDroppable({ id: `cell:${weekday}:${startHm}` });
+  const clickable = !hit && !!onEmptyClick;
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[34px] bg-surface p-0.5 ${isOver ? 'outline outline-2 outline-accent' : ''}`}
+      className={`min-h-[34px] bg-surface p-0.5 transition-colors ${
+        isOver ? 'outline outline-2 outline-accent' : ''
+      } ${clickable ? 'cursor-pointer hover:bg-surface-2' : ''}`}
       onClick={hit ? undefined : () => onEmptyClick?.(weekday, startHm)}
     >
       {hit && (

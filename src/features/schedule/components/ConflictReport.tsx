@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ui';
 import type { ScheduleReportItem } from '@/types/domain';
 
 const LESSON_LABEL: Record<string, string> = {
@@ -14,8 +15,9 @@ interface ConflictReportProps {
 export function ConflictReport({ items }: ConflictReportProps) {
   if (items.length === 0) return null;
   return (
-    <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
-      <p className="mb-1.5 text-[13px] font-semibold text-amber-700 dark:text-amber-300">
+    <div className="mt-3 rounded-xl bg-warn-soft p-3">
+      <p className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold text-warn-ink">
+        <Icon name="info" size={15} />
         Yerleştirilemeyen dersler
       </p>
       <ul className="flex flex-col gap-1 text-[12.5px] text-ink-2">

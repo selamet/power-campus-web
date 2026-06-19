@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { Button, Icon, useToast } from '@/components/ui';
 import { PERMISSIONS } from '@/constants/permissions';
 import { usePermission } from '@/features/auth/usePermission';
 import { fetchClasses, selectClasses } from '@/features/classes/classesSlice';
-import { useToast } from '@/components/ui';
+import { classLink } from '@/routes/paths';
 import type { GridItem } from './components/SessionBlock';
 import { WeekGrid } from './components/WeekGrid';
 import { RulesPanel } from './components/RulesPanel';
@@ -29,6 +30,7 @@ import {
 export function SchedulePage() {
   const { id } = useParams<{ id: string }>();
   const classId = Number(id);
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const toast = useToast();
   const { has } = usePermission();
@@ -95,10 +97,26 @@ export function SchedulePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] p-4">
-      <h1 className="mb-4 text-[22px] font-bold tracking-[-0.01em]">
-        Ders Programı{schoolClass ? ` — ${schoolClass.level}/${schoolClass.section}` : ''}
-      </h1>
+    <div className="anim-fade-up mx-auto flex w-full max-w-[1200px] flex-col gap-5 p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="quiet"
+          onClick={() => navigate(classLink(classId))}
+          className="px-2 py-1.5 text-[13px] text-ink-3"
+          aria-label="Sınıfa dön"
+        >
+          <Icon name="chevL" size={18} />
+          Sınıf
+        </Button>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h1 className="m-0 truncate text-[20px] font-bold tracking-[-0.01em]">
+            Ders Programı{schoolClass ? ` — ${schoolClass.level}/${schoolClass.section}` : ''}
+          </h1>
+          <span className="text-[12px] text-ink-3">
+            Kuralları düzenle, üret, önizle ve uygula.
+          </span>
+        </div>
+      </div>
       <div className="grid gap-4 lg:grid-cols-[340px_1fr]">
         <aside className="card p-[18px]">
           {schoolClass && (
