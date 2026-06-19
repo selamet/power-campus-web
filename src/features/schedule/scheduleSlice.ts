@@ -150,6 +150,17 @@ export const moveSession = createAsyncThunk(
   },
 );
 
+export const toggleLock = createAsyncThunk(
+  'schedule/toggleLock',
+  async ({ id, locked }: { id: number; locked: boolean }, { rejectWithValue }) => {
+    try {
+      return await scheduleApi.lockSession(id, locked);
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
 export const deleteSession = createAsyncThunk(
   'schedule/deleteSession',
   async (id: number, { rejectWithValue }) => {
@@ -261,6 +272,10 @@ const scheduleSlice = createSlice({
         state.savedSessions.push(action.payload);
       })
       .addCase(moveSession.fulfilled, (state, action) => {
+        const i = state.savedSessions.findIndex((s) => s.id === action.payload.id);
+        if (i !== -1) state.savedSessions[i] = action.payload;
+      })
+      .addCase(toggleLock.fulfilled, (state, action) => {
         const i = state.savedSessions.findIndex((s) => s.id === action.payload.id);
         if (i !== -1) state.savedSessions[i] = action.payload;
       })

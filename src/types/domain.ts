@@ -228,6 +228,7 @@ export interface ScheduleSession {
   weekday: number;
   startTime: string; // "HH:MM:SS"
   endTime: string; // "HH:MM:SS"
+  locked: boolean;
 }
 
 /** Generator output before it is applied (no id, no className). */
@@ -240,6 +241,7 @@ export interface SchedulePreviewSession {
   weekday: number;
   startTime: string;
   endTime: string;
+  locked: boolean;
 }
 
 /** One unplaced lesson in a generate/apply report. */

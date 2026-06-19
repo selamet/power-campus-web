@@ -116,6 +116,14 @@ export const scheduleApi = {
     return data;
   },
 
+  async lockSession(id: number, locked: boolean): Promise<ScheduleSession> {
+    const { data } = await axiosClient.patch<ScheduleSession>(
+      `/schedule/sessions/${id}/lock`,
+      { locked },
+    );
+    return data;
+  },
+
   async deleteSession(id: number): Promise<void> {
     await axiosClient.delete(`/schedule/sessions/${id}`);
   },
