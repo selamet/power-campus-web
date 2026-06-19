@@ -20,6 +20,7 @@ interface WeekGridProps {
   onSelectSession?: (item: GridItem) => void;
   onEmptyClick?: (weekday: number, startHm: string) => void;
   onDropSession?: (item: GridItem, weekday: number, startHm: string) => void;
+  onToggleLock?: (item: GridItem) => void;
 }
 
 /** A weekly recurring timetable. The vertical axis is proportional to time, so a
@@ -33,6 +34,7 @@ export function WeekGrid({
   onSelectSession,
   onEmptyClick,
   onDropSession,
+  onToggleLock,
 }: WeekGridProps) {
   const windowFor = (d: number): [number, number] => {
     const w = dayWindows[d];
@@ -109,6 +111,7 @@ export function WeekGrid({
             draggable={!!onDropSession}
             onSelectSession={onSelectSession}
             onEmptyClick={onEmptyClick}
+            onToggleLock={onToggleLock}
           />
         ))}
       </div>
@@ -156,6 +159,7 @@ interface DayColumnProps {
   draggable: boolean;
   onSelectSession?: (item: GridItem) => void;
   onEmptyClick?: (weekday: number, startHm: string) => void;
+  onToggleLock?: (item: GridItem) => void;
 }
 
 function DayColumn({
@@ -169,6 +173,7 @@ function DayColumn({
   draggable,
   onSelectSession,
   onEmptyClick,
+  onToggleLock,
 }: DayColumnProps) {
   const { placed, lanes } = packLanes(items);
   const slots: number[] = [];
@@ -228,7 +233,8 @@ function DayColumn({
             <SessionBlock
               item={p.item}
               onClick={onSelectSession}
-              draggableId={draggable ? p.item.key : undefined}
+              draggableId={draggable && !p.item.locked ? p.item.key : undefined}
+              onToggleLock={onToggleLock}
             />
           </div>
         );

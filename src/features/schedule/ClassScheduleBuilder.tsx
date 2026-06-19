@@ -19,6 +19,7 @@ import {
   selectSavedSessions,
   selectScheduleStatus,
   selectSettings,
+  toggleLock,
 } from './scheduleSlice';
 
 interface ClassScheduleBuilderProps {
@@ -58,6 +59,7 @@ export function ClassScheduleBuilder({ classId, termId, canWrite, termPreview }:
         endTime: s.endTime,
         lessonType: s.lessonType,
         teacherName: s.teacherName,
+        locked: s.locked,
       }));
     }
     return saved.map((s) => ({
@@ -69,6 +71,7 @@ export function ClassScheduleBuilder({ classId, termId, canWrite, termPreview }:
       endTime: s.endTime,
       lessonType: s.lessonType,
       teacherName: s.teacherName,
+      locked: s.locked,
     }));
   }, [effectivePreview, saved]);
 
@@ -150,6 +153,16 @@ export function ClassScheduleBuilder({ classId, termId, canWrite, termPreview }:
                       moveSession({ id: item.sessionId, input: { weekday, startTime: startApi, endTime: endApi } }),
                     ).then((r) => {
                       if (!moveSession.fulfilled.match(r)) toast((r.payload as string) || 'Çakışma var.', 'xCircle');
+                    });
+                  }
+                : undefined
+            }
+            onToggleLock={
+              editable
+                ? (it) => {
+                    if (!it.sessionId) return;
+                    void dispatch(toggleLock({ id: it.sessionId, locked: !it.locked })).then((r) => {
+                      if (!toggleLock.fulfilled.match(r)) toast((r.payload as string) || 'Kilit güncellenemedi', 'xCircle');
                     });
                   }
                 : undefined
