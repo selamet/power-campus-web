@@ -26,6 +26,10 @@ interface ScheduleState {
   report: ScheduleReportItem[];
   status: RequestStatus;
   error: string | null;
+  teacherSessions: ScheduleSession[];
+  termSessions: ScheduleSession[];
+  termPreview: SchedulePreviewSession[] | null;
+  termReport: ScheduleReportItem[];
 }
 
 const initialState: ScheduleState = {
@@ -36,6 +40,10 @@ const initialState: ScheduleState = {
   report: [],
   status: 'idle',
   error: null,
+  teacherSessions: [],
+  termSessions: [],
+  termPreview: null,
+  termReport: [],
 };
 
 const toMessage = (error: unknown): string =>
@@ -154,6 +162,52 @@ export const deleteSession = createAsyncThunk(
   },
 );
 
+export const fetchTeacherSchedule = createAsyncThunk(
+  'schedule/fetchTeacherSchedule',
+  async (teacherId: number, { rejectWithValue }) => {
+    try {
+      return await scheduleApi.teacherSchedule(teacherId);
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
+export const fetchTermSchedule = createAsyncThunk(
+  'schedule/fetchTermSchedule',
+  async ({ termId, weekday }: { termId: number; weekday?: number }, { rejectWithValue }) => {
+    try {
+      return await scheduleApi.termSchedule(termId, weekday);
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
+export const generateTermThunk = createAsyncThunk(
+  'schedule/generateTerm',
+  async (termId: number, { rejectWithValue }) => {
+    try {
+      return await scheduleApi.generateTerm(termId);
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
+export const applyTermThunk = createAsyncThunk(
+  'schedule/applyTerm',
+  async (termId: number, { dispatch, rejectWithValue }) => {
+    try {
+      const result = await scheduleApi.applyTerm(termId);
+      await dispatch(fetchTermSchedule({ termId }));
+      return result;
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
 const scheduleSlice = createSlice({
   name: 'schedule',
   initialState,
@@ -212,6 +266,29 @@ const scheduleSlice = createSlice({
       })
       .addCase(deleteSession.fulfilled, (state, action) => {
         state.savedSessions = state.savedSessions.filter((s) => s.id !== action.payload);
+      })
+      .addCase(fetchTeacherSchedule.fulfilled, (state, action) => {
+        state.teacherSessions = action.payload;
+      })
+      .addCase(fetchTermSchedule.fulfilled, (state, action) => {
+        state.termSessions = action.payload;
+      })
+      .addCase(generateTermThunk.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(generateTermThunk.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.termPreview = action.payload.sessions;
+        state.termReport = action.payload.report;
+      })
+      .addCase(generateTermThunk.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload as string;
+      })
+      .addCase(applyTermThunk.fulfilled, (state, action) => {
+        state.termPreview = null;
+        state.termReport = action.payload.report;
       });
   },
 });
@@ -229,3 +306,11 @@ export const selectPreview = (state: RootState): SchedulePreviewSession[] | null
 export const selectReport = (state: RootState): ScheduleReportItem[] => state.schedule.report;
 export const selectScheduleStatus = (state: RootState): RequestStatus => state.schedule.status;
 export const selectScheduleError = (state: RootState): string | null => state.schedule.error;
+export const selectTeacherSessions = (state: RootState): ScheduleSession[] =>
+  state.schedule.teacherSessions;
+export const selectTermSessions = (state: RootState): ScheduleSession[] =>
+  state.schedule.termSessions;
+export const selectTermPreview = (state: RootState): SchedulePreviewSession[] | null =>
+  state.schedule.termPreview;
+export const selectTermReport = (state: RootState): ScheduleReportItem[] =>
+  state.schedule.termReport;

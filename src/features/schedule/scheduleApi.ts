@@ -115,4 +115,26 @@ export const scheduleApi = {
   async deleteSession(id: number): Promise<void> {
     await axiosClient.delete(`/schedule/sessions/${id}`);
   },
+
+  async teacherSchedule(teacherId: number): Promise<ScheduleSession[]> {
+    const { data } = await axiosClient.get<ScheduleSession[]>(`/teachers/${teacherId}/schedule`);
+    return data;
+  },
+
+  async termSchedule(termId: number, weekday?: number): Promise<ScheduleSession[]> {
+    const { data } = await axiosClient.get<ScheduleSession[]>(`/terms/${termId}/schedule`, {
+      params: weekday === undefined ? undefined : { weekday },
+    });
+    return data;
+  },
+
+  async generateTerm(termId: number): Promise<GeneratePreview> {
+    const { data } = await axiosClient.post<GeneratePreview>(`/terms/${termId}/schedule/generate`);
+    return data;
+  },
+
+  async applyTerm(termId: number): Promise<ApplyResult> {
+    const { data } = await axiosClient.post<ApplyResult>(`/terms/${termId}/schedule/apply`);
+    return data;
+  },
 };
