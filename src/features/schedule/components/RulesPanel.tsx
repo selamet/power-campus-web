@@ -3,8 +3,9 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { Button, Icon, Input, Select, useToast } from '@/components/ui';
 import { classesApi } from '@/features/classes/classesApi';
 import { digitsOnly } from '@/utils/format';
-import type { ClassLesson, LessonType } from '@/types/domain';
+import type { ClassLesson, LessonType, SchoolClass } from '@/types/domain';
 import { saveConfig, selectRules, selectSettings } from '../scheduleSlice';
+import { scheduleApi } from '../scheduleApi';
 import {
   EMPTY_RULES,
   hasSeparation,
@@ -43,6 +44,8 @@ export function RulesPanel({
   const rules = useAppSelector(selectRules) ?? EMPTY_RULES;
   const settings = useAppSelector(selectSettings);
   const [lessons, setLessons] = useState<ClassLesson[]>([]);
+  const [otherClasses, setOtherClasses] = useState<SchoolClass[]>([]);
+  const [copySourceId, setCopySourceId] = useState<string>('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState<
     Record<string, { durationMin: string; sessionsPerWeek: string }>
@@ -55,6 +58,16 @@ export function RulesPanel({
       active = false;
     };
   }, [classId]);
+
+  useEffect(() => {
+    let active = true;
+    void classesApi.list(termId).then((rows) => {
+      if (active) setOtherClasses(rows.filter((c) => c.id !== classId));
+    });
+    return () => {
+      active = false;
+    };
+  }, [termId, classId]);
 
   const draftFor = (lessonType: LessonType) => {
     const rule = ruleFor(rules, lessonType);
@@ -69,6 +82,16 @@ export function RulesPanel({
   const persist = async (next: typeof rules) => {
     const result = await dispatch(saveConfig({ classId, rules: next }));
     if (!saveConfig.fulfilled.match(result)) toast('Kural kaydedilemedi', 'xCircle');
+  };
+
+  const handleCopyFrom = async (sourceId: number) => {
+    try {
+      const src = await scheduleApi.getConfig(sourceId);
+      await persist(src.rules);
+      toast('Kurallar kopyalandı', 'checkCircle');
+    } catch {
+      toast('Kopyalanamadı', 'xCircle');
+    }
   };
 
   const setLessonField = (
@@ -108,6 +131,31 @@ export function RulesPanel({
           </Button>
         )}
       </div>
+
+      {canWrite && otherClasses.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Select
+            value={copySourceId}
+            onChange={(e) => setCopySourceId(e.target.value)}
+            className="flex-1"
+          >
+            <option value="">Kuralları kopyala…</option>
+            {otherClasses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+          <Button
+            variant="ghost"
+            disabled={!copySourceId}
+            onClick={() => void handleCopyFrom(Number(copySourceId))}
+          >
+            <Icon name="copy" size={16} />
+            Kopyala
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2.5">
         <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase">
