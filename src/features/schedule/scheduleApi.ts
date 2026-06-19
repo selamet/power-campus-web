@@ -22,12 +22,15 @@ export interface LessonRule {
   lessonType: LessonType;
   durationMin: number;
   sessionsPerWeek: number;
+  pinnedWeekday?: number;
+  consecutive?: boolean;
 }
 
 /** The builder `rules` JSON. MVP edits `lessons` + `closedWeekdays`. */
 export interface ScheduleRules {
   lessons: LessonRule[];
   closedWeekdays?: number[];
+  separations?: string[][];
   [key: string]: unknown;
 }
 

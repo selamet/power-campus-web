@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { Button, Icon, Input, useToast } from '@/components/ui';
+import { Button, Icon, Input, Select, useToast } from '@/components/ui';
 import { classesApi } from '@/features/classes/classesApi';
 import { digitsOnly } from '@/utils/format';
 import type { ClassLesson, LessonType } from '@/types/domain';
 import { saveConfig, selectRules, selectSettings } from '../scheduleSlice';
-import { EMPTY_RULES, ruleFor, toggleClosedWeekday, withLessonRule } from '../scheduleRules';
+import {
+  EMPTY_RULES,
+  hasSeparation,
+  ruleFor,
+  setPinnedWeekday,
+  toggleClosedWeekday,
+  toggleConsecutive,
+  toggleSeparation,
+  withLessonRule,
+} from '../scheduleRules';
 import { TermSettingsModal } from './TermSettingsModal';
 
 const DAY_LABELS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
@@ -104,6 +113,7 @@ export function RulesPanel({
         <span className="text-[12.5px] font-semibold text-ink-2">Dersler (süre × haftalık)</span>
         {lessons.map((lesson) => {
           const values = draftFor(lesson.lessonType);
+          const rule = ruleFor(rules, lesson.lessonType);
           return (
             <div
               key={lesson.id}
@@ -142,6 +152,40 @@ export function RulesPanel({
                   />
                 </label>
               </div>
+              <div className="mt-2 flex items-center gap-3">
+                <label className="flex flex-1 flex-col gap-1 text-[11px] text-ink-3">
+                  Güne sabitle
+                  <Select
+                    value={rule?.pinnedWeekday != null ? String(rule.pinnedWeekday) : ''}
+                    onChange={(e) =>
+                      void persist(
+                        setPinnedWeekday(
+                          rules,
+                          lesson.lessonType,
+                          e.target.value === '' ? null : Number(e.target.value),
+                        ),
+                      )
+                    }
+                    disabled={!canWrite}
+                  >
+                    <option value="">—</option>
+                    {DAY_LABELS.map((label, d) => (
+                      <option key={d} value={d}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+                <label className="flex items-center gap-1.5 text-[11.5px] text-ink-2">
+                  <input
+                    type="checkbox"
+                    checked={!!rule?.consecutive}
+                    disabled={!canWrite}
+                    onChange={() => void persist(toggleConsecutive(rules, lesson.lessonType))}
+                  />
+                  Ardışık
+                </label>
+              </div>
             </div>
           );
         })}
@@ -166,6 +210,33 @@ export function RulesPanel({
               </button>
             );
           })}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-[12.5px] font-semibold text-ink-2">Aynı gün olmasın</span>
+        <div className="flex flex-col gap-1.5">
+          {lessons.flatMap((a, i) =>
+            lessons.slice(i + 1).map((b) => {
+              const on = hasSeparation(rules, a.lessonType, b.lessonType);
+              return (
+                <button
+                  key={`${a.id}-${b.id}`}
+                  type="button"
+                  disabled={!canWrite}
+                  onClick={() => void persist(toggleSeparation(rules, a.lessonType, b.lessonType))}
+                  className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[12px] ${
+                    on ? 'border-accent bg-accent/10 text-accent' : 'border-line text-ink-3'
+                  }`}
+                >
+                  <span>
+                    {a.lessonTypeLabel} ↔ {b.lessonTypeLabel}
+                  </span>
+                  <span>{on ? 'Ayrı' : '—'}</span>
+                </button>
+              );
+            }),
+          )}
         </div>
       </div>
 

@@ -40,3 +40,49 @@ export function toggleClosedWeekday(rules: ScheduleRules, weekday: number): Sche
     : [...current, weekday];
   return { ...rules, closedWeekdays };
 }
+
+export function setPinnedWeekday(
+  rules: ScheduleRules,
+  lessonType: LessonType,
+  weekday: number | null,
+): ScheduleRules {
+  const existing = ruleFor(rules, lessonType) ?? {
+    lessonType,
+    durationMin: 45,
+    sessionsPerWeek: 1,
+  };
+  return withLessonRule(rules, { ...existing, pinnedWeekday: weekday ?? undefined });
+}
+
+export function toggleConsecutive(rules: ScheduleRules, lessonType: LessonType): ScheduleRules {
+  const existing = ruleFor(rules, lessonType) ?? {
+    lessonType,
+    durationMin: 45,
+    sessionsPerWeek: 1,
+  };
+  return withLessonRule(rules, { ...existing, consecutive: !existing.consecutive });
+}
+
+/** Order-independent key for a lesson-type pair. */
+export function separationKey(a: LessonType, b: LessonType): string {
+  return [a, b].sort().join('|');
+}
+
+export function hasSeparation(rules: ScheduleRules, a: LessonType, b: LessonType): boolean {
+  const key = separationKey(a, b);
+  return (rules.separations ?? []).some(
+    (pair) => separationKey(pair[0] as LessonType, pair[1] as LessonType) === key,
+  );
+}
+
+export function toggleSeparation(rules: ScheduleRules, a: LessonType, b: LessonType): ScheduleRules {
+  const key = separationKey(a, b);
+  const current = rules.separations ?? [];
+  const exists = current.some(
+    (pair) => separationKey(pair[0] as LessonType, pair[1] as LessonType) === key,
+  );
+  const separations = exists
+    ? current.filter((pair) => separationKey(pair[0] as LessonType, pair[1] as LessonType) !== key)
+    : [...current, [a, b]];
+  return { ...rules, separations };
+}
