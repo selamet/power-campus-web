@@ -5,7 +5,7 @@ import { Badge, Button, Icon } from '@/components/ui';
 import { TEACHER_STATUS } from '@/constants/teacherStatus';
 import { PERMISSIONS } from '@/constants/permissions';
 import { usePermission } from '@/features/auth/usePermission';
-import { classLink } from '@/routes/paths';
+import { classLink, teacherScheduleLink } from '@/routes/paths';
 import type { SchoolClass } from '@/types/domain';
 import { levelCode } from '@/utils/format';
 import { teachersApi } from './teachersApi';
@@ -21,6 +21,7 @@ export function TeacherDetailPage() {
   const teachersStatus = useAppSelector(selectTeachersStatus);
   const { has } = usePermission();
   const canWrite = has(PERMISSIONS.teachersWrite);
+  const canViewSchedule = has(PERMISSIONS.scheduleRead);
 
   const [editing, setEditing] = useState(false);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
@@ -81,6 +82,12 @@ export function TeacherDetailPage() {
             {teacher.email ?? '—'} · {teacher.phone ?? '—'}
           </div>
         </div>
+        {canViewSchedule && (
+          <Button variant="ghost" onClick={() => navigate(teacherScheduleLink(teacherId))}>
+            <Icon name="calendar" size={17} />
+            Ders Programı
+          </Button>
+        )}
         {canWrite && (
           <Button variant="ghost" onClick={() => setEditing(true)}>
             <Icon name="edit" size={16} /> Düzenle
