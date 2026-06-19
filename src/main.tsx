@@ -21,6 +21,7 @@ import { TeacherDetailPage } from '@/features/teachers/TeacherDetailPage';
 import { TeachersPage } from '@/features/teachers/TeachersPage';
 import { SchedulePage } from '@/features/schedule/SchedulePage';
 import { TeacherSchedulePage } from '@/features/schedule/TeacherSchedulePage';
+import { TermSchedulePage } from '@/features/schedule/TermSchedulePage';
 import { AppShell } from '@/layout/AppShell';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
                 children: [
                   { path: paths.classSchedule, element: <SchedulePage /> },
                   { path: paths.teacherSchedule, element: <TeacherSchedulePage /> },
+                  { path: paths.termSchedule, element: <TermSchedulePage /> },
                 ],
               },
               {

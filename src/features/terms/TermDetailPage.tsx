@@ -6,7 +6,7 @@ import { PERMISSIONS } from '@/constants/permissions';
 import { STATUS } from '@/constants/status';
 import type { StudentStatus } from '@/types/domain';
 import { usePermission } from '@/features/auth/usePermission';
-import { paths, studentLink } from '@/routes/paths';
+import { paths, studentLink, termScheduleLink } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 import { formatDate, levelCode } from '@/utils/format';
 import { AddStudentsModal } from './components/AddStudentsModal';
@@ -68,6 +68,7 @@ export function TermDetailPage() {
   const { has } = usePermission();
   const canEditTerm = has(PERMISSIONS.termsWrite);
   const canEnroll = has(PERMISSIONS.studentsWrite);
+  const canViewSchedule = has(PERMISSIONS.scheduleRead);
 
   const [roster, setRoster] = useState<TermStudent[]>([]);
   const [editOpen, setEditOpen] = useState(false);
@@ -174,6 +175,12 @@ export function TermDetailPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {canViewSchedule && (
+            <Button variant="ghost" onClick={() => navigate(termScheduleLink(termId))}>
+              <Icon name="calendar" size={17} />
+              Ders Programı
+            </Button>
+          )}
           {canEditTerm && term && (
             <Button variant="ghost" onClick={() => setEditOpen(true)}>
               <Icon name="edit" size={17} />
