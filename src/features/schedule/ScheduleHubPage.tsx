@@ -120,6 +120,21 @@ export function ScheduleHubPage() {
 
   const nameForClass = (cid: number) => termClasses.find((c) => c.id === cid)?.name ?? '';
 
+  const printSubtitle = (() => {
+    const termName = terms.find((t) => t.id === termId)?.name ?? '';
+    const modeLabel = MODES.find((m) => m.value === mode)?.label ?? '';
+    const contextName =
+      mode === 'class'
+        ? classId != null
+          ? nameForClass(classId)
+          : ''
+        : mode === 'teacher'
+          ? (teachers.find((t) => t.id === teacherId)?.name ?? '')
+          : '';
+    const ctx = contextName ? `${modeLabel}: ${contextName}` : modeLabel;
+    return [termName, ctx, new Date().toLocaleDateString('tr-TR')].filter(Boolean).join(' · ');
+  })();
+
   const readonlyItems = useMemo<GridItem[]>(() => {
     let base: GridItem[];
     if (mode === 'teacher') {
@@ -179,7 +194,7 @@ export function ScheduleHubPage() {
 
   return (
     <div className="anim-fade-up mx-auto flex w-full max-w-[1280px] flex-col gap-4 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <h1 className="m-0 text-[20px] font-bold tracking-[-0.01em]">Ders Programı</h1>
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex gap-1">
@@ -248,7 +263,18 @@ export function ScheduleHubPage() {
               </Button>
             </>
           )}
+          <Button variant="ghost" onClick={() => window.print()}>
+            <Icon name="download" size={16} />
+            Yazdır
+          </Button>
         </div>
+      </div>
+
+      <div className="hidden print:block">
+        <h1 className="m-0 text-[18px] font-bold tracking-[-0.01em]">
+          Power Campus · Ders Programı
+        </h1>
+        <p className="mt-1 text-[13px] text-ink-2">{printSubtitle}</p>
       </div>
 
       {mode === 'class' &&
