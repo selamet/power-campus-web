@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PERMISSIONS } from '@/constants/permissions';
@@ -9,6 +9,7 @@ import type { GridItem } from './components/SessionBlock';
 import { WeekGrid } from './components/WeekGrid';
 import { RulesPanel } from './components/RulesPanel';
 import { ConflictReport } from './components/ConflictReport';
+import { SessionModal, type SessionModalState } from './components/SessionModal';
 import {
   applyClass,
   fetchClassSchedule,
@@ -37,6 +38,9 @@ export function SchedulePage() {
   const preview = useAppSelector(selectPreview);
   const report = useAppSelector(selectReport);
   const status = useAppSelector(selectScheduleStatus);
+
+  const [modal, setModal] = useState<SessionModalState | null>(null);
+  const editable = canWrite && !preview; // manual edits operate on the persisted schedule
 
   useEffect(() => {
     if (!classId) return;
@@ -110,7 +114,7 @@ export function SchedulePage() {
         <section className="card p-[18px]">
           {preview && (
             <p className="mb-2 text-[12.5px] font-medium text-accent">
-              Önizleme — uygulanana dek kaydedilmedi.
+              Önizleme — uygulanana dek kaydedilmedi. Elle düzenleme uyguladıktan sonra açılır.
             </p>
           )}
           {settings ? (
@@ -119,6 +123,14 @@ export function SchedulePage() {
               dayStart={settings.dayStart}
               dayEnd={settings.dayEnd}
               workingDays={settings.workingDays}
+              onSelectSession={
+                editable
+                  ? (it) => setModal({ mode: 'edit', item: it, weekday: it.weekday, startHm: it.startTime.slice(0, 5) })
+                  : undefined
+              }
+              onEmptyClick={
+                editable ? (weekday, startHm) => setModal({ mode: 'add', weekday, startHm }) : undefined
+              }
             />
           ) : (
             <p className="text-[13px] text-ink-3">Dönem ayarları yükleniyor…</p>
@@ -126,6 +138,12 @@ export function SchedulePage() {
           <ConflictReport items={report} />
         </section>
       </div>
+      <SessionModal
+        open={modal !== null}
+        classId={classId}
+        state={modal}
+        onClose={() => setModal(null)}
+      />
     </div>
   );
 }
