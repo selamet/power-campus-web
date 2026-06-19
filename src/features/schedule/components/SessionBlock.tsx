@@ -6,6 +6,7 @@ export interface GridItem {
   key: string;
   sessionId?: number;
   classLessonId: number;
+  classId?: number;
   weekday: number;
   startTime: string;
   endTime: string;

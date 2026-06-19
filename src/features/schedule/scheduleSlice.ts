@@ -287,6 +287,8 @@ const scheduleSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(applyTermThunk.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.error = null;
         state.termPreview = null;
         state.termReport = action.payload.report;
       });

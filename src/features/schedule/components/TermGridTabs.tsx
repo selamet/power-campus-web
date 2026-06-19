@@ -31,6 +31,7 @@ export function TermGridTabs({ settings, classes, sessions, preview }: TermGridT
     ? preview.map((s, i) => ({
         key: `p-${s.classId}-${s.weekday}-${s.startTime}-${i}`,
         classLessonId: s.classLessonId,
+        classId: s.classId,
         weekday: s.weekday,
         startTime: s.startTime,
         endTime: s.endTime,
@@ -41,6 +42,7 @@ export function TermGridTabs({ settings, classes, sessions, preview }: TermGridT
         key: `s-${s.id}`,
         sessionId: s.id,
         classLessonId: s.classLessonId,
+        classId: s.classId,
         weekday: s.weekday,
         startTime: s.startTime,
         endTime: s.endTime,
@@ -51,9 +53,7 @@ export function TermGridTabs({ settings, classes, sessions, preview }: TermGridT
   // class mode filters to one class; day mode filters to one weekday.
   const items =
     mode === 'class'
-      ? allItems.filter((_, idx) =>
-          preview ? preview[idx]?.classId === classId : sessions[idx]?.classId === classId,
-        )
+      ? allItems.filter((it) => it.classId === classId)
       : allItems.filter((it) => it.weekday === weekday);
 
   return (
