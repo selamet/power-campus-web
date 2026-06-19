@@ -1,3 +1,4 @@
+import { useDraggable } from '@dnd-kit/core';
 import type { LessonType } from '@/types/domain';
 import { hmFromApi } from '../timeUtils';
 
@@ -29,11 +30,20 @@ const LESSON_LABEL: Record<LessonType, string> = {
 interface SessionBlockProps {
   item: GridItem;
   onClick?: (item: GridItem) => void;
+  draggableId?: string;
 }
 
-export function SessionBlock({ item, onClick }: SessionBlockProps) {
+export function SessionBlock({ item, onClick, draggableId }: SessionBlockProps) {
+  const drag = useDraggable({ id: draggableId ?? item.key, disabled: !draggableId });
+  const style = drag.transform
+    ? { transform: `translate3d(${drag.transform.x}px, ${drag.transform.y}px, 0)`, zIndex: 50 }
+    : undefined;
   return (
     <button
+      ref={drag.setNodeRef}
+      style={style}
+      {...drag.listeners}
+      {...drag.attributes}
       type="button"
       onClick={() => onClick?.(item)}
       className={`flex h-full w-full flex-col items-start rounded-lg border px-2 py-1 text-left text-[11px] leading-tight ${LESSON_COLOR[item.lessonType]}`}

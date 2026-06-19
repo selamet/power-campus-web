@@ -10,12 +10,14 @@ import { WeekGrid } from './components/WeekGrid';
 import { RulesPanel } from './components/RulesPanel';
 import { ConflictReport } from './components/ConflictReport';
 import { SessionModal, type SessionModalState } from './components/SessionModal';
+import { minutesOf, toApiTime } from './timeUtils';
 import {
   applyClass,
   fetchClassSchedule,
   fetchConfig,
   fetchSettings,
   generateClass,
+  moveSession,
   resetSchedule,
   selectPreview,
   selectReport,
@@ -130,6 +132,23 @@ export function SchedulePage() {
               }
               onEmptyClick={
                 editable ? (weekday, startHm) => setModal({ mode: 'add', weekday, startHm }) : undefined
+              }
+              onDropSession={
+                editable
+                  ? (item, weekday, startHm) => {
+                      if (!item.sessionId) return;
+                      const startApi = toApiTime(startHm);
+                      // preserve the session's duration
+                      const durMin = minutesOf(item.endTime) - minutesOf(item.startTime);
+                      const endMin = minutesOf(startApi) + durMin;
+                      const endApi = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}:00`;
+                      void dispatch(
+                        moveSession({ id: item.sessionId, input: { weekday, startTime: startApi, endTime: endApi } }),
+                      ).then((r) => {
+                        if (!moveSession.fulfilled.match(r)) toast((r.payload as string) || 'Çakışma var.', 'xCircle');
+                      });
+                    }
+                  : undefined
               }
             />
           ) : (
