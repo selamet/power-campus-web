@@ -20,9 +20,7 @@ import { ClassesPage } from '@/features/classes/ClassesPage';
 import { TeacherDetailPage } from '@/features/teachers/TeacherDetailPage';
 import { TeachersPage } from '@/features/teachers/TeachersPage';
 import { ScheduleHubPage } from '@/features/schedule/ScheduleHubPage';
-import { SchedulePage } from '@/features/schedule/SchedulePage';
 import { TeacherSchedulePage } from '@/features/schedule/TeacherSchedulePage';
-import { TermSchedulePage } from '@/features/schedule/TermSchedulePage';
 import { AppShell } from '@/layout/AppShell';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
@@ -67,9 +65,7 @@ const router = createBrowserRouter([
                 element: <RequirePermission permission={PERMISSIONS.scheduleRead} />,
                 children: [
                   { path: paths.schedule, element: <ScheduleHubPage /> },
-                  { path: paths.classSchedule, element: <SchedulePage /> },
                   { path: paths.teacherSchedule, element: <TeacherSchedulePage /> },
-                  { path: paths.termSchedule, element: <TermSchedulePage /> },
                 ],
               },
               {

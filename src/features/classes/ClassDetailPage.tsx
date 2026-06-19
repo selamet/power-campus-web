@@ -8,7 +8,7 @@ import type { StudentStatus, ClassStudent, Teacher } from '@/types/domain';
 import { usePermission } from '@/features/auth/usePermission';
 import { fetchTerms } from '@/features/terms/termsSlice';
 import { teachersApi } from '@/features/teachers/teachersApi';
-import { classScheduleLink, paths, studentLink, teacherLink } from '@/routes/paths';
+import { paths, studentLink, teacherLink } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 import { levelCode } from '@/utils/format';
 import { AddStudentsToClassModal } from './components/AddStudentsToClassModal';
@@ -29,7 +29,6 @@ export function ClassDetailPage() {
   const schoolClass = useAppSelector(selectClasses).find((item) => item.id === classId);
   const { has } = usePermission();
   const canWrite = has(PERMISSIONS.classesWrite);
-  const canViewSchedule = has(PERMISSIONS.scheduleRead);
 
   const [roster, setRoster] = useState<ClassStudent[]>([]);
   const [editOpen, setEditOpen] = useState(false);
@@ -150,14 +149,6 @@ export function ClassDetailPage() {
             </span>
           )}
         </div>
-        {canViewSchedule && schoolClass && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="ghost" onClick={() => navigate(classScheduleLink(classId))}>
-              <Icon name="calendar" size={17} />
-              Ders Programı
-            </Button>
-          </div>
-        )}
         {canWrite && schoolClass && (
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="ghost" onClick={() => setAutoOpen(true)}>
