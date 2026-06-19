@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { Button, Field, Icon, Input, Modal, useToast } from '@/components/ui';
+import { teachersApi } from '@/features/teachers/teachersApi';
+import type { Teacher } from '@/types/domain';
 import { digitsOnly } from '@/utils/format';
 import { hmFromApi, toApiTime } from '../timeUtils';
 import { saveSettings, selectSettings } from '../scheduleSlice';
@@ -23,6 +25,10 @@ export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSetti
   const [dayEnd, setDayEnd] = useState('18:00');
   const [perDay, setPerDay] = useState('3');
   const [busy, setBusy] = useState(false);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teacherRules, setTeacherRules] = useState<
+    Record<string, { unavailableWeekdays: number[]; maxPerDay: string; maxPerWeek: string }>
+  >({});
 
   useEffect(() => {
     if (!open || !settings) return;
@@ -32,8 +38,56 @@ export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSetti
     setPerDay(String(settings.defaultPerDay));
   }, [open, settings]);
 
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    void teachersApi.list('active').then((rows) => active && setTeachers(rows));
+    return () => {
+      active = false;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const raw = (settings?.teacherRules ?? {}) as Record<
+      string,
+      { unavailableWeekdays?: number[]; maxPerDay?: number; maxPerWeek?: number }
+    >;
+    const seeded: Record<
+      string,
+      { unavailableWeekdays: number[]; maxPerDay: string; maxPerWeek: string }
+    > = {};
+    for (const [id, v] of Object.entries(raw)) {
+      seeded[id] = {
+        unavailableWeekdays: v.unavailableWeekdays ?? [],
+        maxPerDay: v.maxPerDay != null ? String(v.maxPerDay) : '',
+        maxPerWeek: v.maxPerWeek != null ? String(v.maxPerWeek) : '',
+      };
+    }
+    setTeacherRules(seeded);
+  }, [open, settings]);
+
   const toggleDay = (d: number) =>
     setWorkingDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
+
+  const ruleFor = (teacherId: number) =>
+    teacherRules[String(teacherId)] ?? { unavailableWeekdays: [], maxPerDay: '', maxPerWeek: '' };
+
+  const updateRule = (
+    teacherId: number,
+    patch: Partial<{ unavailableWeekdays: number[]; maxPerDay: string; maxPerWeek: string }>,
+  ) =>
+    setTeacherRules((prev) => ({
+      ...prev,
+      [String(teacherId)]: { ...ruleFor(teacherId), ...patch },
+    }));
+
+  const toggleTeacherDay = (teacherId: number, d: number) => {
+    const current = ruleFor(teacherId).unavailableWeekdays;
+    updateRule(teacherId, {
+      unavailableWeekdays: current.includes(d) ? current.filter((x) => x !== d) : [...current, d],
+    });
+  };
 
   const handleSave = async () => {
     if (!canWrite) return;
@@ -48,7 +102,18 @@ export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSetti
           defaultDuration: settings?.defaultDuration ?? 45,
           defaultPerDay: Math.max(1, Number(digitsOnly(perDay)) || 1),
           breakMin: settings?.breakMin ?? 0,
-          teacherRules: settings?.teacherRules ?? {},
+          teacherRules: Object.fromEntries(
+            Object.entries(teacherRules)
+              .map(([id, v]) => {
+                const entry: { unavailableWeekdays?: number[]; maxPerDay?: number; maxPerWeek?: number } =
+                  {};
+                if (v.unavailableWeekdays.length) entry.unavailableWeekdays = v.unavailableWeekdays;
+                if (v.maxPerDay) entry.maxPerDay = Number(v.maxPerDay);
+                if (v.maxPerWeek) entry.maxPerWeek = Number(v.maxPerWeek);
+                return [id, entry] as const;
+              })
+              .filter(([, entry]) => Object.keys(entry).length > 0),
+          ),
         },
       }),
     );
@@ -116,6 +181,61 @@ export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSetti
             disabled={!canWrite}
           />
         </Field>
+        {teachers.length > 0 && (
+          <Field label="Öğretmen uygunluğu">
+            <div className="flex max-h-[40vh] flex-col gap-2.5 overflow-y-auto pr-1">
+              {teachers.map((teacher) => {
+                const rule = ruleFor(teacher.id);
+                return (
+                  <div key={teacher.id} className="rounded-lg border border-line p-2.5">
+                    <div className="mb-1.5 text-[12.5px] font-semibold text-ink-2">{teacher.name}</div>
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      {DAY_LABELS.map((label, d) => (
+                        <button
+                          key={d}
+                          type="button"
+                          disabled={!canWrite}
+                          onClick={() => toggleTeacherDay(teacher.id, d)}
+                          className={`rounded-lg border px-2.5 py-1 text-[12.5px] ${
+                            rule.unavailableWeekdays.includes(d)
+                              ? 'border-accent bg-accent/10 text-accent'
+                              : 'border-line text-ink-3'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <Field label="Günlük üst sınır">
+                        <Input
+                          value={rule.maxPerDay}
+                          onChange={(e) =>
+                            updateRule(teacher.id, { maxPerDay: digitsOnly(e.target.value).slice(0, 2) })
+                          }
+                          inputMode="numeric"
+                          className="font-mono"
+                          disabled={!canWrite}
+                        />
+                      </Field>
+                      <Field label="Haftalık üst sınır">
+                        <Input
+                          value={rule.maxPerWeek}
+                          onChange={(e) =>
+                            updateRule(teacher.id, { maxPerWeek: digitsOnly(e.target.value).slice(0, 2) })
+                          }
+                          inputMode="numeric"
+                          className="font-mono"
+                          disabled={!canWrite}
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Field>
+        )}
       </div>
       <div className="mt-5 flex justify-end gap-2.5">
         <Button variant="ghost" onClick={onClose}>
