@@ -6,9 +6,10 @@ import { usePermission } from '@/features/auth/usePermission';
 import { fetchClasses, selectClasses } from '@/features/classes/classesSlice';
 import { fetchTerms, selectCurrentTerm, selectTerms } from '@/features/terms/termsSlice';
 import { teachersApi } from '@/features/teachers/teachersApi';
-import type { Teacher } from '@/types/domain';
+import type { LessonType, Teacher } from '@/types/domain';
 import { ClassScheduleBuilder } from './ClassScheduleBuilder';
 import { WeekGrid } from './components/WeekGrid';
+import { ScheduleLegend } from './components/ScheduleLegend';
 import type { GridItem } from './components/SessionBlock';
 import {
   applyTermThunk,
@@ -52,6 +53,23 @@ export function ScheduleHubPage() {
   const [classId, setClassId] = useState<number | null>(null);
   const [teacherId, setTeacherId] = useState<number | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [hiddenTypes, setHiddenTypes] = useState<Set<LessonType>>(new Set());
+  const [hiddenClassIds, setHiddenClassIds] = useState<Set<number>>(new Set());
+
+  const toggleType = (t: LessonType) =>
+    setHiddenTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  const toggleClass = (id: number) =>
+    setHiddenClassIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   useEffect(() => {
     void dispatch(fetchTerms());
@@ -87,6 +105,11 @@ export function ScheduleHubPage() {
     if (mode === 'teacher' && teacherId != null) void dispatch(fetchTeacherSchedule(teacherId));
   }, [dispatch, mode, teacherId]);
 
+  useEffect(() => {
+    setHiddenTypes(new Set());
+    setHiddenClassIds(new Set());
+  }, [termId, mode]);
+
   const dayWindows = useMemo(
     () =>
       Object.fromEntries(Object.entries(settings?.dayWindows ?? {}).map(([k, w]) => [Number(k), w])),
@@ -96,8 +119,9 @@ export function ScheduleHubPage() {
   const nameForClass = (cid: number) => termClasses.find((c) => c.id === cid)?.name ?? '';
 
   const readonlyItems = useMemo<GridItem[]>(() => {
+    let base: GridItem[];
     if (mode === 'teacher') {
-      return teacherSessions.map((s) => ({
+      base = teacherSessions.map((s) => ({
         key: `t-${s.id}`,
         classLessonId: s.classLessonId,
         weekday: s.weekday,
@@ -106,11 +130,10 @@ export function ScheduleHubPage() {
         lessonType: s.lessonType,
         teacherName: s.className,
       }));
-    }
-    // all-classes: prefer the term-bulk preview, else applied term sessions.
-    if (termPreview) {
-      return termPreview.map((s, i) => ({
+    } else if (termPreview) {
+      base = termPreview.map((s, i) => ({
         key: `tp-${s.classId}-${s.weekday}-${s.startTime}-${i}`,
+        classId: s.classId,
         classLessonId: s.classLessonId,
         weekday: s.weekday,
         startTime: s.startTime,
@@ -118,18 +141,25 @@ export function ScheduleHubPage() {
         lessonType: s.lessonType,
         teacherName: nameForClass(s.classId),
       }));
+    } else {
+      base = termSessions.map((s) => ({
+        key: `ts-${s.id}`,
+        classId: s.classId,
+        classLessonId: s.classLessonId,
+        weekday: s.weekday,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        lessonType: s.lessonType,
+        teacherName: s.className,
+      }));
     }
-    return termSessions.map((s) => ({
-      key: `ts-${s.id}`,
-      classLessonId: s.classLessonId,
-      weekday: s.weekday,
-      startTime: s.startTime,
-      endTime: s.endTime,
-      lessonType: s.lessonType,
-      teacherName: s.className,
-    }));
+    return base.filter(
+      (it) =>
+        !hiddenTypes.has(it.lessonType) &&
+        !(mode === 'all' && it.classId != null && hiddenClassIds.has(it.classId)),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, teacherSessions, termSessions, termPreview, termClasses]);
+  }, [mode, teacherSessions, termSessions, termPreview, termClasses, hiddenTypes, hiddenClassIds]);
 
   const handleGenerateAll = () => {
     if (termId != null) void dispatch(generateTermThunk(termId));
@@ -229,6 +259,8 @@ export function ScheduleHubPage() {
               classId={classId}
               termId={termId!}
               canWrite={canWrite}
+              hiddenTypes={hiddenTypes}
+              onToggleType={toggleType}
               termPreview={
                 termPreview && classId != null
                   ? termPreview.filter((s) => s.classId === classId)
@@ -243,13 +275,37 @@ export function ScheduleHubPage() {
           {mode === 'teacher' && teacherId == null ? (
             <p className="text-[13px] text-ink-3">Bir öğretmen seçin.</p>
           ) : settings ? (
-            <WeekGrid
-              items={readonlyItems}
-              dayStart={settings.dayStart}
-              dayEnd={settings.dayEnd}
-              workingDays={settings.workingDays}
-              dayWindows={dayWindows}
-            />
+            <div className="flex flex-col gap-3">
+              <ScheduleLegend hiddenTypes={hiddenTypes} onToggle={toggleType} />
+              {mode === 'all' && termClasses.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {termClasses.map((c) => {
+                    const hidden = hiddenClassIds.has(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => toggleClass(c.id)}
+                        className={`rounded-lg border px-2.5 py-1 text-[12px] font-medium transition-opacity ${
+                          hidden
+                            ? 'border-line text-ink-3 opacity-50'
+                            : 'border-accent bg-accent-soft text-accent'
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <WeekGrid
+                items={readonlyItems}
+                dayStart={settings.dayStart}
+                dayEnd={settings.dayEnd}
+                workingDays={settings.workingDays}
+                dayWindows={dayWindows}
+              />
+            </div>
           ) : (
             <p className="text-[13px] text-ink-3">Dönem ayarları yükleniyor…</p>
           )}
