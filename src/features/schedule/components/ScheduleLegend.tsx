@@ -1,7 +1,8 @@
 import type { LessonType } from '@/types/domain';
 import { LESSON_COLOR, LESSON_LABEL } from './lessonMeta';
 
-const TYPES: LessonType[] = ['speaking', 'reading', 'writing', 'speaking_club'];
+// Derived from the label map so a new lesson type can't silently miss its chip.
+const TYPES = Object.keys(LESSON_LABEL) as LessonType[];
 
 interface ScheduleLegendProps {
   hiddenTypes: Set<LessonType>;
