@@ -10,6 +10,7 @@ import type { LessonType, Teacher } from '@/types/domain';
 import { ClassScheduleBuilder } from './ClassScheduleBuilder';
 import { WeekGrid } from './components/WeekGrid';
 import { ScheduleLegend } from './components/ScheduleLegend';
+import { TeacherLoadTable } from './components/TeacherLoadTable';
 import type { GridItem } from './components/SessionBlock';
 import {
   applyTermThunk,
@@ -26,11 +27,12 @@ import {
   selectTermSessions,
 } from './scheduleSlice';
 
-type Mode = 'class' | 'teacher' | 'all';
+type Mode = 'class' | 'teacher' | 'all' | 'load';
 const MODES: { value: Mode; label: string }[] = [
   { value: 'class', label: 'Sınıf' },
   { value: 'teacher', label: 'Öğretmen' },
   { value: 'all', label: 'Tüm Sınıflar' },
+  { value: 'load', label: 'Yük' },
 ];
 
 export function ScheduleHubPage() {
@@ -234,7 +236,7 @@ export function ScheduleHubPage() {
               ))}
             </Select>
           )}
-          {canWrite && (
+          {canWrite && mode !== 'load' && (
             <>
               <Button variant="ghost" onClick={handleGenerateAll} disabled={status === 'loading'}>
                 <Icon name="sparkle" size={16} />
@@ -270,7 +272,7 @@ export function ScheduleHubPage() {
           )
         ))}
 
-      {mode !== 'class' && (
+      {(mode === 'teacher' || mode === 'all') && (
         <section className="card p-[18px]">
           {mode === 'teacher' && teacherId == null ? (
             <p className="text-[13px] text-ink-3">Bir öğretmen seçin.</p>
@@ -306,6 +308,25 @@ export function ScheduleHubPage() {
                 dayWindows={dayWindows}
               />
             </div>
+          ) : (
+            <p className="text-[13px] text-ink-3">Dönem ayarları yükleniyor…</p>
+          )}
+        </section>
+      )}
+
+      {mode === 'load' && (
+        <section className="card p-[18px]">
+          {settings ? (
+            <TeacherLoadTable
+              sessions={termSessions}
+              teacherRules={
+                (settings.teacherRules ?? {}) as Record<
+                  string,
+                  { maxPerDay?: number; maxPerWeek?: number }
+                >
+              }
+              workingDays={settings.workingDays}
+            />
           ) : (
             <p className="text-[13px] text-ink-3">Dönem ayarları yükleniyor…</p>
           )}
