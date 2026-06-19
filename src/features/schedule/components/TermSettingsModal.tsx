@@ -11,9 +11,10 @@ interface TermSettingsModalProps {
   open: boolean;
   onClose: () => void;
   termId: number;
+  canWrite: boolean;
 }
 
-export function TermSettingsModal({ open, onClose, termId }: TermSettingsModalProps) {
+export function TermSettingsModal({ open, onClose, termId, canWrite }: TermSettingsModalProps) {
   const dispatch = useAppDispatch();
   const toast = useToast();
   const settings = useAppSelector(selectSettings);
@@ -35,6 +36,7 @@ export function TermSettingsModal({ open, onClose, termId }: TermSettingsModalPr
     setWorkingDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
 
   const handleSave = async () => {
+    if (!canWrite) return;
     setBusy(true);
     const result = await dispatch(
       saveSettings({
@@ -74,6 +76,7 @@ export function TermSettingsModal({ open, onClose, termId }: TermSettingsModalPr
               <button
                 key={d}
                 type="button"
+                disabled={!canWrite}
                 onClick={() => toggleDay(d)}
                 className={`rounded-lg border px-2.5 py-1 text-[12.5px] ${
                   workingDays.includes(d)
@@ -88,10 +91,20 @@ export function TermSettingsModal({ open, onClose, termId }: TermSettingsModalPr
         </Field>
         <div className="grid grid-cols-2 gap-3.5">
           <Field label="Gün başlangıcı">
-            <Input type="time" value={dayStart} onChange={(e) => setDayStart(e.target.value)} />
+            <Input
+              type="time"
+              value={dayStart}
+              onChange={(e) => setDayStart(e.target.value)}
+              disabled={!canWrite}
+            />
           </Field>
           <Field label="Gün bitişi">
-            <Input type="time" value={dayEnd} onChange={(e) => setDayEnd(e.target.value)} />
+            <Input
+              type="time"
+              value={dayEnd}
+              onChange={(e) => setDayEnd(e.target.value)}
+              disabled={!canWrite}
+            />
           </Field>
         </div>
         <Field label="Günlük ders üst sınırı">
@@ -100,6 +113,7 @@ export function TermSettingsModal({ open, onClose, termId }: TermSettingsModalPr
             onChange={(e) => setPerDay(digitsOnly(e.target.value).slice(0, 2))}
             inputMode="numeric"
             className="font-mono"
+            disabled={!canWrite}
           />
         </Field>
       </div>
@@ -107,10 +121,12 @@ export function TermSettingsModal({ open, onClose, termId }: TermSettingsModalPr
         <Button variant="ghost" onClick={onClose}>
           Vazgeç
         </Button>
-        <Button variant="primary" onClick={handleSave} disabled={busy}>
-          <Icon name="check" size={17} />
-          {busy ? 'Kaydediliyor…' : 'Kaydet'}
-        </Button>
+        {canWrite && (
+          <Button variant="primary" onClick={handleSave} disabled={busy}>
+            <Icon name="check" size={17} />
+            {busy ? 'Kaydediliyor…' : 'Kaydet'}
+          </Button>
+        )}
       </div>
     </Modal>
   );

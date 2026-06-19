@@ -35,6 +35,9 @@ export function RulesPanel({
   const settings = useAppSelector(selectSettings);
   const [lessons, setLessons] = useState<ClassLesson[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [draft, setDraft] = useState<
+    Record<string, { durationMin: string; sessionsPerWeek: string }>
+  >({});
 
   useEffect(() => {
     let active = true;
@@ -43,6 +46,16 @@ export function RulesPanel({
       active = false;
     };
   }, [classId]);
+
+  const draftFor = (lessonType: LessonType) => {
+    const rule = ruleFor(rules, lessonType);
+    return (
+      draft[lessonType] ?? {
+        durationMin: String(rule?.durationMin ?? settings?.defaultDuration ?? 45),
+        sessionsPerWeek: String(rule?.sessionsPerWeek ?? 1),
+      }
+    );
+  };
 
   const persist = async (next: typeof rules) => {
     const result = await dispatch(saveConfig({ classId, rules: next }));
@@ -54,29 +67,43 @@ export function RulesPanel({
     field: 'durationMin' | 'sessionsPerWeek',
     raw: string,
   ) => {
+    setDraft((prev) => ({
+      ...prev,
+      [lessonType]: { ...draftFor(lessonType), [field]: digitsOnly(raw) },
+    }));
+  };
+
+  const commitLessonField = (lessonType: LessonType) => {
+    const current = draftFor(lessonType);
     const existing = ruleFor(rules, lessonType) ?? {
       lessonType,
       durationMin: settings?.defaultDuration ?? 45,
       sessionsPerWeek: 1,
     };
-    const value = Math.max(1, Number(digitsOnly(raw)) || 1);
-    void persist(withLessonRule(rules, { ...existing, [field]: value }));
+    const durationMin = Math.max(1, Number(current.durationMin) || 1);
+    const sessionsPerWeek = Math.max(1, Number(current.sessionsPerWeek) || 1);
+    if (durationMin === existing.durationMin && sessionsPerWeek === existing.sessionsPerWeek) {
+      return;
+    }
+    void persist(withLessonRule(rules, { ...existing, durationMin, sessionsPerWeek }));
   };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h4 className="m-0 text-[14.5px] font-bold">Kurallar</h4>
-        <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
-          <Icon name="edit" size={16} />
-          Dönem
-        </Button>
+        {canWrite && (
+          <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
+            <Icon name="edit" size={16} />
+            Dönem
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-2.5">
         <span className="text-[12.5px] font-semibold text-ink-2">Dersler (süre × haftalık)</span>
         {lessons.map((lesson) => {
-          const rule = ruleFor(rules, lesson.lessonType);
+          const values = draftFor(lesson.lessonType);
           return (
             <div
               key={lesson.id}
@@ -87,8 +114,12 @@ export function RulesPanel({
                 <label className="flex flex-col gap-1 text-[11px] text-ink-3">
                   Süre (dk)
                   <Input
-                    value={String(rule?.durationMin ?? settings?.defaultDuration ?? 45)}
+                    value={values.durationMin}
                     onChange={(e) => setLessonField(lesson.lessonType, 'durationMin', e.target.value)}
+                    onBlur={() => commitLessonField(lesson.lessonType)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitLessonField(lesson.lessonType);
+                    }}
                     inputMode="numeric"
                     className="font-mono"
                     disabled={!canWrite}
@@ -97,10 +128,14 @@ export function RulesPanel({
                 <label className="flex flex-col gap-1 text-[11px] text-ink-3">
                   Haftalık
                   <Input
-                    value={String(rule?.sessionsPerWeek ?? 1)}
+                    value={values.sessionsPerWeek}
                     onChange={(e) =>
                       setLessonField(lesson.lessonType, 'sessionsPerWeek', e.target.value)
                     }
+                    onBlur={() => commitLessonField(lesson.lessonType)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitLessonField(lesson.lessonType);
+                    }}
                     inputMode="numeric"
                     className="font-mono"
                     disabled={!canWrite}
@@ -147,7 +182,12 @@ export function RulesPanel({
         </div>
       )}
 
-      <TermSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} termId={termId} />
+      <TermSettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        termId={termId}
+        canWrite={canWrite}
+      />
     </div>
   );
 }
