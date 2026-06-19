@@ -3,6 +3,7 @@ export const paths = {
   login: '/login',
   setPassword: '/parola-belirle',
   overview: '/',
+  schedule: '/schedule',
   students: '/students',
   staff: '/staff',
   terms: '/terms',
@@ -11,6 +12,7 @@ export const paths = {
   classDetail: '/classes/:id',
   teachers: '/teachers',
   teacherDetail: '/teachers/:id',
+  teacherSchedule: '/teachers/:id/schedule',
   newStudent: '/students/new',
   studentDetail: '/students/:tckn',
   welcome: '/hosgeldin/:tckn',
@@ -39,3 +41,6 @@ export const classLink = (id: number) => `/classes/${id}`;
 
 /** Detail-page link for a teacher. */
 export const teacherLink = (id: number) => `/teachers/${id}`;
+
+/** Schedule screen link for a teacher. */
+export const teacherScheduleLink = (id: number) => `/teachers/${id}/schedule`;

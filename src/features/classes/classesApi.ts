@@ -10,14 +10,10 @@ import type {
 export interface LessonInput {
   lessonType: LessonType;
   teacherId?: number | null;
-  sessionDurationMin: number;
-  sessionsPerWeek: number;
 }
 
 export interface LessonPatch {
   teacherId?: number | null;
-  sessionDurationMin?: number;
-  sessionsPerWeek?: number;
 }
 
 export interface AutoAssignCriteria {

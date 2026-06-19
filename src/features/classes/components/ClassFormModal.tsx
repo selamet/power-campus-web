@@ -66,8 +66,6 @@ export function ClassFormModal({
         catalog.map((c) => ({
           lessonType: c.value,
           enabled: true,
-          sessionDurationMin: c.defaultDurationMin,
-          sessionsPerWeek: c.defaultSessionsPerWeek,
           teacherId: null,
         })),
       );
@@ -107,8 +105,6 @@ export function ClassFormModal({
       .filter((d) => d.enabled)
       .map((d) => ({
         lessonType: d.lessonType,
-        sessionDurationMin: d.sessionDurationMin,
-        sessionsPerWeek: d.sessionsPerWeek,
         teacherId: d.teacherId,
       }));
 

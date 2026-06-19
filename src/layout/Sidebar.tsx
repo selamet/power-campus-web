@@ -23,12 +23,12 @@ const NAV: NavItem[] = [
   { to: paths.terms, label: 'Dönemler', icon: 'calendar', permission: PERMISSIONS.termsRead },
   { to: paths.classes, label: 'Sınıflar', icon: 'layers', permission: PERMISSIONS.classesRead },
   { to: paths.teachers, label: 'Öğretmenler', icon: 'user', permission: PERMISSIONS.teachersRead },
+  { to: paths.schedule, label: 'Ders Programı', icon: 'clock', permission: PERMISSIONS.scheduleRead },
   { to: paths.staff, label: 'Yetkililer', icon: 'shield', permission: PERMISSIONS.usersRead },
 ];
 
 const NAV_SOON = [
   { label: 'Yoklama', icon: 'clipboard' },
-  { label: 'Ders Programı', icon: 'clock' },
   { label: 'Dökümanlar', icon: 'folder' },
 ];
 

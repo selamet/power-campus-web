@@ -97,16 +97,11 @@ export interface ClassLesson {
   lessonTypeLabel: string;
   teacherId: number | null;
   teacherName: string | null;
-  sessionDurationMin: number;
-  sessionsPerWeek: number;
-  weeklyTotalMin: number;
 }
 
 export interface LessonTypeCatalog {
   value: LessonType;
   label: string;
-  defaultSessionsPerWeek: number;
-  defaultDurationMin: number;
 }
 
 /** Payload used when creating a student through the manual registration form. */
@@ -216,4 +211,55 @@ export interface Teacher {
   levels: string[];
   note: string | null;
   classCount: number;
+}
+
+/** 0 = Monday … 6 = Sunday. */
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/** A placed, persisted weekly session (class/teacher/term timetable row). */
+export interface ScheduleSession {
+  id: number;
+  classLessonId: number;
+  classId: number;
+  className: string;
+  lessonType: LessonType;
+  teacherId: number | null;
+  teacherName: string | null;
+  weekday: number;
+  startTime: string; // "HH:MM:SS"
+  endTime: string; // "HH:MM:SS"
+  locked: boolean;
+}
+
+/** Generator output before it is applied (no id, no className). */
+export interface SchedulePreviewSession {
+  classLessonId: number;
+  classId: number;
+  lessonType: LessonType;
+  teacherId: number | null;
+  teacherName: string | null;
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  locked: boolean;
+}
+
+/** One unplaced lesson in a generate/apply report. */
+export interface ScheduleReportItem {
+  classId: number;
+  lessonType: LessonType;
+  reason: string;
+}
+
+/** Per-term grid defaults. */
+export interface TermScheduleSettings {
+  termId: number;
+  workingDays: number[];
+  dayStart: string; // "HH:MM:SS"
+  dayEnd: string;
+  defaultDuration: number;
+  defaultPerDay: number;
+  breakMin: number;
+  teacherRules: Record<string, unknown>;
+  dayWindows: Record<string, { start: string; end: string }>;
 }
