@@ -47,13 +47,13 @@ export function SessionBlock({ item, onClick, draggableId }: SessionBlockProps) 
       {...drag.attributes}
       type="button"
       onClick={() => onClick?.(item)}
-      className={`flex h-full w-full flex-col items-start rounded-lg border px-2 py-1 text-left text-[11px] leading-tight ${LESSON_COLOR[item.lessonType]}`}
+      className={`flex h-full w-full flex-col items-start gap-px overflow-hidden rounded-lg border px-2 py-1 text-left text-[11px] leading-[1.25] shadow-sm transition-shadow hover:shadow-md ${draggableId ? 'cursor-grab active:cursor-grabbing' : ''} ${LESSON_COLOR[item.lessonType]}`}
     >
-      <span className="font-semibold">{LESSON_LABEL[item.lessonType]}</span>
-      <span className="opacity-80">
+      <span className="w-full truncate font-semibold">{LESSON_LABEL[item.lessonType]}</span>
+      <span className="font-mono text-[10px] tabular-nums opacity-80">
         {hmFromApi(item.startTime)}–{hmFromApi(item.endTime)}
       </span>
-      {item.teacherName && <span className="truncate opacity-70">{item.teacherName}</span>}
+      {item.teacherName && <span className="w-full truncate opacity-70">{item.teacherName}</span>}
     </button>
   );
 }
