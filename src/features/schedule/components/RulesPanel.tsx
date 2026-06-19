@@ -4,7 +4,7 @@ import { Button, Icon, Input, Select, useToast } from '@/components/ui';
 import { classesApi } from '@/features/classes/classesApi';
 import { digitsOnly } from '@/utils/format';
 import type { ClassLesson, LessonType, SchoolClass } from '@/types/domain';
-import { saveConfig, selectRules, selectSettings } from '../scheduleSlice';
+import { createTemplate, deleteTemplate, fetchTemplates, saveConfig, selectRules, selectSettings, selectTemplates } from '../scheduleSlice';
 import { scheduleApi } from '../scheduleApi';
 import {
   EMPTY_RULES,
@@ -43,6 +43,9 @@ export function RulesPanel({
   const toast = useToast();
   const rules = useAppSelector(selectRules) ?? EMPTY_RULES;
   const settings = useAppSelector(selectSettings);
+  const templates = useAppSelector(selectTemplates);
+  const [templateId, setTemplateId] = useState<string>('');
+  const [templateName, setTemplateName] = useState('');
   const [lessons, setLessons] = useState<ClassLesson[]>([]);
   const [otherClasses, setOtherClasses] = useState<SchoolClass[]>([]);
   const [copySourceId, setCopySourceId] = useState<string>('');
@@ -50,6 +53,10 @@ export function RulesPanel({
   const [draft, setDraft] = useState<
     Record<string, { durationMin: string; sessionsPerWeek: string }>
   >({});
+
+  useEffect(() => {
+    void dispatch(fetchTemplates());
+  }, [dispatch]);
 
   useEffect(() => {
     let active = true;
@@ -91,6 +98,34 @@ export function RulesPanel({
       toast('Kurallar kopyalandı', 'checkCircle');
     } catch {
       toast('Kopyalanamadı', 'xCircle');
+    }
+  };
+
+  const handleApplyTemplate = async (id: number) => {
+    const tpl = templates.find((t) => t.id === id);
+    if (!tpl) return;
+    await persist(tpl.rules);
+    toast('Şablon uygulandı', 'checkCircle');
+  };
+  const handleSaveTemplate = async () => {
+    const name = templateName.trim();
+    if (!name) return;
+    const r = await dispatch(createTemplate({ name, rules }));
+    if (createTemplate.fulfilled.match(r)) {
+      setTemplateName('');
+      toast('Şablon kaydedildi', 'checkCircle');
+    } else {
+      toast((r.payload as string) || 'Şablon kaydedilemedi', 'xCircle');
+    }
+  };
+  const handleDeleteTemplate = async (id: number) => {
+    if (!window.confirm('Şablon silinsin mi?')) return;
+    const r = await dispatch(deleteTemplate(id));
+    if (deleteTemplate.fulfilled.match(r)) {
+      if (String(id) === templateId) setTemplateId('');
+      toast('Şablon silindi', 'checkCircle');
+    } else {
+      toast('Silinemedi', 'xCircle');
     }
   };
 
@@ -297,6 +332,52 @@ export function RulesPanel({
           )}
         </div>
       </div>
+
+      {canWrite && (
+        <div className="flex flex-col gap-2">
+          <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase">
+            Şablonlar
+          </span>
+          <div className="flex items-center gap-2">
+            <Select value={templateId} onChange={(e) => setTemplateId(e.target.value)} className="flex-1">
+              <option value="">Şablon seç…</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </Select>
+            <Button
+              variant="ghost"
+              disabled={!templateId}
+              onClick={() => void handleApplyTemplate(Number(templateId))}
+            >
+              <Icon name="check" size={16} />
+              Uygula
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={!templateId}
+              onClick={() => void handleDeleteTemplate(Number(templateId))}
+            >
+              <Icon name="x" size={16} />
+              Sil
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="Yeni şablon adı"
+              className="flex-1"
+            />
+            <Button variant="ghost" disabled={!templateName.trim()} onClick={() => void handleSaveTemplate()}>
+              <Icon name="plus" size={16} />
+              Şablon olarak kaydet
+            </Button>
+          </div>
+        </div>
+      )}
 
       {canWrite && (
         <div className="flex gap-2.5">
