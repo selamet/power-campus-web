@@ -697,3 +697,28 @@
   mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+
+@media print {
+  /* hide the app shell — only the routed content prints */
+  .sidebar,
+  .sidebar-scrim,
+  .topbar {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  /* keep lesson-type colors and load-table highlights on paper */
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* avoid splitting a schedule card / grid across pages */
+  .card {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+}
