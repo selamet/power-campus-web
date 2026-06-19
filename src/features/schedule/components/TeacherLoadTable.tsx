@@ -82,7 +82,7 @@ export function TeacherLoadTable({ sessions, teacherRules, workingDays }: Teache
                         dayOver ? 'font-bold text-red-600' : n === 0 ? 'text-ink-3' : ''
                       }`}
                     >
-                      {n}
+                      {rule.maxPerDay != null ? `${n} / ${rule.maxPerDay}` : n}
                     </td>
                   );
                 })}
