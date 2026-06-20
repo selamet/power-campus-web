@@ -35,6 +35,12 @@ export interface ScheduleRules {
   [key: string]: unknown;
 }
 
+export interface RuleTemplate {
+  id: number;
+  name: string;
+  rules: ScheduleRules;
+}
+
 export interface SessionCreateInput {
   classLessonId: number;
   weekday: number;
@@ -138,6 +144,20 @@ export const scheduleApi = {
       params: weekday === undefined ? undefined : { weekday },
     });
     return data;
+  },
+
+  async listRuleTemplates(): Promise<RuleTemplate[]> {
+    const { data } = await axiosClient.get<RuleTemplate[]>('/schedule/rule-templates');
+    return data;
+  },
+
+  async createRuleTemplate(name: string, rules: ScheduleRules): Promise<RuleTemplate> {
+    const { data } = await axiosClient.post<RuleTemplate>('/schedule/rule-templates', { name, rules });
+    return data;
+  },
+
+  async deleteRuleTemplate(id: number): Promise<void> {
+    await axiosClient.delete(`/schedule/rule-templates/${id}`);
   },
 
   async generateTerm(termId: number): Promise<GeneratePreview> {

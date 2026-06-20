@@ -67,7 +67,7 @@ export function AppShell() {
         <main className="flex-1 p-7">
           <Outlet context={shellContext} />
         </main>
-        <footer className="border-t border-line px-7 py-5 text-center">
+        <footer className="border-t border-line px-7 py-5 text-center print:hidden">
           <span className="font-mono text-[11px] tracking-[0.06em] text-ink-3">
             <span className="font-semibold text-ink-2">laboflush</span>
             {' · crafted by '}

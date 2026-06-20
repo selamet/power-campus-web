@@ -9,6 +9,7 @@ import type {
 } from '@/types/domain';
 import {
   scheduleApi,
+  type RuleTemplate,
   type ScheduleRules,
   type SessionCreateInput,
   type SessionMoveInput,
@@ -30,6 +31,7 @@ interface ScheduleState {
   termSessions: ScheduleSession[];
   termPreview: SchedulePreviewSession[] | null;
   termReport: ScheduleReportItem[];
+  templates: RuleTemplate[];
 }
 
 const initialState: ScheduleState = {
@@ -44,6 +46,7 @@ const initialState: ScheduleState = {
   termSessions: [],
   termPreview: null,
   termReport: [],
+  templates: [],
 };
 
 const toMessage = (error: unknown): string =>
@@ -206,6 +209,40 @@ export const generateTermThunk = createAsyncThunk(
   },
 );
 
+export const fetchTemplates = createAsyncThunk(
+  'schedule/fetchTemplates',
+  async (_: void, { rejectWithValue }) => {
+    try {
+      return await scheduleApi.listRuleTemplates();
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
+export const createTemplate = createAsyncThunk(
+  'schedule/createTemplate',
+  async ({ name, rules }: { name: string; rules: ScheduleRules }, { rejectWithValue }) => {
+    try {
+      return await scheduleApi.createRuleTemplate(name, rules);
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
+export const deleteTemplate = createAsyncThunk(
+  'schedule/deleteTemplate',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await scheduleApi.deleteRuleTemplate(id);
+      return id;
+    } catch (error) {
+      return rejectWithValue(toMessage(error));
+    }
+  },
+);
+
 export const applyTermThunk = createAsyncThunk(
   'schedule/applyTerm',
   async (termId: number, { dispatch, rejectWithValue }) => {
@@ -306,6 +343,15 @@ const scheduleSlice = createSlice({
         state.error = null;
         state.termPreview = null;
         state.termReport = action.payload.report;
+      })
+      .addCase(fetchTemplates.fulfilled, (state, action) => {
+        state.templates = action.payload;
+      })
+      .addCase(createTemplate.fulfilled, (state, action) => {
+        state.templates.push(action.payload);
+      })
+      .addCase(deleteTemplate.fulfilled, (state, action) => {
+        state.templates = state.templates.filter((t) => t.id !== action.payload);
       });
   },
 });
@@ -331,3 +377,4 @@ export const selectTermPreview = (state: RootState): SchedulePreviewSession[] | 
   state.schedule.termPreview;
 export const selectTermReport = (state: RootState): ScheduleReportItem[] =>
   state.schedule.termReport;
+export const selectTemplates = (state: RootState): RuleTemplate[] => state.schedule.templates;

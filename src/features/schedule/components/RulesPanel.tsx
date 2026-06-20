@@ -3,8 +3,9 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { Button, Icon, Input, Select, useToast } from '@/components/ui';
 import { classesApi } from '@/features/classes/classesApi';
 import { digitsOnly } from '@/utils/format';
-import type { ClassLesson, LessonType } from '@/types/domain';
-import { saveConfig, selectRules, selectSettings } from '../scheduleSlice';
+import type { ClassLesson, LessonType, SchoolClass } from '@/types/domain';
+import { createTemplate, deleteTemplate, fetchTemplates, saveConfig, selectRules, selectSettings, selectTemplates } from '../scheduleSlice';
+import { scheduleApi } from '../scheduleApi';
 import {
   EMPTY_RULES,
   hasSeparation,
@@ -42,11 +43,20 @@ export function RulesPanel({
   const toast = useToast();
   const rules = useAppSelector(selectRules) ?? EMPTY_RULES;
   const settings = useAppSelector(selectSettings);
+  const templates = useAppSelector(selectTemplates);
+  const [templateId, setTemplateId] = useState<string>('');
+  const [templateName, setTemplateName] = useState('');
   const [lessons, setLessons] = useState<ClassLesson[]>([]);
+  const [otherClasses, setOtherClasses] = useState<SchoolClass[]>([]);
+  const [copySourceId, setCopySourceId] = useState<string>('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState<
     Record<string, { durationMin: string; sessionsPerWeek: string }>
   >({});
+
+  useEffect(() => {
+    void dispatch(fetchTemplates());
+  }, [dispatch]);
 
   useEffect(() => {
     let active = true;
@@ -55,6 +65,16 @@ export function RulesPanel({
       active = false;
     };
   }, [classId]);
+
+  useEffect(() => {
+    let active = true;
+    void classesApi.list(termId).then((rows) => {
+      if (active) setOtherClasses(rows.filter((c) => c.id !== classId));
+    });
+    return () => {
+      active = false;
+    };
+  }, [termId, classId]);
 
   const draftFor = (lessonType: LessonType) => {
     const rule = ruleFor(rules, lessonType);
@@ -66,9 +86,57 @@ export function RulesPanel({
     );
   };
 
-  const persist = async (next: typeof rules) => {
+  const persist = async (next: typeof rules): Promise<boolean> => {
     const result = await dispatch(saveConfig({ classId, rules: next }));
-    if (!saveConfig.fulfilled.match(result)) toast('Kural kaydedilemedi', 'xCircle');
+    return saveConfig.fulfilled.match(result);
+  };
+
+  const persistOrWarn = (next: typeof rules) =>
+    void persist(next).then((ok) => {
+      if (!ok) toast('Kural kaydedilemedi', 'xCircle');
+    });
+
+  const handleCopyFrom = async (sourceId: number) => {
+    try {
+      const src = await scheduleApi.getConfig(sourceId);
+      const ok = await persist(src.rules);
+      if (ok) {
+        setCopySourceId('');
+        toast('Kurallar kopyalandı', 'checkCircle');
+      } else {
+        toast('Kopyalanamadı', 'xCircle');
+      }
+    } catch {
+      toast('Kopyalanamadı', 'xCircle');
+    }
+  };
+
+  const handleApplyTemplate = async (id: number) => {
+    const tpl = templates.find((t) => t.id === id);
+    if (!tpl) return;
+    const ok = await persist(tpl.rules);
+    toast(ok ? 'Şablon uygulandı' : 'Şablon uygulanamadı', ok ? 'checkCircle' : 'xCircle');
+  };
+  const handleSaveTemplate = async () => {
+    const name = templateName.trim();
+    if (!name) return;
+    const r = await dispatch(createTemplate({ name, rules }));
+    if (createTemplate.fulfilled.match(r)) {
+      setTemplateName('');
+      toast('Şablon kaydedildi', 'checkCircle');
+    } else {
+      toast((r.payload as string) || 'Şablon kaydedilemedi', 'xCircle');
+    }
+  };
+  const handleDeleteTemplate = async (id: number) => {
+    if (!window.confirm('Şablon silinsin mi?')) return;
+    const r = await dispatch(deleteTemplate(id));
+    if (deleteTemplate.fulfilled.match(r)) {
+      if (String(id) === templateId) setTemplateId('');
+      toast('Şablon silindi', 'checkCircle');
+    } else {
+      toast('Silinemedi', 'xCircle');
+    }
   };
 
   const setLessonField = (
@@ -94,7 +162,7 @@ export function RulesPanel({
     if (durationMin === existing.durationMin && sessionsPerWeek === existing.sessionsPerWeek) {
       return;
     }
-    void persist(withLessonRule(rules, { ...existing, durationMin, sessionsPerWeek }));
+    persistOrWarn(withLessonRule(rules, { ...existing, durationMin, sessionsPerWeek }));
   };
 
   return (
@@ -108,6 +176,31 @@ export function RulesPanel({
           </Button>
         )}
       </div>
+
+      {canWrite && otherClasses.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Select
+            value={copySourceId}
+            onChange={(e) => setCopySourceId(e.target.value)}
+            className="flex-1"
+          >
+            <option value="">Kuralları kopyala…</option>
+            {otherClasses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+          <Button
+            variant="ghost"
+            disabled={!copySourceId}
+            onClick={() => void handleCopyFrom(Number(copySourceId))}
+          >
+            <Icon name="copy" size={16} />
+            Kopyala
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2.5">
         <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase">
@@ -160,7 +253,7 @@ export function RulesPanel({
                   <Select
                     value={rule?.pinnedWeekday != null ? String(rule.pinnedWeekday) : ''}
                     onChange={(e) =>
-                      void persist(
+                      persistOrWarn(
                         setPinnedWeekday(
                           rules,
                           lesson.lessonType,
@@ -183,7 +276,7 @@ export function RulesPanel({
                     type="checkbox"
                     checked={!!rule?.consecutive}
                     disabled={!canWrite}
-                    onChange={() => void persist(toggleConsecutive(rules, lesson.lessonType))}
+                    onChange={() => persistOrWarn(toggleConsecutive(rules, lesson.lessonType))}
                   />
                   Ardışık
                 </label>
@@ -205,7 +298,7 @@ export function RulesPanel({
                 key={d}
                 type="button"
                 disabled={!canWrite}
-                onClick={() => void persist(toggleClosedWeekday(rules, d))}
+                onClick={() => persistOrWarn(toggleClosedWeekday(rules, d))}
                 className={`rounded-lg border px-2.5 py-1 text-[12.5px] font-medium transition-colors ${
                   closed
                     ? 'border-accent bg-accent-soft text-accent'
@@ -232,7 +325,7 @@ export function RulesPanel({
                   key={`${a.id}-${b.id}`}
                   type="button"
                   disabled={!canWrite}
-                  onClick={() => void persist(toggleSeparation(rules, a.lessonType, b.lessonType))}
+                  onClick={() => persistOrWarn(toggleSeparation(rules, a.lessonType, b.lessonType))}
                   className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
                     on
                       ? 'border-accent bg-accent-soft text-accent'
@@ -249,6 +342,52 @@ export function RulesPanel({
           )}
         </div>
       </div>
+
+      {canWrite && (
+        <div className="flex flex-col gap-2">
+          <span className="text-[11.5px] font-semibold tracking-[0.04em] text-ink-3 uppercase">
+            Şablonlar
+          </span>
+          <div className="flex items-center gap-2">
+            <Select value={templateId} onChange={(e) => setTemplateId(e.target.value)} className="flex-1">
+              <option value="">Şablon seç…</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </Select>
+            <Button
+              variant="ghost"
+              disabled={!templateId}
+              onClick={() => void handleApplyTemplate(Number(templateId))}
+            >
+              <Icon name="check" size={16} />
+              Uygula
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={!templateId}
+              onClick={() => void handleDeleteTemplate(Number(templateId))}
+            >
+              <Icon name="x" size={16} />
+              Sil
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="Yeni şablon adı"
+              className="flex-1"
+            />
+            <Button variant="ghost" disabled={!templateName.trim()} onClick={() => void handleSaveTemplate()}>
+              <Icon name="plus" size={16} />
+              Şablon olarak kaydet
+            </Button>
+          </div>
+        </div>
+      )}
 
       {canWrite && (
         <div className="flex gap-2.5">
